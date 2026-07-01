@@ -15,6 +15,8 @@
         .grid-cell img { width: 100%; height: 100%; object-fit: cover; }
         .remove-btn { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; background: rgba(0,0,0,0.75); color: white; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 12px; z-index: 20; }
         .remove-btn:hover { background: #dc2626; }
+        .loading-skeleton { background: linear-gradient(90deg, #1e2937 25%, #334155 50%, #1e2937 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
@@ -74,7 +76,7 @@
                     </select>
                 </div>
 
-                <div class="text-xs text-slate-400 mb-2">Images resolved via XRP Café Proxy with Bithomp fallback.</div>
+                <div class="text-xs text-slate-400 mb-2">Primary resolution via XRPScan Indexer with multi-level fallback.</div>
                 <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[420px] overflow-auto"></div>
 
                 <div class="mt-4 flex justify-between text-sm">
@@ -143,31 +145,45 @@
         let selectedNFTs = [];
         let currentWallet = '';
         let currentMarker = null;
-        const bithompCache = new Map();
-        const xrplToCache = new Map();
+        const metadataCache = new Map();
         const collectionNameCache = new Map();
         let isLoadingMore = false;
 
-        async function getBithompNFT(nftId) {
-            if (bithompCache.has(nftId)) return bithompCache.get(nftId);
+        async function getXRPScanMetadata(nftId) {
+            if (metadataCache.has(nftId)) return metadataCache.get(nftId);
             try {
-                const res = await fetch(`https://bithomp.com/api/v2/nft/${nftId}`);
+                const res = await fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`);
                 if (res.ok) {
                     const data = await res.json();
-                    bithompCache.set(nftId, data);
+                    metadataCache.set(nftId, data);
                     return data;
                 }
             } catch(e){}
             return null;
         }
 
-        async function getXRPLToNFT(nftId) {
-            if (xrplToCache.has(nftId)) return xrplToCache.get(nftId);
+        async function getXRPLMetaMetadata(nftId) {
+            const cacheKey = `meta-${nftId}`;
+            if (metadataCache.has(cacheKey)) return metadataCache.get(cacheKey);
             try {
-                const res = await fetch(`https://api.xrpl.to/v1/nft/${nftId}`);
+                const res = await fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`);
                 if (res.ok) {
                     const data = await res.json();
-                    xrplToCache.set(nftId, data);
+                    metadataCache.set(cacheKey, data);
+                    return data;
+                }
+            } catch(e){}
+            return null;
+        }
+
+        async function getBithompMetadata(nftId) {
+            const cacheKey = `bithomp-${nftId}`;
+            if (metadataCache.has(cacheKey)) return metadataCache.get(cacheKey);
+            try {
+                const res = await fetch(`https://bithomp.com/api/v2/nft/${nftId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    metadataCache.set(cacheKey, data);
                     return data;
                 }
             } catch(e){}
@@ -175,43 +191,61 @@
         }
 
         /**
-         * Resolves image sources with XRP Cafe Proxy priority and Bithomp fallback.
+         * Resolves image sources using Indexer-First architecture:
+         * 1. XRPScan (Primary)
+         * 2. XRPL Meta (Secondary)
+         * 3. Bithomp (Tertiary)
+         * 4. IPFS Gateway Race (Final Fallback)
          */
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
 
-            // 1. Direct from Chain URI (Highest priority)
+            // 1. XRPScan (Highest Priority Indexer)
+            const scanData = await getXRPScanMetadata(nft.NFTokenID);
+            if (scanData?.meta?.image) {
+                const url = formatImageUrl(scanData.meta.image);
+                if (url && !sources.includes(url)) sources.push(url);
+            }
+
+            // 2. XRPL Meta (Secondary Indexer)
+            const metaData = await getXRPLMetaMetadata(nft.NFTokenID);
+            if (metaData?.image) {
+                const url = formatImageUrl(metaData.image);
+                if (url && !sources.includes(url)) sources.push(url);
+            }
+
+            // 3. Bithomp (Tertiary fallback)
+            const bData = await getBithompMetadata(nft.NFTokenID);
+            if (bData?.image) {
+                const url = formatImageUrl(bData.image);
+                if (url && !sources.includes(url)) sources.push(url);
+            }
+
+            // 4. Manual IPFS Race (Final fallback)
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
-            
             if (rawUri) {
                 const cid = extractCID(rawUri);
                 if (cid) {
                     sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
+                    sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
                     sources.push(`https://ipfs.io/ipfs/${cid}`);
                 } else if (rawUri.startsWith('http')) {
                     sources.push(rawUri);
                 }
             }
 
-            // 2. Fetch Bithomp data for fallback image
-            const bData = await getBithompNFT(nft.NFTokenID);
-            if (bData?.image) {
-                const bCid = extractCID(bData.image);
-                if (bCid) {
-                    const proxyUrl = `https://ipfs-proxy.xrp.cafe/ipfs/${bCid}`;
-                    if (!sources.includes(proxyUrl)) sources.push(proxyUrl);
-                }
-                if (!sources.includes(bData.image)) sources.push(bData.image);
-            }
-
-            // 3. xrpl.to fallback
-            const xData = await getXRPLToNFT(nft.NFTokenID);
-            const xImg = xData?.image || xData?.metadata?.image;
-            if (xImg && !sources.includes(xImg)) sources.push(xImg);
-
             return [...new Set(sources)];
+        }
+
+        function formatImageUrl(url) {
+            if (!url) return null;
+            if (url.startsWith('ipfs://')) {
+                const cid = url.replace('ipfs://', '');
+                return `https://ipfs-proxy.xrp.cafe/ipfs/${cid}`;
+            }
+            return url;
         }
 
         function extractCID(uri) {
@@ -242,7 +276,7 @@
             if (name && /^[0-9A-Fa-f]+$/.test(name)) name = decodeHexName(name);
             if (!name && nft) {
                 const short = (nft.Issuer || '').slice(0,8) + '…' + (nft.Issuer || '').slice(-4);
-                return `Collection (${short} • Taxon ${nft.NFTokenTaxon || 0})`;
+                return `Coll: ${short}`;
             }
             return name || "Unknown Collection";
         }
@@ -324,8 +358,8 @@
             const select = document.getElementById('collection-filter');
             while (select.options.length > 1) select.remove(1);
             const map = new Map();
-            for (let i = 0; i < allNFTs.length; i += 5) {
-                const batch = allNFTs.slice(i, i + 5);
+            for (let i = 0; i < allNFTs.length; i += 10) {
+                const batch = allNFTs.slice(i, i + 10);
                 await Promise.all(batch.map(async (nft) => {
                     const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
                     if (!map.has(key)) {
@@ -333,13 +367,8 @@
                         else {
                             let collectionData = null;
                             try {
-                                let data = await getBithompNFT(nft.NFTokenID);
-                                if (data?.metadata?.collection) collectionData = data.metadata.collection;
-                                else if (data?.issuer_info) collectionData = data.issuer_info;
-                                if (!collectionData) {
-                                    data = await getXRPLToNFT(nft.NFTokenID);
-                                    if (data?.collection) collectionData = data.collection;
-                                }
+                                const data = await getXRPScanMetadata(nft.NFTokenID);
+                                if (data?.meta?.collection) collectionData = data.meta.collection;
                             } catch(e){}
                             const label = getCollectionDisplayName(collectionData, nft);
                             collectionNameCache.set(key, label);
