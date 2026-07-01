@@ -74,7 +74,7 @@
                     </select>
                 </div>
 
-                <div class="text-xs text-slate-400 mb-2">Collection names from Bithomp. Images resolved via XRP Café Proxy with Deep Extraction.</div>
+                <div class="text-xs text-slate-400 mb-2">Images resolved via XRP Café Proxy with Bithomp fallback.</div>
                 <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[420px] overflow-auto"></div>
 
                 <div class="mt-4 flex justify-between text-sm">
@@ -175,93 +175,50 @@
         }
 
         /**
-         * Prioritizes XRP Cafe proxy for CID resolution.
+         * Resolves image sources with XRP Cafe Proxy priority and Bithomp fallback.
          */
-        function cleanImageUrl(url) {
-            if (!url) return null;
-            
-            // If the URL contains a CID, rewrite to XRP Cafe Proxy
-            let cid = null;
-            if (url.startsWith('ipfs://')) {
-                cid = url.replace('ipfs://', '');
-            } else if (url.includes('ipfs/')) {
-                cid = url.split('ipfs/').pop();
-            } else if (url.match(/^[a-zA-Z0-9]{46,59}$/)) {
-                cid = url;
-            }
+        async function resolveNFTImageSources(nft) {
+            const sources = [];
+            if (!nft?.NFTokenID) return sources;
 
-            if (cid) {
-                // Ensure CID is isolated if it was a nested path (e.g. cid/1.png)
-                const parts = cid.split('/');
-                const baseCid = parts[0];
-                const subPath = parts.slice(1).join('/');
-                
-                const proxyBase = `https://ipfs-proxy.xrp.cafe/ipfs/${baseCid}`;
-                const finalProxy = subPath ? `${proxyBase}/${subPath}` : proxyBase;
-
-                return [
-                    finalProxy,
-                    `https://ipfs.io/ipfs/${cid}`,
-                    `https://cloudflare-ipfs.com/ipfs/${cid}`
-                ];
-            }
-
-            return url;
-        }
-
-        /**
-         * Resolves the metadata URI using the proxy to bypass CORS if possible.
-         */
-        function resolveMetadataProxyUrl(uri) {
-            if (!uri) return null;
-            
-            let cid = null;
-            if (uri.startsWith('ipfs://')) cid = uri.replace('ipfs://', '');
-            else if (uri.includes('ipfs/')) cid = uri.split('ipfs/').pop();
-            else if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) cid = uri;
-
-            if (cid) return `https://ipfs-proxy.xrp.cafe/ipfs/${cid}`;
-            return uri;
-        }
-
-        async function resolveNFTImage(nft) {
-            if (!nft?.NFTokenID) return null;
-
-            // Step 1: Deep Extract from on-chain URI
+            // 1. Direct from Chain URI (Highest priority)
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
-
-            // If URI is already a direct image CID or link
-            if (rawUri && /\.(jpg|jpeg|png|gif|webp)/i.test(rawUri)) {
-                return cleanImageUrl(rawUri);
-            }
-
-            // Step 2: Hunt for Metadata URI (on-chain -> Bithomp -> XRPL.to)
-            let metadataUri = rawUri;
-            if (!metadataUri || !metadataUri.includes('ipfs')) {
-                const bData = await getBithompNFT(nft.NFTokenID);
-                if (bData?.uri) metadataUri = bData.uri;
-                
-                if (!metadataUri) {
-                    const xData = await getXRPLToNFT(nft.NFTokenID);
-                    if (xData?.uri) metadataUri = xData.uri;
+            
+            if (rawUri) {
+                const cid = extractCID(rawUri);
+                if (cid) {
+                    sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
+                    sources.push(`https://ipfs.io/ipfs/${cid}`);
+                } else if (rawUri.startsWith('http')) {
+                    sources.push(rawUri);
                 }
             }
 
-            // Step 3: Fetch Metadata JSON via Proxy (Bypass CORS)
-            if (metadataUri) {
-                try {
-                    const proxyUrl = resolveMetadataProxyUrl(metadataUri);
-                    const res = await fetch(proxyUrl);
-                    if (res.ok) {
-                        const json = await res.json();
-                        // Deep Extract image fields from JSON
-                        const img = json.image || json.image_url || json.thumbnail || json.properties?.image?.description || json.media;
-                        if (img) return cleanImageUrl(img);
-                    }
-                } catch(e){}
+            // 2. Fetch Bithomp data for fallback image
+            const bData = await getBithompNFT(nft.NFTokenID);
+            if (bData?.image) {
+                const bCid = extractCID(bData.image);
+                if (bCid) {
+                    const proxyUrl = `https://ipfs-proxy.xrp.cafe/ipfs/${bCid}`;
+                    if (!sources.includes(proxyUrl)) sources.push(proxyUrl);
+                }
+                if (!sources.includes(bData.image)) sources.push(bData.image);
             }
 
+            // 3. xrpl.to fallback
+            const xData = await getXRPLToNFT(nft.NFTokenID);
+            const xImg = xData?.image || xData?.metadata?.image;
+            if (xImg && !sources.includes(xImg)) sources.push(xImg);
+
+            return [...new Set(sources)];
+        }
+
+        function extractCID(uri) {
+            if (!uri) return null;
+            if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', '');
+            if (uri.includes('ipfs/')) return uri.split('ipfs/').pop();
+            if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) return uri;
             return null;
         }
 
@@ -433,26 +390,25 @@
             const skel = document.getElementById(`skel-${index}`);
             const wrap = document.getElementById(`imgwrap-${index}`);
             if (!skel || !wrap) return;
-            const result = await resolveNFTImage(nft);
+            
+            const sources = await resolveNFTImageSources(nft);
             skel.style.display = 'none';
             wrap.style.display = 'block';
             wrap.className = 'w-full h-full';
-            if (!result) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
+            
+            if (sources.length === 0) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
+            
             const img = document.createElement('img');
             img.className = 'w-full h-full object-cover';
             img.crossOrigin = 'anonymous'; 
-            if (Array.isArray(result)) {
-                let currentTry = 0;
-                img.onerror = () => {
-                    currentTry++;
-                    if (currentTry < result.length) img.src = result[currentTry];
-                    else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
-                };
-                img.src = result[0];
-            } else {
-                img.onerror = () => { wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
-                img.src = result;
-            }
+            
+            let currentTry = 0;
+            img.onerror = () => {
+                currentTry++;
+                if (currentTry < sources.length) img.src = sources[currentTry];
+                else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
+            };
+            img.src = sources[0];
             wrap.appendChild(img);
         }
 
@@ -492,22 +448,17 @@
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full relative bg-[#1e2937]';
                 cell.appendChild(wrap);
-                resolveNFTImage(nft).then(result => {
-                    if (result) {
+                resolveNFTImageSources(nft).then(sources => {
+                    if (sources.length > 0) {
                         const img = document.createElement('img');
                         img.className = 'w-full h-full object-cover'; img.crossOrigin = 'anonymous';
-                        if (Array.isArray(result)) {
-                            let currentTry = 0;
-                            img.onerror = () => {
-                                currentTry++;
-                                if (currentTry < result.length) img.src = result[currentTry];
-                                else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
-                            };
-                            img.src = result[0];
-                        } else {
-                            img.onerror = () => { wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
-                            img.src = result;
-                        }
+                        let currentTry = 0;
+                        img.onerror = () => {
+                            currentTry++;
+                            if (currentTry < sources.length) img.src = sources[currentTry];
+                            else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
+                        };
+                        img.src = sources[0];
                         wrap.appendChild(img);
                     } else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
                 });
