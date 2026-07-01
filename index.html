@@ -76,8 +76,8 @@
                     </select>
                 </div>
 
-                <div class="text-xs text-slate-400 mb-2">Primary resolution via XRPScan Indexer with multi-level fallback.</div>
-                <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[420px] overflow-auto"></div>
+                <div class="text-xs text-slate-400 mb-2">Lazy loading enabled for high-count wallets.</div>
+                <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[500px] overflow-auto p-1"></div>
 
                 <div class="mt-4 flex justify-between text-sm">
                     <div class="text-blue-400"><span id="selected-count">0</span> selected</div>
@@ -148,11 +148,45 @@
         const metadataCache = new Map();
         const collectionNameCache = new Map();
         let isLoadingMore = false;
+        
+        // Throttling/Queueing state
+        const fetchQueue = [];
+        let activeFetches = 0;
+        const MAX_CONCURRENT_FETCHES = 6;
+
+        /**
+         * Queued fetch wrapper to prevent browser connection limit saturation.
+         */
+        async function throttledFetch(url, options = {}) {
+            return new Promise((resolve, reject) => {
+                const execute = async () => {
+                    activeFetches++;
+                    try {
+                        const res = await fetch(url, options);
+                        resolve(res);
+                    } catch (err) {
+                        reject(err);
+                    } finally {
+                        activeFetches--;
+                        if (fetchQueue.length > 0) {
+                            const next = fetchQueue.shift();
+                            next();
+                        }
+                    }
+                };
+
+                if (activeFetches < MAX_CONCURRENT_FETCHES) {
+                    execute();
+                } else {
+                    fetchQueue.push(execute);
+                }
+            });
+        }
 
         async function getXRPScanMetadata(nftId) {
             if (metadataCache.has(nftId)) return metadataCache.get(nftId);
             try {
-                const res = await fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`);
+                const res = await throttledFetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`);
                 if (res.ok) {
                     const data = await res.json();
                     metadataCache.set(nftId, data);
@@ -166,7 +200,7 @@
             const cacheKey = `meta-${nftId}`;
             if (metadataCache.has(cacheKey)) return metadataCache.get(cacheKey);
             try {
-                const res = await fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`);
+                const res = await throttledFetch(`https://xrplmeta.org/api/v1/nft/${nftId}`);
                 if (res.ok) {
                     const data = await res.json();
                     metadataCache.set(cacheKey, data);
@@ -180,7 +214,7 @@
             const cacheKey = `bithomp-${nftId}`;
             if (metadataCache.has(cacheKey)) return metadataCache.get(cacheKey);
             try {
-                const res = await fetch(`https://bithomp.com/api/v2/nft/${nftId}`);
+                const res = await throttledFetch(`https://bithomp.com/api/v2/nft/${nftId}`);
                 if (res.ok) {
                     const data = await res.json();
                     metadataCache.set(cacheKey, data);
@@ -190,39 +224,28 @@
             return null;
         }
 
-        /**
-         * Resolves image sources using Indexer-First architecture:
-         * 1. XRPScan (Primary)
-         * 2. XRPL Meta (Secondary)
-         * 3. Bithomp (Tertiary)
-         * 4. IPFS Gateway Race (Final Fallback)
-         */
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
 
-            // 1. XRPScan (Highest Priority Indexer)
             const scanData = await getXRPScanMetadata(nft.NFTokenID);
             if (scanData?.meta?.image) {
                 const url = formatImageUrl(scanData.meta.image);
                 if (url && !sources.includes(url)) sources.push(url);
             }
 
-            // 2. XRPL Meta (Secondary Indexer)
             const metaData = await getXRPLMetaMetadata(nft.NFTokenID);
             if (metaData?.image) {
                 const url = formatImageUrl(metaData.image);
                 if (url && !sources.includes(url)) sources.push(url);
             }
 
-            // 3. Bithomp (Tertiary fallback)
             const bData = await getBithompMetadata(nft.NFTokenID);
             if (bData?.image) {
                 const url = formatImageUrl(bData.image);
                 if (url && !sources.includes(url)) sources.push(url);
             }
 
-            // 4. Manual IPFS Race (Final fallback)
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
@@ -358,26 +381,22 @@
             const select = document.getElementById('collection-filter');
             while (select.options.length > 1) select.remove(1);
             const map = new Map();
-            for (let i = 0; i < allNFTs.length; i += 10) {
-                const batch = allNFTs.slice(i, i + 10);
-                await Promise.all(batch.map(async (nft) => {
-                    const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
-                    if (!map.has(key)) {
-                        if (collectionNameCache.has(key)) map.set(key, { label: collectionNameCache.get(key), count: 0 });
-                        else {
-                            let collectionData = null;
-                            try {
-                                const data = await getXRPScanMetadata(nft.NFTokenID);
-                                if (data?.meta?.collection) collectionData = data.meta.collection;
-                            } catch(e){}
-                            const label = getCollectionDisplayName(collectionData, nft);
-                            collectionNameCache.set(key, label);
-                            map.set(key, { label, count: 0 });
-                        }
-                    }
-                    map.get(key).count++;
-                }));
-            }
+            // Just use the first 50 for collection filters to avoid overwhelming 
+            const sample = allNFTs.slice(0, 50);
+            await Promise.all(sample.map(async (nft) => {
+                const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
+                if (!map.has(key)) {
+                    let label = "Unknown Collection";
+                    if (collectionNameCache.has(key)) label = collectionNameCache.get(key);
+                    map.set(key, { label, count: 0 });
+                }
+            }));
+
+            allNFTs.forEach(nft => {
+                const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
+                if (map.has(key)) map.get(key).count++;
+            });
+
             Array.from(map.entries()).sort((a,b) => b[1].count - a[1].count).forEach(([key, data]) => {
                 const opt = document.createElement('option');
                 opt.value = key; opt.textContent = `${data.label} (${data.count})`;
@@ -394,6 +413,27 @@
             renderNFTGallery(filtered);
         }
 
+        /**
+         * Intersection Observer for Lazy Loading.
+         * Only triggers image/metadata logic when card is visible.
+         */
+        const lazyObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const card = entry.target;
+                    const nftIndex = card.dataset.index;
+                    const nftId = card.dataset.nftid;
+                    const nft = allNFTs.find(n => n.NFTokenID === nftId);
+                    if (nft && !card.dataset.loaded) {
+                        card.dataset.loaded = "true";
+                        loadImageForCard(nft, nftIndex, card);
+                    }
+                    // Optional: Unobserve after loading to save resources
+                    // lazyObserver.unobserve(card);
+                }
+            });
+        }, { root: document.getElementById('nft-grid'), rootMargin: '200px' });
+
         function renderNFTGallery(filtered = null) {
             const container = document.getElementById('nft-grid');
             container.innerHTML = '';
@@ -402,6 +442,8 @@
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
                 card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer`;
+                card.dataset.index = i;
+                card.dataset.nftid = nft.NFTokenID;
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-4xl text-slate-700"></i></div>
@@ -410,7 +452,7 @@
                     </div>`;
                 card.onclick = () => toggleSelection(nft, card);
                 container.appendChild(card);
-                setTimeout(() => loadImageForCard(nft, i, card), 60);
+                lazyObserver.observe(card);
             });
             updateSelectedCount();
         }
@@ -429,10 +471,6 @@
             
             const img = document.createElement('img');
             img.className = 'w-full h-full object-cover';
-            // Indexers usually have better CORS, but IPFS proxies might need help.
-            // We'll try without crossOrigin first for better compatibility, 
-            // then only add it for the final grid canvas if needed.
-            
             let currentTry = 0;
             img.onerror = () => {
                 currentTry++;
@@ -483,8 +521,6 @@
                     if (sources.length > 0) {
                         const img = document.createElement('img');
                         img.className = 'w-full h-full object-cover'; 
-                        // For the download grid, we MUST use crossOrigin="anonymous" 
-                        // or html2canvas will fail to render the image.
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
                         img.onerror = () => {
@@ -504,13 +540,6 @@
         function setGridPreset(r, c) {
             document.getElementById('rows-slider').value = r; document.getElementById('cols-slider').value = c;
             document.getElementById('rows-value').textContent = r; document.getElementById('cols-value').textContent = c;
-            updateGridPreview();
-        }
-        function shuffleSelected() {
-            for (let i = selectedNFTs.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [selectedNFTs[i], selectedNFTs[j]] = [selectedNFTs[j], selectedNFTs[i]];
-            }
             updateGridPreview();
         }
         function shuffleSelected() {
