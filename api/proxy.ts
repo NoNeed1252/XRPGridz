@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel.node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
  * Library Assistant Backend Proxy - Optimized for Node 24+
@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Use WHATWG URL API for reliable query parsing as per Vercel/Node 24 recommendations
-  const protocol = req.headers['x-forwarded-proto'] || 'http';
+  const protocol = (req.headers['x-forwarded-proto'] as string) || 'http';
   const host = req.headers['host'];
   const fullUrl = new URL(req.url || '', `${protocol}://${host}`);
   
