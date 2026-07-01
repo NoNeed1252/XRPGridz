@@ -228,33 +228,41 @@
             const sources = [];
             if (!nft?.NFTokenID) return sources;
 
+            // Prioritize our new backend proxy for hex-unwrapping and IPFS resolution
+            if (nft.URI) {
+                sources.push(`/api/proxy?hex=${nft.URI}`);
+            }
+
             const scanData = await getXRPScanMetadata(nft.NFTokenID);
             if (scanData?.meta?.image) {
                 const url = formatImageUrl(scanData.meta.image);
-                if (url && !sources.includes(url)) sources.push(url);
+                if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
             }
 
             const metaData = await getXRPLMetaMetadata(nft.NFTokenID);
             if (metaData?.image) {
                 const url = formatImageUrl(metaData.image);
-                if (url && !sources.includes(url)) sources.push(url);
+                if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
             }
 
             const bData = await getBithompMetadata(nft.NFTokenID);
             if (bData?.image) {
                 const url = formatImageUrl(bData.image);
-                if (url && !sources.includes(url)) sources.push(url);
+                if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
             }
 
+            // Fallback to extraction logic if proxy fails
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
                 const cid = extractCID(rawUri);
                 if (cid) {
+                    sources.push(`/api/proxy?cid=${cid}`);
+                    // Direct fallbacks as last resort
                     sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
                     sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
-                    sources.push(`https://ipfs.io/ipfs/${cid}`);
                 } else if (rawUri.startsWith('http')) {
+                    sources.push(`/api/proxy?url=${encodeURIComponent(rawUri)}`);
                     sources.push(rawUri);
                 }
             }
@@ -266,7 +274,7 @@
             if (!url) return null;
             if (url.startsWith('ipfs://')) {
                 const cid = url.replace('ipfs://', '');
-                return `https://ipfs-proxy.xrp.cafe/ipfs/${cid}`;
+                return `https://ipfs.io/ipfs/${cid}`;
             }
             return url;
         }
