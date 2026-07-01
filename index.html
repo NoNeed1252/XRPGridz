@@ -178,11 +178,9 @@
         async function resolveNFTImage(nft) {
             if (!nft?.NFTokenID) return null;
 
-            // Try Bithomp first - Use their optimized image service if possible
+            // Try Bithomp first - check for their optimized image field
             let data = await getBithompNFT(nft.NFTokenID);
-            if (data?.image) {
-                return cleanImageUrl(data.image);
-            }
+            if (data?.image) return cleanImageUrl(data.image);
 
             // Try xrpl.to as secondary
             data = await getXRPLToNFT(nft.NFTokenID);
@@ -200,19 +198,27 @@
 
         function cleanImageUrl(url) {
             if (!url) return null;
-            // Handle ipfs:// protocol
+            
+            // Extract CID
+            let cid = null;
             if (url.startsWith('ipfs://')) {
-                return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
+                cid = url.replace('ipfs://', '');
+            } else if (url.includes('ipfs/')) {
+                cid = url.split('ipfs/').pop();
+            } else if (url.match(/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-zA-Z0-9]{55})/)) {
+                cid = url;
             }
-            // Handle ipfs/ paths
-            if (url.includes('ipfs/')) {
-                return 'https://ipfs.io/ipfs/' + url.split('ipfs/').pop();
+
+            // If we have a CID, prioritize XRP Cafe proxy, then standard gateways
+            if (cid) {
+                return [
+                    `https://ipfs-proxy.xrp.cafe/ipfs/${cid}`,
+                    `https://cloudflare-ipfs.com/ipfs/${cid}`,
+                    `https://ipfs.io/ipfs/${cid}`
+                ];
             }
-            // Handle bare CIDs (Qm... or bafy...)
-            if (url.match(/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-zA-Z0-9]{55})/)) {
-                return 'https://ipfs.io/ipfs/' + url;
-            }
-            return url;
+
+            return url; // Return as-is if it's already a full HTTP URL and not IPFS
         }
 
         function hexToString(hex) {
@@ -395,30 +401,38 @@
             const wrap = document.getElementById(`imgwrap-${index}`);
             if (!skel || !wrap) return;
 
-            const url = await resolveNFTImage(nft);
+            let result = await resolveNFTImage(nft);
             skel.style.display = 'none';
             wrap.style.display = 'block';
             wrap.className = 'w-full h-full';
 
-            if (url) {
-                const img = document.createElement('img');
-                img.src = url;
-                img.className = 'w-full h-full object-cover';
-                // Remove crossOrigin for basic display if it's causing CORS issues,
-                // but html2canvas needs it. We'll stick with it and hope the gateway supports it.
-                img.crossOrigin = 'anonymous'; 
-                img.onerror = () => { 
-                    // Try alternative gateway on error
-                    if (url.includes('ipfs.io')) {
-                        img.src = url.replace('ipfs.io', 'cloudflare-ipfs.com');
+            if (!result) {
+                wrap.innerHTML = createPlaceholder(nft.NFTokenID);
+                return;
+            }
+
+            const img = document.createElement('img');
+            img.className = 'w-full h-full object-cover';
+            img.crossOrigin = 'anonymous'; 
+
+            if (Array.isArray(result)) {
+                let currentTry = 0;
+                const tryNext = () => {
+                    currentTry++;
+                    if (currentTry < result.length) {
+                        img.src = result[currentTry];
                     } else {
-                        wrap.innerHTML = createPlaceholder(nft.NFTokenID); 
+                        wrap.innerHTML = createPlaceholder(nft.NFTokenID);
                     }
                 };
-                wrap.appendChild(img);
+                img.onerror = tryNext;
+                img.src = result[0];
             } else {
-                wrap.innerHTML = createPlaceholder(nft.NFTokenID);
+                img.onerror = () => { wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
+                img.src = result;
             }
+
+            wrap.appendChild(img);
         }
 
         function toggleSelection(nft, card) {
@@ -477,12 +491,23 @@
                 wrap.className = 'w-full h-full relative bg-[#1e2937]';
                 cell.appendChild(wrap);
 
-                resolveNFTImage(nft).then(url => {
-                    if (url) {
+                resolveNFTImage(nft).then(result => {
+                    if (result) {
                         const img = document.createElement('img');
-                        img.src = url;
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
+                        if (Array.isArray(result)) {
+                            let currentTry = 0;
+                            img.onerror = () => {
+                                currentTry++;
+                                if (currentTry < result.length) img.src = result[currentTry];
+                                else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
+                            };
+                            img.src = result[0];
+                        } else {
+                            img.onerror = () => { wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
+                            img.src = result;
+                        }
                         wrap.appendChild(img);
                     } else {
                         wrap.innerHTML = createPlaceholder(nft.NFTokenID);
@@ -542,7 +567,6 @@
         async function downloadGridPNG() {
             const wrapper = document.getElementById('grid-preview');
             if (!wrapper.children.length) return alert('Build a preview first!');
-            // Use try-catch for canvas generation to handle CORS issues
             try {
                 const canvas = await html2canvas(wrapper, { 
                     scale: 3, 
