@@ -74,7 +74,7 @@
                     </select>
                 </div>
 
-                <div class="text-xs text-slate-400 mb-2">Collection metadata provided by Bithomp. Images resolved via XRP Café proxy.</div>
+                <div class="text-xs text-slate-400 mb-2">Collection names from Bithomp. Images resolved via XRP Café Proxy with Deep Extraction.</div>
                 <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[420px] overflow-auto"></div>
 
                 <div class="mt-4 flex justify-between text-sm">
@@ -180,6 +180,7 @@
         function cleanImageUrl(url) {
             if (!url) return null;
             
+            // If the URL contains a CID, rewrite to XRP Cafe Proxy
             let cid = null;
             if (url.startsWith('ipfs://')) {
                 cid = url.replace('ipfs://', '');
@@ -190,9 +191,16 @@
             }
 
             if (cid) {
-                // Strict priority: XRP Cafe Proxy -> Direct IPFS Fallbacks
+                // Ensure CID is isolated if it was a nested path (e.g. cid/1.png)
+                const parts = cid.split('/');
+                const baseCid = parts[0];
+                const subPath = parts.slice(1).join('/');
+                
+                const proxyBase = `https://ipfs-proxy.xrp.cafe/ipfs/${baseCid}`;
+                const finalProxy = subPath ? `${proxyBase}/${subPath}` : proxyBase;
+
                 return [
-                    `https://ipfs-proxy.xrp.cafe/ipfs/${cid}`,
+                    finalProxy,
                     `https://ipfs.io/ipfs/${cid}`,
                     `https://cloudflare-ipfs.com/ipfs/${cid}`
                 ];
@@ -201,53 +209,60 @@
             return url;
         }
 
+        /**
+         * Resolves the metadata URI using the proxy to bypass CORS if possible.
+         */
+        function resolveMetadataProxyUrl(uri) {
+            if (!uri) return null;
+            
+            let cid = null;
+            if (uri.startsWith('ipfs://')) cid = uri.replace('ipfs://', '');
+            else if (uri.includes('ipfs/')) cid = uri.split('ipfs/').pop();
+            else if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) cid = uri;
+
+            if (cid) return `https://ipfs-proxy.xrp.cafe/ipfs/${cid}`;
+            return uri;
+        }
+
         async function resolveNFTImage(nft) {
             if (!nft?.NFTokenID) return null;
 
-            // Step 1: Look for original CID/URI from on-chain data
-            let uri = nft.URI || '';
-            if (/^[0-9A-Fa-f]{20,}$/.test(uri)) uri = hexToString(uri);
+            // Step 1: Deep Extract from on-chain URI
+            let rawUri = nft.URI || '';
+            if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
 
-            // Step 2: Try to extract a CID from on-chain URI first
-            if (uri) {
-                const resolved = cleanImageUrl(uri);
-                if (Array.isArray(resolved) || (resolved && resolved.startsWith('http'))) return resolved;
+            // If URI is already a direct image CID or link
+            if (rawUri && /\.(jpg|jpeg|png|gif|webp)/i.test(rawUri)) {
+                return cleanImageUrl(rawUri);
             }
 
-            // Step 3: Fetch metadata to find the CID if not found in URI
-            // Use Bithomp/XRPL.to ONLY to get the metadata URI or CID, ignore their image caches.
-            let metadataUri = null;
-            
-            let data = await getBithompNFT(nft.NFTokenID);
-            if (data?.uri) metadataUri = resolveMetadataUri(data.uri);
-
-            if (!metadataUri) {
-                data = await getXRPLToNFT(nft.NFTokenID);
-                if (data?.metadata?.image) {
-                    const resolved = cleanImageUrl(data.metadata.image);
-                    if (resolved) return resolved;
+            // Step 2: Hunt for Metadata URI (on-chain -> Bithomp -> XRPL.to)
+            let metadataUri = rawUri;
+            if (!metadataUri || !metadataUri.includes('ipfs')) {
+                const bData = await getBithompNFT(nft.NFTokenID);
+                if (bData?.uri) metadataUri = bData.uri;
+                
+                if (!metadataUri) {
+                    const xData = await getXRPLToNFT(nft.NFTokenID);
+                    if (xData?.uri) metadataUri = xData.uri;
                 }
             }
 
+            // Step 3: Fetch Metadata JSON via Proxy (Bypass CORS)
             if (metadataUri) {
                 try {
-                    const res = await fetch(metadataUri);
+                    const proxyUrl = resolveMetadataProxyUrl(metadataUri);
+                    const res = await fetch(proxyUrl);
                     if (res.ok) {
                         const json = await res.json();
-                        const img = json.image || json.image_url || json.thumbnail;
+                        // Deep Extract image fields from JSON
+                        const img = json.image || json.image_url || json.thumbnail || json.properties?.image?.description || json.media;
                         if (img) return cleanImageUrl(img);
                     }
                 } catch(e){}
             }
 
             return null;
-        }
-
-        function resolveMetadataUri(uri) {
-            if (!uri) return null;
-            if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', 'https://ipfs.io/ipfs/');
-            if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) return `https://ipfs.io/ipfs/${uri}`;
-            return uri;
         }
 
         function hexToString(hex) {
@@ -309,7 +324,7 @@
             const address = document.getElementById('wallet-input').value.trim();
             if (!address) return alert('Please enter a wallet address');
             const statusEl = document.getElementById('wallet-status');
-            showStatus(statusEl, 'Fetching your wallet...', 'loading');
+            showStatus(statusEl, 'Syncing XRPL Wallet...', 'loading');
             document.getElementById('nft-gallery-section').classList.add('hidden');
             document.getElementById('grid-config-section').classList.add('hidden');
 
