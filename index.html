@@ -429,7 +429,9 @@
             
             const img = document.createElement('img');
             img.className = 'w-full h-full object-cover';
-            img.crossOrigin = 'anonymous'; 
+            // Indexers usually have better CORS, but IPFS proxies might need help.
+            // We'll try without crossOrigin first for better compatibility, 
+            // then only add it for the final grid canvas if needed.
             
             let currentTry = 0;
             img.onerror = () => {
@@ -480,7 +482,10 @@
                 resolveNFTImageSources(nft).then(sources => {
                     if (sources.length > 0) {
                         const img = document.createElement('img');
-                        img.className = 'w-full h-full object-cover'; img.crossOrigin = 'anonymous';
+                        img.className = 'w-full h-full object-cover'; 
+                        // For the download grid, we MUST use crossOrigin="anonymous" 
+                        // or html2canvas will fail to render the image.
+                        img.crossOrigin = 'anonymous';
                         let currentTry = 0;
                         img.onerror = () => {
                             currentTry++;
@@ -499,6 +504,13 @@
         function setGridPreset(r, c) {
             document.getElementById('rows-slider').value = r; document.getElementById('cols-slider').value = c;
             document.getElementById('rows-value').textContent = r; document.getElementById('cols-value').textContent = c;
+            updateGridPreview();
+        }
+        function shuffleSelected() {
+            for (let i = selectedNFTs.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [selectedNFTs[i], selectedNFTs[j]] = [selectedNFTs[j], selectedNFTs[i]];
+            }
             updateGridPreview();
         }
         function shuffleSelected() {
