@@ -1,8 +1,9 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel.node';
 
 /**
  * Library Assistant Backend Proxy - Optimized for Node 24+
  * Uses WHATWG URL API for reliable parameter parsing and improved fetch handling.
+ * Includes enhanced observability for debugging resolution failures.
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -26,6 +27,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const hex = fullUrl.searchParams.get('hex');
   const urlParam = fullUrl.searchParams.get('url');
 
+  console.log(`[Proxy Request] Parameters - cid: ${cid}, hex: ${hex}, url: ${urlParam}`);
+
   try {
     let targetUrl = '';
 
@@ -39,9 +42,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
         }
       } catch (e) {
+        console.error(`[Proxy Error] Hex decoding failed for: ${hex}`);
         return res.status(400).json({ error: 'Invalid hex encoding' });
       }
       
+      console.log(`[Proxy Debug] Decoded Hex: ${decoded}`);
+
       if (decoded.startsWith('ipfs://')) {
         targetUrl = `https://ipfs.io/ipfs/${decoded.replace('ipfs://', '')}`;
       } else if (decoded.startsWith('http')) {
@@ -54,8 +60,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (!targetUrl) {
+      console.warn('[Proxy Warning] No target URL could be resolved from parameters.');
       return res.status(400).json({ error: 'Missing CID, Hex, or URL parameter' });
     }
+
+    console.log(`[Proxy Fetching] Target URL: ${targetUrl}`);
 
     // Use a Controller to implement a generous timeout for IPFS resolution (15s)
     const controller = new AbortController();
@@ -64,7 +73,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response = await fetch(targetUrl, { signal: controller.signal });
     clearTimeout(timeoutId);
     
+    console.log(`[Proxy Response] Status: ${response.status}, Content-Type: ${response.headers.get('content-type')}`);
+
     if (!response.ok) {
+      console.error(`[Proxy Error] Target returned error status: ${response.status}`);
       return res.status(response.status).json({ error: `Target returned ${response.status}` });
     }
 
@@ -79,15 +91,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
+    console.log(`[Proxy Success] Buffered ${buffer.length} bytes.`);
+
     if (buffer.length === 0) {
+        console.warn('[Proxy Warning] Target returned empty body.');
         return res.status(404).json({ error: 'Empty response from target' });
     }
 
     return res.status(200).send(buffer);
 
   } catch (error: any) {
-    console.error('Proxy Error:', error.name === 'AbortError' ? 'Fetch Timeout' : error);
-    const status = error.name === 'AbortError' ? 504 : 500;
-    return res.status(status).json({ error: error.name === 'AbortError' ? 'Gateway Timeout' : error.message });
+    const isTimeout = error.name === 'AbortError';
+    console.error(`[Proxy Critical] ${isTimeout ? 'Fetch Timeout' : 'Exception'}:`, error);
+    const status = isTimeout ? 504 : 500;
+    return res.status(status).json({ error: isTimeout ? 'Gateway Timeout' : error.message });
   }
 }
