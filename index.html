@@ -178,49 +178,41 @@
         async function resolveNFTImage(nft) {
             if (!nft?.NFTokenID) return null;
 
-            // Try Bithomp first
+            // Try Bithomp first - Use their optimized image service if possible
             let data = await getBithompNFT(nft.NFTokenID);
             if (data?.image) {
-                return data.image.replace(/^ipfs:\/\//i, 'https://cloudflare-ipfs.com/ipfs/');
+                return cleanImageUrl(data.image);
             }
 
             // Try xrpl.to as secondary
             data = await getXRPLToNFT(nft.NFTokenID);
             if (data?.image || data?.metadata?.image) {
-                let url = (data.image || data.metadata.image).replace(/^ipfs:\/\//i, 'https://cloudflare-ipfs.com/ipfs/');
-                return url;
+                return cleanImageUrl(data.image || data.metadata.image);
             }
 
-            // Strong fallback on the NFT's own URI
+            // Fallback to URI
             let uri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(uri)) uri = hexToString(uri);
             if (!uri) return null;
 
-            if (/\.(jpg|jpeg|png|gif|webp)/i.test(uri) && uri.startsWith('http')) return uri;
+            return cleanImageUrl(uri);
+        }
 
-            let clean = uri.replace(/^ipfs:\/\//i, '').replace(/^ipfs\//i, '');
-            const gateways = [
-                `https://cloudflare-ipfs.com/ipfs/${clean}`,
-                `https://ipfs.io/ipfs/${clean}`,
-                `https://gateway.pinata.cloud/ipfs/${clean}`
-            ];
-
-            if (clean.startsWith('Qm') || clean.length > 40) {
-                return gateways[0];
+        function cleanImageUrl(url) {
+            if (!url) return null;
+            // Handle ipfs:// protocol
+            if (url.startsWith('ipfs://')) {
+                return url.replace('ipfs://', 'https://ipfs.io/ipfs/');
             }
-
-            try {
-                const res = await fetch(gateways[0]);
-                if (res.ok) {
-                    const json = await res.json().catch(() => null);
-                    if (json) {
-                        const img = json.image || json.image_url || json.thumbnail || json.properties?.image || json.media;
-                        if (img) return img.replace(/^ipfs:\/\//i, 'https://cloudflare-ipfs.com/ipfs/');
-                    }
-                }
-            } catch(e){}
-
-            return null;
+            // Handle ipfs/ paths
+            if (url.includes('ipfs/')) {
+                return 'https://ipfs.io/ipfs/' + url.split('ipfs/').pop();
+            }
+            // Handle bare CIDs (Qm... or bafy...)
+            if (url.match(/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|bafy[a-zA-Z0-9]{55})/)) {
+                return 'https://ipfs.io/ipfs/' + url;
+            }
+            return url;
         }
 
         function hexToString(hex) {
@@ -349,7 +341,6 @@
                     }
                     map.get(key).count++;
                 }));
-                // Update dropdown periodically as we find collections
                 if (i % 20 === 0) updateDropdown(select, map);
             }
             updateDropdown(select, map);
@@ -413,8 +404,17 @@
                 const img = document.createElement('img');
                 img.src = url;
                 img.className = 'w-full h-full object-cover';
-                img.crossOrigin = 'anonymous';
-                img.onerror = () => { wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
+                // Remove crossOrigin for basic display if it's causing CORS issues,
+                // but html2canvas needs it. We'll stick with it and hope the gateway supports it.
+                img.crossOrigin = 'anonymous'; 
+                img.onerror = () => { 
+                    // Try alternative gateway on error
+                    if (url.includes('ipfs.io')) {
+                        img.src = url.replace('ipfs.io', 'cloudflare-ipfs.com');
+                    } else {
+                        wrap.innerHTML = createPlaceholder(nft.NFTokenID); 
+                    }
+                };
                 wrap.appendChild(img);
             } else {
                 wrap.innerHTML = createPlaceholder(nft.NFTokenID);
@@ -542,11 +542,22 @@
         async function downloadGridPNG() {
             const wrapper = document.getElementById('grid-preview');
             if (!wrapper.children.length) return alert('Build a preview first!');
-            const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a' });
-            const a = document.createElement('a');
-            a.download = `xrpgridz-${currentWallet.slice(0,6)}-${new Date().toISOString().slice(0,10)}.png`;
-            a.href = canvas.toDataURL('image/png');
-            a.click();
+            // Use try-catch for canvas generation to handle CORS issues
+            try {
+                const canvas = await html2canvas(wrapper, { 
+                    scale: 3, 
+                    backgroundColor: '#0f172a',
+                    useCORS: true,
+                    allowTaint: false
+                });
+                const a = document.createElement('a');
+                a.download = `xrpgridz-${currentWallet.slice(0,6)}-${new Date().toISOString().slice(0,10)}.png`;
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+            } catch (e) {
+                console.error('Canvas error:', e);
+                alert('PNG Generation failed. This is likely due to CORS restrictions on the NFT images. Try a different browser or clear your cache.');
+            }
         }
 
         function showStatus(el, msg, type) {
