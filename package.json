@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "mkdir -p .output/static && cp index.html .output/static/ && tsc"
   },
   "dependencies": {
     "node-fetch": "^3.3.2"
