@@ -1,5 +1,7 @@
 {
+  "version": 2,
   "rewrites": [
-    { "source": "/api/proxy", "destination": "/api/proxy.ts" }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
