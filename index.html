@@ -116,6 +116,7 @@
                             <button onclick="shuffleSelected()" class="flex-1 py-2 text-xs border border-slate-600 rounded-2xl">Shuffle</button>
                             <button onclick="updateGridPreview()" class="flex-1 py-2 text-xs bg-emerald-600 text-white rounded-2xl">Refresh Preview</button>
                         </div>
+                        <div id="total-cells" class="hidden">16</div>
                     </div>
 
                     <div class="md:col-span-3">
@@ -143,8 +144,10 @@
         let selectedNFTs = [];
         let currentWallet = '';
         let currentMarker = null;
+        let isLoadingMore = false;
         const bithompCache = new Map();
         const xrplToCache = new Map();
+        const collectionNameCache = new Map();
 
         async function getBithompNFT(nftId) {
             if (bithompCache.has(nftId)) return bithompCache.get(nftId);
@@ -202,12 +205,10 @@
                 `https://gateway.pinata.cloud/ipfs/${clean}`
             ];
 
-            // Return first gateway (browser will load it)
             if (clean.startsWith('Qm') || clean.length > 40) {
                 return gateways[0];
             }
 
-            // Try as metadata JSON
             try {
                 const res = await fetch(gateways[0]);
                 if (res.ok) {
@@ -318,28 +319,45 @@
             while (select.options.length > 1) select.remove(1);
 
             const map = new Map();
-            for (const nft of allNFTs) {
-                const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
-                if (!map.has(key)) {
-                    let niceName = null;
-                    try {
-                        let data = await getBithompNFT(nft.NFTokenID);
-                        if (data?.metadata?.collection?.name) niceName = data.metadata.collection.name;
-                        else if (data?.issuer_info?.name) niceName = data.issuer_info.name;
+            const BATCH_SIZE = 5;
+            
+            for (let i = 0; i < allNFTs.length; i += BATCH_SIZE) {
+                const batch = allNFTs.slice(i, i + BATCH_SIZE);
+                await Promise.all(batch.map(async (nft) => {
+                    const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
+                    if (!map.has(key)) {
+                        if (collectionNameCache.has(key)) {
+                            map.set(key, { label: collectionNameCache.get(key), count: 0 });
+                        } else {
+                            let niceName = null;
+                            try {
+                                let data = await getBithompNFT(nft.NFTokenID);
+                                if (data?.metadata?.collection?.name) niceName = data.metadata.collection.name;
+                                else if (data?.issuer_info?.name) niceName = data.issuer_info.name;
 
-                        if (!niceName) {
-                            data = await getXRPLToNFT(nft.NFTokenID);
-                            if (data?.collection?.name) niceName = data.collection.name;
+                                if (!niceName) {
+                                    data = await getXRPLToNFT(nft.NFTokenID);
+                                    if (data?.collection?.name) niceName = data.collection.name;
+                                }
+                            } catch(e){}
+
+                            const short = (nft.Issuer || '').slice(0,8) + '…' + (nft.Issuer || '').slice(-4);
+                            const label = niceName || `Collection (${short} • Taxon ${nft.NFTokenTaxon || 0})`;
+                            collectionNameCache.set(key, label);
+                            map.set(key, { label, count: 0 });
                         }
-                    } catch(e){}
-
-                    const short = (nft.Issuer || '').slice(0,8) + '…' + (nft.Issuer || '').slice(-4);
-                    const label = niceName || `Collection (${short} • Taxon ${nft.NFTokenTaxon || 0})`;
-                    map.set(key, { label, count: 0 });
-                }
-                map.get(key).count++;
+                    }
+                    map.get(key).count++;
+                }));
+                // Update dropdown periodically as we find collections
+                if (i % 20 === 0) updateDropdown(select, map);
             }
+            updateDropdown(select, map);
+        }
 
+        function updateDropdown(select, map) {
+            const currentVal = select.value;
+            while (select.options.length > 1) select.remove(1);
             const sorted = Array.from(map.entries()).sort((a,b) => b[1].count - a[1].count);
             sorted.forEach(([key, data]) => {
                 const opt = document.createElement('option');
@@ -347,6 +365,7 @@
                 opt.textContent = `${data.label} (${data.count})`;
                 select.appendChild(opt);
             });
+            select.value = currentVal;
         }
 
         function filterNFTs() {
@@ -426,10 +445,10 @@
 
             if (!selectedNFTs.length) {
                 grid.innerHTML = '';
-                placeholder.classList.remove('hidden');
+                if (placeholder) placeholder.classList.remove('hidden');
                 return;
             }
-            placeholder.classList.add('hidden');
+            if (placeholder) placeholder.classList.add('hidden');
             grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             grid.innerHTML = '';
 
@@ -484,7 +503,8 @@
             document.getElementById('cols-slider').value = c;
             document.getElementById('rows-value').textContent = r;
             document.getElementById('cols-value').textContent = c;
-            document.getElementById('total-cells').textContent = r * c;
+            const totalCellsEl = document.getElementById('total-cells');
+            if (totalCellsEl) totalCellsEl.textContent = r * c;
             updateGridPreview();
         }
 
@@ -501,7 +521,8 @@
             renderNFTGallery();
             updateSelectedCount();
             document.getElementById('grid-preview').innerHTML = '';
-            document.getElementById('preview-placeholder').classList.remove('hidden');
+            const placeholder = document.getElementById('preview-placeholder');
+            if (placeholder) placeholder.classList.remove('hidden');
         }
 
         function selectAllNFTs() {
@@ -567,13 +588,15 @@
                 r.oninput = c.oninput = () => {
                     document.getElementById('rows-value').textContent = r.value;
                     document.getElementById('cols-value').textContent = c.value;
-                    document.getElementById('total-cells').textContent = parseInt(r.value) * parseInt(c.value);
+                    const totalCellsEl = document.getElementById('total-cells');
+                    if (totalCellsEl) totalCellsEl.textContent = parseInt(r.value) * parseInt(c.value);
                     updateGridPreview();
                 };
                 r.value = 4; c.value = 4;
                 document.getElementById('rows-value').textContent = 4;
                 document.getElementById('cols-value').textContent = 4;
-                document.getElementById('total-cells').textContent = 16;
+                const totalCellsEl = document.getElementById('total-cells');
+                if (totalCellsEl) totalCellsEl.textContent = 16;
             }
         }
         window.onload = initializeApp;
