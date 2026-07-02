@@ -398,20 +398,13 @@
             const position = document.getElementById('banner-position').value;
             
             try {
-                // Ensure grid is fully rendered before capture
+                // Ensure grid is captured first
                 const canvas = await html2canvas(wrapper, { 
                     scale: 3, 
                     backgroundColor: '#0f172a', 
                     useCORS: true, 
                     logging: false 
                 });
-
-                // Create branding canvas (Offscreen)
-                const brandingCanvas = document.createElement('canvas');
-                brandingCanvas.width = canvas.width;
-                brandingCanvas.height = canvas.height;
-                const bctx = brandingCanvas.getContext('2d');
-                bctx.drawImage(canvas, 0, 0);
 
                 // Load Logo Image
                 const logoImg = new Image();
@@ -420,59 +413,57 @@
 
                 await new Promise((resolve) => {
                     logoImg.onload = resolve;
-                    logoImg.onerror = () => {
-                        console.warn('Logo failed to load, falling back to icon');
-                        resolve();
-                    };
+                    logoImg.onerror = () => { console.warn('Logo failed to load'); resolve(); };
                 });
 
-                const bannerHeight = canvas.height * 0.08;
-                const padding = canvas.width * 0.03;
-                bctx.font = `bold ${Math.floor(bannerHeight * 0.5)}px system-ui, sans-serif`;
+                const brandingCanvas = document.createElement('canvas');
+                brandingCanvas.width = canvas.width;
+                brandingCanvas.height = canvas.height;
+                const bctx = brandingCanvas.getContext('2d');
+                bctx.drawImage(canvas, 0, 0);
+
+                const bannerHeight = canvas.height * 0.1;
+                const bannerWidth = canvas.width;
+                const logoSize = bannerHeight * 0.5;
+                bctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px system-ui, sans-serif`;
                 const text = "XRPGridz";
                 const textMetrics = bctx.measureText(text);
-                const logoSize = bannerHeight * 0.6;
                 const logoAvailable = logoImg.complete && logoImg.naturalWidth > 0;
-                const totalWidth = (logoAvailable ? logoSize : logoSize) + (padding * 0.5) + textMetrics.width;
+                const contentWidth = (logoAvailable ? logoSize : 0) + (canvas.width * 0.02) + textMetrics.width;
+
+                let bx = 0, by = 0, bw = canvas.width, bh = bannerHeight;
                 
-                let x, y;
-                if (position === 'bottom') { x = (canvas.width - totalWidth) / 2; y = canvas.height - (bannerHeight * 0.5) - padding; }
-                else if (position === 'top') { x = (canvas.width - totalWidth) / 2; y = padding + (bannerHeight * 0.5); }
-                else if (position === 'center') { x = (canvas.width - totalWidth) / 2; y = canvas.height / 2; }
-                else if (position === 'left') { x = padding + (bannerHeight * 0.3); y = canvas.height / 2; }
-                else if (position === 'right') { x = canvas.width - totalWidth - padding - (bannerHeight * 0.3); y = canvas.height / 2; }
+                if (position === 'top') { by = 0; }
+                else if (position === 'bottom') { by = canvas.height - bh; }
+                else if (position === 'center') { by = (canvas.height - bh) / 2; }
+                else if (position === 'left') { bx = 0; by = 0; bw = bannerHeight; bh = canvas.height; }
+                else if (position === 'right') { bx = canvas.width - bannerHeight; by = 0; bw = bannerHeight; bh = canvas.height; }
 
-                // Draw Background
-                bctx.fillStyle = 'rgba(10, 15, 30, 0.9)';
-                const rectPadding = bannerHeight * 0.3;
-                roundRect(bctx, x - rectPadding, y - (bannerHeight * 0.5), totalWidth + (rectPadding * 2), bannerHeight, bannerHeight * 0.2, true);
+                // Draw solid rectangular banner
+                bctx.fillStyle = 'rgba(10, 15, 30, 0.95)';
+                bctx.fillRect(bx, by, bw, bh);
 
-                // Draw Logo/Icon
-                let currentX = x;
-                if (logoAvailable) {
-                    bctx.drawImage(logoImg, currentX, y - (logoSize / 2), logoSize, logoSize);
-                    currentX += logoSize + (padding * 0.3);
-                } else {
-                    // Fallback stylized icon
-                    const grad = bctx.createLinearGradient(currentX, y - (logoSize/2), currentX, y + (logoSize/2));
-                    grad.addColorStop(0, '#3b82f6'); grad.addColorStop(1, '#22d3ee');
-                    bctx.fillStyle = grad;
-                    bctx.beginPath();
-                    bctx.roundRect(currentX, y - (logoSize/2), logoSize, logoSize, logoSize * 0.3);
-                    bctx.fill();
-                    bctx.fillStyle = '#fff';
-                    bctx.font = `bold ${Math.floor(logoSize * 0.6)}px "Font Awesome 6 Free"`;
-                    bctx.textAlign = 'center';
-                    bctx.fillText("\uf00a", currentX + (logoSize/2), y);
-                    bctx.textAlign = 'start';
-                    currentX += logoSize + (padding * 0.3);
+                // Center content inside the banner
+                bctx.save();
+                if (position === 'left' || position === 'right') {
+                    bctx.translate(bx + bw / 2, by + bh / 2);
+                    bctx.rotate(-Math.PI / 2);
+                    bctx.translate(-(bx + bw / 2), -(by + bh / 2));
                 }
+                
+                const centerX = bx + bw / 2;
+                const centerY = by + bh / 2;
+                let startX = centerX - contentWidth / 2;
 
-                // Draw Text
+                if (logoAvailable) {
+                    bctx.drawImage(logoImg, startX, centerY - logoSize / 2, logoSize, logoSize);
+                    startX += logoSize + (canvas.width * 0.02);
+                }
+                
                 bctx.fillStyle = '#ffffff';
                 bctx.textBaseline = 'middle';
-                bctx.font = `bold ${Math.floor(bannerHeight * 0.5)}px system-ui, sans-serif`;
-                bctx.fillText(text, currentX, y);
+                bctx.fillText(text, startX, centerY);
+                bctx.restore();
 
                 const a = document.createElement('a');
                 a.download = `xrpgridz-${new Date().getTime()}.png`;
@@ -482,21 +473,6 @@
                 console.error(e);
                 alert('Download failed. Try refreshing.'); 
             }
-        }
-
-        function roundRect(ctx, x, y, width, height, radius, fill) {
-            ctx.beginPath();
-            ctx.moveTo(x + radius, y);
-            ctx.lineTo(x + width - radius, y);
-            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-            ctx.lineTo(x + width, y + height - radius);
-            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-            ctx.lineTo(x + radius, y + height);
-            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-            ctx.lineTo(x, y + radius);
-            ctx.quadraticCurveTo(x, y, x + radius, y);
-            ctx.closePath();
-            if (fill) ctx.fill();
         }
 
         function updateSelectedCount() { 
