@@ -3,6 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 /**
  * Library Assistant Backend Proxy - Optimized for Node 24+
  * Implements Recursive Metadata Resolution and CORS Passthrough.
+ * Enhanced with Multi-Provider Metadata Racing for maximum reliability.
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -24,11 +25,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const cid = fullUrl.searchParams.get('cid');
   const hex = fullUrl.searchParams.get('hex');
   const urlParam = fullUrl.searchParams.get('url');
+  const nftId = fullUrl.searchParams.get('nftId');
 
   try {
     let targetUrl = resolveTargetUrl(cid, hex, urlParam);
+
+    // If we have an nftId but no direct image URL yet, start the Metadata Resolution Chain
+    if (!targetUrl && nftId) {
+      console.log(`[Proxy] Starting Metadata Race for NFT: ${nftId}`);
+      targetUrl = await raceMetadataProviders(nftId);
+    }
+
     if (!targetUrl) {
-      return res.status(400).json({ error: 'Missing CID, Hex, or URL parameter' });
+      return res.status(400).json({ error: 'Missing CID, Hex, nftId, or URL parameter' });
     }
 
     console.log(`[Proxy] Initial Target: ${targetUrl}`);
@@ -40,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Recursive Resolution: If target is JSON, extract image link and re-fetch
     if (contentType.includes('application/json')) {
       const metadata = await response.json();
-      const mediaUrl = metadata.image || metadata.video || metadata.animation_url;
+      const mediaUrl = metadata.image || metadata.video || metadata.animation_url || metadata.image_url;
       if (mediaUrl) {
         targetUrl = normalizeUrl(mediaUrl);
         console.log(`[Proxy] Re-fetching actual media: ${targetUrl}`);
@@ -74,6 +83,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isTimeout = error.name === 'AbortError';
     console.error(`[Proxy Critical] ${isTimeout ? 'Timeout' : 'Error'}:`, error);
     return res.status(isTimeout ? 504 : 500).json({ error: isTimeout ? 'Gateway Timeout' : error.message });
+  }
+}
+
+async function raceMetadataProviders(nftId: string): Promise<string | null> {
+  const controller = new AbortController();
+  
+  // Resolution strategy: Start several requests in parallel, return the first one that has a valid image URL
+  const providers = [
+    // XRPScan
+    () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+    // XRPLMeta
+    () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+    // Bithomp
+    () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+    // XRP Cafe
+    () => fetch(`https://api.xrp.cafe/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+  ];
+
+  try {
+    const winner = await Promise.any(providers.map(p => p().then(img => {
+      if (img && typeof img === 'string' && img.length > 5) {
+        controller.abort(); // Cancel other pending requests
+        return normalizeUrl(img);
+      }
+      throw new Error('invalid');
+    })));
+    return winner;
+  } catch (e) {
+    return null;
   }
 }
 
