@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XRPGridz • Grid Your XRP NFTs</title>
+    
+    <!-- Social Preview Card (Phase 3) -->
+    <meta name="description" content="Turn your XRP NFTs into beautiful grids. Search wallet, filter by collection, and download a high-res PNG of your favorite assets.">
+    <meta property="og:title" content="XRPGridz • Grid Your XRP NFTs">
+    <meta property="og:description" content="Create beautiful grid layouts of your XRP NFTs in seconds.">
+    <meta property="og:image" content="https://xrpgridz.vercel.app/social-preview.png">
+    <meta property="og:url" content="https://xrpgridz.vercel.app">
+    <meta name="twitter:card" content="summary_large_image">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -106,11 +115,11 @@
                         <div class="grid grid-cols-2 gap-4 mb-5">
                             <div>
                                 <div class="flex justify-between text-xs mb-1"><span>Columns</span><span id="cols-value">4</span></div>
-                                <input type="range" id="cols-slider" min="1" max="10" value="4" class="w-full accent-blue-500" oninput="updateGridPreview()">
+                                <input type="range" id="cols-slider" min="1" max="10" value="4" class="w-full accent-blue-500">
                             </div>
                             <div>
                                 <div class="flex justify-between text-xs mb-1"><span>Rows</span><span id="rows-value">4</span></div>
-                                <input type="range" id="rows-slider" min="1" max="10" value="4" class="w-full accent-blue-500" oninput="updateGridPreview()">
+                                <input type="range" id="rows-slider" min="1" max="10" value="4" class="w-full accent-blue-500">
                             </div>
                         </div>
 
@@ -149,10 +158,10 @@
         const collectionNameCache = new Map();
         let isLoadingMore = false;
         
-        // --- Throttling / Request Queueing (Phase 2) ---
+        // --- Throttling / Request Queueing ---
         const requestQueue = [];
         let activeRequests = 0;
-        const MAX_PARALLEL = 5; // Leave 1 slot for XRPL metadata
+        const MAX_PARALLEL = 5;
 
         async function queuedRequest(task) {
             return new Promise((resolve, reject) => {
@@ -170,10 +179,6 @@
             });
         }
 
-        /**
-         * Race strategy for metadata providers.
-         * Aborts the others as soon as the fastest one returns a valid image.
-         */
         async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
             const providers = [
@@ -194,18 +199,12 @@
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
-
-            // 1. First priority: the direct proxy with hex URI
             if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
-
-            // 2. Metadata Race (Queued)
             const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
             if (racedImage) {
                 const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
                 sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
             }
-
-            // 3. Last resort fallbacks
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
@@ -278,10 +277,6 @@
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
-        /**
-         * Intersection Observer for Performance (Phase 2).
-         * Only triggers image loading logic when card is visible.
-         */
         const galleryObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -329,7 +324,7 @@
                 if (!sources.length) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
                 const img = document.createElement('img');
                 img.className = 'w-full h-full object-cover';
-                img.crossOrigin = "anonymous"; // Phase 1: Consistency
+                img.crossOrigin = "anonymous";
                 let tryIdx = 0;
                 img.onerror = () => { tryIdx++; if (tryIdx < sources.length) img.src = sources[tryIdx]; else wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
                 img.src = sources[0];
@@ -342,10 +337,12 @@
             if (idx > -1) {
                 selectedNFTs.splice(idx, 1);
                 card.classList.remove('selected', 'border-blue-500');
+                card.classList.add('border-slate-700');
             } else {
                 if (selectedNFTs.length >= 100) return alert('Max 100 NFTs');
                 selectedNFTs.push(nft);
                 card.classList.add('selected', 'border-blue-500');
+                card.classList.remove('border-slate-700');
             }
             updateSelectedCount(); updateGridPreview();
         }
@@ -354,6 +351,11 @@
             const grid = document.getElementById('grid-preview');
             const rows = parseInt(document.getElementById('rows-slider').value);
             const cols = parseInt(document.getElementById('cols-slider').value);
+            
+            // Sync labels (Phase 2 fix)
+            document.getElementById('cols-value').textContent = cols;
+            document.getElementById('rows-value').textContent = rows;
+
             if (!selectedNFTs.length) { grid.innerHTML = ''; return; }
             grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             grid.innerHTML = '';
@@ -367,7 +369,7 @@
                     if (sources.length > 0) {
                         const img = document.createElement('img');
                         img.className = 'w-full h-full object-cover';
-                        img.crossOrigin = 'anonymous'; // Phase 1: Force CORS for html2canvas
+                        img.crossOrigin = 'anonymous';
                         let currentTry = 0;
                         img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
                         img.src = sources[0];
@@ -389,11 +391,56 @@
             } catch (e) { alert('Download failed. Try refreshing.'); }
         }
 
-        function updateSelectedCount() { document.getElementById('selected-count').textContent = selectedNFTs.length; }
-        function setGridPreset(r, c) { document.getElementById('rows-slider').value = r; document.getElementById('cols-slider').value = c; updateGridPreview(); }
-        function showStatus(el, msg, type) { el.innerHTML = msg; el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; el.classList.remove('hidden'); }
-        function createPlaceholder(id) { return `<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 font-mono p-2 text-center">No Image Found<br>${id.slice(0,6)}</div>`; }
-        window.onload = () => { document.getElementById('rows-slider').oninput = document.getElementById('cols-slider').oninput = updateGridPreview; };
+        function updateSelectedCount() { 
+            document.getElementById('selected-count').textContent = selectedNFTs.length; 
+        }
+
+        function setGridPreset(r, c) { 
+            document.getElementById('rows-slider').value = r; 
+            document.getElementById('cols-slider').value = c; 
+            updateGridPreview(); 
+        }
+
+        function clearSelected() { 
+            selectedNFTs = []; 
+            renderNFTGallery(); 
+            updateSelectedCount(); 
+            updateGridPreview(); 
+        }
+
+        function selectAllNFTs() { 
+            selectedNFTs = [...allNFTs].slice(0, 100); 
+            renderNFTGallery(); 
+            updateSelectedCount(); 
+            updateGridPreview(); 
+        }
+
+        function deselectAllNFTs() { 
+            clearSelected(); 
+        }
+
+        function showStatus(el, msg, type) { 
+            el.innerHTML = msg; 
+            el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; 
+            el.classList.remove('hidden'); 
+        }
+
+        function createPlaceholder(id) { 
+            return `<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 font-mono p-2 text-center">No Image Found<br>${id.slice(0,6)}</div>`; 
+        }
+
+        function shuffleSelected() {
+            for (let i = selectedNFTs.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [selectedNFTs[i], selectedNFTs[j]] = [selectedNFTs[j], selectedNFTs[i]];
+            }
+            updateGridPreview();
+        }
+
+        window.onload = () => { 
+            document.getElementById('rows-slider').oninput = updateGridPreview;
+            document.getElementById('cols-slider').oninput = updateGridPreview;
+        };
     </script>
 </body>
 </html>
