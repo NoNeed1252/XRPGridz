@@ -546,6 +546,27 @@
             updateGridPreview();
         }
 
+        const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
+        function showDonateModal() {
+            const modal = document.createElement('div');
+            modal.className = `fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4`;
+            modal.innerHTML = `
+                <div class="glass border border-white/10 rounded-3xl max-w-md w-full p-8 relative" onclick="event.target === this && this.remove()">
+                    <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl">×</button>
+                    <div class="text-center">
+                        <div class="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mb-5"><i class="fa-solid fa-heart text-white text-4xl"></i></div>
+                        <h3 class="text-3xl font-semibold mb-2">Support XRPGridz</h3>
+                        <p class="text-slate-400 mb-6">Thank you for keeping this tool free.</p>
+                        <div class="bg-[#0a0f1e] border border-white/10 rounded-2xl p-5 mb-5">
+                            <div class="text-xs text-emerald-400 mb-1">TREASURY WALLET</div>
+                            <div class="font-mono text-lg break-all mb-3">${DONATE_ADDRESS}</div>
+                            <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+
         window.onload = () => { 
             document.getElementById('rows-slider').oninput = updateGridPreview;
             document.getElementById('cols-slider').oninput = updateGridPreview;
