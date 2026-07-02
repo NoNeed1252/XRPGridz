@@ -124,6 +124,17 @@
                             </div>
                         </div>
 
+                        <div class="mb-5">
+                            <div class="text-xs text-slate-400 mb-2">BANNER PLACEMENT</div>
+                            <select id="banner-position" class="w-full bg-[#0a0f1e] border border-slate-600 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500">
+                                <option value="bottom">Bottom Right</option>
+                                <option value="top">Top Right</option>
+                                <option value="center">Center</option>
+                                <option value="left">Bottom Left</option>
+                                <option value="none">No Banner</option>
+                            </select>
+                        </div>
+
                         <div class="flex gap-2">
                             <button onclick="shuffleSelected()" class="flex-1 py-2 text-xs border border-slate-600 rounded-2xl">Shuffle</button>
                             <button onclick="updateGridPreview()" class="flex-1 py-2 text-xs bg-emerald-600 text-white rounded-2xl">Refresh Preview</button>
@@ -353,7 +364,7 @@
             const rows = parseInt(document.getElementById('rows-slider').value);
             const cols = parseInt(document.getElementById('cols-slider').value);
             
-            // Sync labels (Phase 2 fix)
+            // Sync labels
             document.getElementById('cols-value').textContent = cols;
             document.getElementById('rows-value').textContent = rows;
 
@@ -384,12 +395,80 @@
         async function downloadGridPNG() {
             const wrapper = document.getElementById('grid-preview');
             if (!wrapper.children.length) return alert('Build a grid first!');
+            const position = document.getElementById('banner-position').value;
+            
             try {
-                const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true, logging: false });
+                const canvas = await html2canvas(wrapper, { 
+                    scale: 3, 
+                    backgroundColor: '#0f172a', 
+                    useCORS: true, 
+                    logging: false 
+                });
+
+                if (position !== 'none') {
+                    const ctx = canvas.getContext('2d');
+                    const bannerHeight = canvas.height * 0.08;
+                    const padding = canvas.width * 0.03;
+                    
+                    ctx.font = `bold ${Math.floor(bannerHeight * 0.5)}px system-ui, sans-serif`;
+                    const text = "XRPGridz";
+                    const textMetrics = ctx.measureText(text);
+                    const logoSize = bannerHeight * 0.6;
+                    const totalWidth = logoSize + (padding * 0.5) + textMetrics.width;
+                    
+                    let x, y;
+                    if (position === 'bottom') { x = canvas.width - totalWidth - padding; y = canvas.height - (bannerHeight * 0.5) - padding; }
+                    else if (position === 'top') { x = canvas.width - totalWidth - padding; y = padding + (bannerHeight * 0.5); }
+                    else if (position === 'center') { x = (canvas.width - totalWidth) / 2; y = canvas.height / 2; }
+                    else if (position === 'left') { x = padding; y = canvas.height - (bannerHeight * 0.5) - padding; }
+
+                    // Draw Background
+                    ctx.fillStyle = 'rgba(10, 15, 30, 0.85)';
+                    const rectPadding = bannerHeight * 0.3;
+                    roundRect(ctx, x - rectPadding, y - (bannerHeight * 0.5), totalWidth + (rectPadding * 2), bannerHeight, bannerHeight * 0.2, true);
+
+                    // Draw Text
+                    ctx.fillStyle = '#ffffff';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(text, x + logoSize + (padding * 0.3), y);
+
+                    // Draw Logo (Gradient Circle as fallback for simplicity/reliability)
+                    const grad = ctx.createLinearGradient(x, y - (logoSize/2), x, y + (logoSize/2));
+                    grad.addColorStop(0, '#3b82f6'); grad.addColorStop(1, '#22d3ee');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.roundRect(x, y - (logoSize/2), logoSize, logoSize, logoSize * 0.3);
+                    ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `bold ${Math.floor(logoSize * 0.6)}px "Font Awesome 6 Free"`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText("\uf00a", x + (logoSize/2), y);
+                    ctx.textAlign = 'start';
+                }
+
                 const a = document.createElement('a');
                 a.download = `xrpgridz-${new Date().getTime()}.png`;
-                a.href = canvas.toDataURL('image/png'); a.click();
-            } catch (e) { alert('Download failed. Try refreshing.'); }
+                a.href = canvas.toDataURL('image/png'); 
+                a.click();
+            } catch (e) { 
+                console.error(e);
+                alert('Download failed. Try refreshing.'); 
+            }
+        }
+
+        function roundRect(ctx, x, y, width, height, radius, fill) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
         }
 
         function updateSelectedCount() { 
