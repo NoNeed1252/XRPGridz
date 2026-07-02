@@ -18,7 +18,7 @@
         
         /* Social Style overrides */
         .social-style #grid-preview { 
-            padding: 24px; 
+            padding: 4%; 
             border-radius: 48px; 
             background: #0f172a;
             aspect-ratio: 16 / 9;
@@ -29,8 +29,11 @@
         }
         .social-style .grid-inner {
             display: grid;
-            width: 100%;
-            height: 100%;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            margin: auto;
         }
         .social-style .grid-cell {
             border-radius: 24px;
@@ -218,22 +221,22 @@
         }
 
         /**
-         * Resolves an IPFS URI into a public gateway URL.
+         * Resolves an IPFS URI into a public gateway URL via proxy.
          */
         function resolveIpfsUrl(uri) {
             if (!uri) return '';
             
-            // Handle ipfs:// protocol
+            let target = uri;
             if (uri.startsWith('ipfs://')) {
-                return uri.replace('ipfs://', 'https://ipfs.io/ipfs/');
+                target = uri.replace('ipfs://', '');
+                return `/api/proxy?cid=${target}`;
             }
 
-            // Handle bare CID
             if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) {
-                return `https://ipfs.io/ipfs/${uri}`;
+                return `/api/proxy?cid=${uri}`;
             }
 
-            return uri;
+            return `/api/proxy?url=${encodeURIComponent(uri)}`;
         }
 
         async function resolveNFTImage(nft) {
@@ -256,24 +259,7 @@
             if (/^[0-9A-Fa-f]{20,}$/.test(uri)) uri = hexToString(uri);
             if (!uri) return null;
 
-            if (/\.(jpg|jpeg|png|gif|webp)/i.test(uri) && uri.startsWith('http')) return uri;
-
-            const gatewayUrl = resolveIpfsUrl(uri);
-            if (gatewayUrl.includes('/ipfs/')) return gatewayUrl;
-
-            // Try as metadata JSON
-            try {
-                const res = await fetch(gatewayUrl);
-                if (res.ok) {
-                    const json = await res.json().catch(() => null);
-                    if (json) {
-                        const img = json.image || json.image_url || json.thumbnail || json.properties?.image || json.media;
-                        if (img) return resolveIpfsUrl(img);
-                    }
-                }
-            } catch(e){}
-
-            return null;
+            return resolveIpfsUrl(uri);
         }
 
         function hexToString(hex) {
@@ -538,6 +524,23 @@
             inner.style.display = 'grid';
             inner.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             inner.style.gap = socialStyle ? '12px' : '6px';
+
+            if (socialStyle) {
+                const ratio = 16 / 9;
+                const gridRatio = cols / rows;
+                if (gridRatio > ratio) {
+                    inner.style.width = '100%';
+                    inner.style.height = 'auto';
+                } else {
+                    inner.style.height = '100%';
+                    inner.style.width = 'auto';
+                    inner.style.aspectRatio = `${cols} / ${rows}`;
+                }
+            } else {
+                inner.style.width = '100%';
+                inner.style.height = 'auto';
+            }
+
             grid.appendChild(inner);
 
             const toShow = selectedNFTs.slice(0, rows * cols);
