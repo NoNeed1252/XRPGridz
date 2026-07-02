@@ -127,11 +127,11 @@
                         <div class="mb-5">
                             <div class="text-xs text-slate-400 mb-2">BANNER PLACEMENT</div>
                             <select id="banner-position" class="w-full bg-[#0a0f1e] border border-slate-600 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500">
-                                <option value="bottom">Bottom Right</option>
-                                <option value="top">Top Right</option>
+                                <option value="bottom">Bottom</option>
+                                <option value="top">Top</option>
                                 <option value="center">Center</option>
-                                <option value="left">Bottom Left</option>
-                                <option value="none">No Banner</option>
+                                <option value="left">Left Side</option>
+                                <option value="right">Right Side</option>
                             </select>
                         </div>
 
@@ -405,46 +405,53 @@
                     logging: false 
                 });
 
-                if (position !== 'none') {
-                    const ctx = canvas.getContext('2d');
-                    const bannerHeight = canvas.height * 0.08;
-                    const padding = canvas.width * 0.03;
-                    
-                    ctx.font = `bold ${Math.floor(bannerHeight * 0.5)}px system-ui, sans-serif`;
-                    const text = "XRPGridz";
-                    const textMetrics = ctx.measureText(text);
-                    const logoSize = bannerHeight * 0.6;
-                    const totalWidth = logoSize + (padding * 0.5) + textMetrics.width;
-                    
-                    let x, y;
-                    if (position === 'bottom') { x = canvas.width - totalWidth - padding; y = canvas.height - (bannerHeight * 0.5) - padding; }
-                    else if (position === 'top') { x = canvas.width - totalWidth - padding; y = padding + (bannerHeight * 0.5); }
-                    else if (position === 'center') { x = (canvas.width - totalWidth) / 2; y = canvas.height / 2; }
-                    else if (position === 'left') { x = padding; y = canvas.height - (bannerHeight * 0.5) - padding; }
+                // Load Logo Image
+                const logoImg = new Image();
+                logoImg.crossOrigin = 'anonymous';
+                // Using a persistent proxy URL for the logo asset
+                logoImg.src = '/api/proxy?url=' + encodeURIComponent('https://storage.googleapis.com/interaction-media-bucket/a0718422-582f-468c-a0c2-44452572707f/4e981d41-b8a2-5040-b22e-bfa12613b472');
 
-                    // Draw Background
-                    ctx.fillStyle = 'rgba(10, 15, 30, 0.85)';
-                    const rectPadding = bannerHeight * 0.3;
-                    roundRect(ctx, x - rectPadding, y - (bannerHeight * 0.5), totalWidth + (rectPadding * 2), bannerHeight, bannerHeight * 0.2, true);
+                await new Promise((resolve, reject) => {
+                    logoImg.onload = resolve;
+                    logoImg.onerror = () => {
+                        console.warn('Failed to load branding logo, proceeding with text only');
+                        resolve();
+                    };
+                });
 
-                    // Draw Text
-                    ctx.fillStyle = '#ffffff';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(text, x + logoSize + (padding * 0.3), y);
+                const ctx = canvas.getContext('2d');
+                const bannerHeight = canvas.height * 0.08;
+                const padding = canvas.width * 0.03;
+                
+                ctx.font = `bold ${Math.floor(bannerHeight * 0.5)}px system-ui, sans-serif`;
+                const text = "XRPGridz";
+                const textMetrics = ctx.measureText(text);
+                const logoSize = bannerHeight * 0.6;
+                const totalWidth = (logoImg.complete && logoImg.naturalWidth > 0 ? logoSize : 0) + (padding * 0.5) + textMetrics.width;
+                
+                let x, y;
+                if (position === 'bottom') { x = (canvas.width - totalWidth) / 2; y = canvas.height - (bannerHeight * 0.5) - padding; }
+                else if (position === 'top') { x = (canvas.width - totalWidth) / 2; y = padding + (bannerHeight * 0.5); }
+                else if (position === 'center') { x = (canvas.width - totalWidth) / 2; y = (canvas.height) / 2; }
+                else if (position === 'left') { x = padding + (bannerHeight * 0.3); y = (canvas.height) / 2; }
+                else if (position === 'right') { x = canvas.width - totalWidth - padding - (bannerHeight * 0.3); y = (canvas.height) / 2; }
 
-                    // Draw Logo (Gradient Circle as fallback for simplicity/reliability)
-                    const grad = ctx.createLinearGradient(x, y - (logoSize/2), x, y + (logoSize/2));
-                    grad.addColorStop(0, '#3b82f6'); grad.addColorStop(1, '#22d3ee');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.roundRect(x, y - (logoSize/2), logoSize, logoSize, logoSize * 0.3);
-                    ctx.fill();
-                    ctx.fillStyle = '#fff';
-                    ctx.font = `bold ${Math.floor(logoSize * 0.6)}px "Font Awesome 6 Free"`;
-                    ctx.textAlign = 'center';
-                    ctx.fillText("\uf00a", x + (logoSize/2), y);
-                    ctx.textAlign = 'start';
+                // Draw Background
+                ctx.fillStyle = 'rgba(10, 15, 30, 0.9)';
+                const rectPadding = bannerHeight * 0.3;
+                roundRect(ctx, x - rectPadding, y - (bannerHeight * 0.5), totalWidth + (rectPadding * 2), bannerHeight, bannerHeight * 0.2, true);
+
+                // Draw Logo
+                let currentX = x;
+                if (logoImg.complete && logoImg.naturalWidth > 0) {
+                    ctx.drawImage(logoImg, currentX, y - (logoSize / 2), logoSize, logoSize);
+                    currentX += logoSize + (padding * 0.3);
                 }
+
+                // Draw Text
+                ctx.fillStyle = '#ffffff';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, currentX, y);
 
                 const a = document.createElement('a');
                 a.download = `xrpgridz-${new Date().getTime()}.png`;
