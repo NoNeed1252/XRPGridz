@@ -398,6 +398,7 @@
             const position = document.getElementById('banner-position').value;
             
             try {
+                // Ensure grid is fully rendered before capture
                 const canvas = await html2canvas(wrapper, { 
                     scale: 3, 
                     backgroundColor: '#0f172a', 
@@ -405,57 +406,77 @@
                     logging: false 
                 });
 
+                // Create branding canvas (Offscreen)
+                const brandingCanvas = document.createElement('canvas');
+                brandingCanvas.width = canvas.width;
+                brandingCanvas.height = canvas.height;
+                const bctx = brandingCanvas.getContext('2d');
+                bctx.drawImage(canvas, 0, 0);
+
                 // Load Logo Image
                 const logoImg = new Image();
                 logoImg.crossOrigin = 'anonymous';
-                // Using a persistent proxy URL for the logo asset
                 logoImg.src = '/api/proxy?url=' + encodeURIComponent('https://storage.googleapis.com/interaction-media-bucket/a0718422-582f-468c-a0c2-44452572707f/4e981d41-b8a2-5040-b22e-bfa12613b472');
 
-                await new Promise((resolve, reject) => {
+                await new Promise((resolve) => {
                     logoImg.onload = resolve;
                     logoImg.onerror = () => {
-                        console.warn('Failed to load branding logo, proceeding with text only');
+                        console.warn('Logo failed to load, falling back to icon');
                         resolve();
                     };
                 });
 
-                const ctx = canvas.getContext('2d');
                 const bannerHeight = canvas.height * 0.08;
                 const padding = canvas.width * 0.03;
-                
-                ctx.font = `bold ${Math.floor(bannerHeight * 0.5)}px system-ui, sans-serif`;
+                bctx.font = `bold ${Math.floor(bannerHeight * 0.5)}px system-ui, sans-serif`;
                 const text = "XRPGridz";
-                const textMetrics = ctx.measureText(text);
+                const textMetrics = bctx.measureText(text);
                 const logoSize = bannerHeight * 0.6;
-                const totalWidth = (logoImg.complete && logoImg.naturalWidth > 0 ? logoSize : 0) + (padding * 0.5) + textMetrics.width;
+                const logoAvailable = logoImg.complete && logoImg.naturalWidth > 0;
+                const totalWidth = (logoAvailable ? logoSize : logoSize) + (padding * 0.5) + textMetrics.width;
                 
                 let x, y;
                 if (position === 'bottom') { x = (canvas.width - totalWidth) / 2; y = canvas.height - (bannerHeight * 0.5) - padding; }
                 else if (position === 'top') { x = (canvas.width - totalWidth) / 2; y = padding + (bannerHeight * 0.5); }
-                else if (position === 'center') { x = (canvas.width - totalWidth) / 2; y = (canvas.height) / 2; }
-                else if (position === 'left') { x = padding + (bannerHeight * 0.3); y = (canvas.height) / 2; }
-                else if (position === 'right') { x = canvas.width - totalWidth - padding - (bannerHeight * 0.3); y = (canvas.height) / 2; }
+                else if (position === 'center') { x = (canvas.width - totalWidth) / 2; y = canvas.height / 2; }
+                else if (position === 'left') { x = padding + (bannerHeight * 0.3); y = canvas.height / 2; }
+                else if (position === 'right') { x = canvas.width - totalWidth - padding - (bannerHeight * 0.3); y = canvas.height / 2; }
 
                 // Draw Background
-                ctx.fillStyle = 'rgba(10, 15, 30, 0.9)';
+                bctx.fillStyle = 'rgba(10, 15, 30, 0.9)';
                 const rectPadding = bannerHeight * 0.3;
-                roundRect(ctx, x - rectPadding, y - (bannerHeight * 0.5), totalWidth + (rectPadding * 2), bannerHeight, bannerHeight * 0.2, true);
+                roundRect(bctx, x - rectPadding, y - (bannerHeight * 0.5), totalWidth + (rectPadding * 2), bannerHeight, bannerHeight * 0.2, true);
 
-                // Draw Logo
+                // Draw Logo/Icon
                 let currentX = x;
-                if (logoImg.complete && logoImg.naturalWidth > 0) {
-                    ctx.drawImage(logoImg, currentX, y - (logoSize / 2), logoSize, logoSize);
+                if (logoAvailable) {
+                    bctx.drawImage(logoImg, currentX, y - (logoSize / 2), logoSize, logoSize);
+                    currentX += logoSize + (padding * 0.3);
+                } else {
+                    // Fallback stylized icon
+                    const grad = bctx.createLinearGradient(currentX, y - (logoSize/2), currentX, y + (logoSize/2));
+                    grad.addColorStop(0, '#3b82f6'); grad.addColorStop(1, '#22d3ee');
+                    bctx.fillStyle = grad;
+                    bctx.beginPath();
+                    bctx.roundRect(currentX, y - (logoSize/2), logoSize, logoSize, logoSize * 0.3);
+                    bctx.fill();
+                    bctx.fillStyle = '#fff';
+                    bctx.font = `bold ${Math.floor(logoSize * 0.6)}px "Font Awesome 6 Free"`;
+                    bctx.textAlign = 'center';
+                    bctx.fillText("\uf00a", currentX + (logoSize/2), y);
+                    bctx.textAlign = 'start';
                     currentX += logoSize + (padding * 0.3);
                 }
 
                 // Draw Text
-                ctx.fillStyle = '#ffffff';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(text, currentX, y);
+                bctx.fillStyle = '#ffffff';
+                bctx.textBaseline = 'middle';
+                bctx.font = `bold ${Math.floor(bannerHeight * 0.5)}px system-ui, sans-serif`;
+                bctx.fillText(text, currentX, y);
 
                 const a = document.createElement('a');
                 a.download = `xrpgridz-${new Date().getTime()}.png`;
-                a.href = canvas.toDataURL('image/png'); 
+                a.href = brandingCanvas.toDataURL('image/png'); 
                 a.click();
             } catch (e) { 
                 console.error(e);
