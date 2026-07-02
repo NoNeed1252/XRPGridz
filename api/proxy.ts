@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel.node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
  * Library Assistant Backend Proxy - Optimized for Node 24+
