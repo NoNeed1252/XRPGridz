@@ -1,12 +1,12 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel.node';
 
 /**
  * Library Assistant Backend Proxy - Optimized for Node 24+
- * Implements Recursive Metadata Resolution: If the target is JSON, it extracts the 'image' field
- * and fetches the actual media asset.
+ * Implements Recursive Metadata Resolution and CORS Passthrough.
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Force clean CORS headers to satisfy html2canvas and cross-origin pixel reads
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -40,11 +40,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Recursive Resolution: If target is JSON, extract image link and re-fetch
     if (contentType.includes('application/json')) {
       const metadata = await response.json();
-      console.log(`[Proxy] Metadata detected. Parsing JSON...`);
-      
       const mediaUrl = metadata.image || metadata.video || metadata.animation_url;
       if (mediaUrl) {
-        console.log(`[Proxy] Media found in metadata: ${mediaUrl}`);
         targetUrl = normalizeUrl(mediaUrl);
         console.log(`[Proxy] Re-fetching actual media: ${targetUrl}`);
         response = await fetchWithTimeout(targetUrl, 12000);
@@ -56,10 +53,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(response.status).json({ error: `Target returned ${response.status}` });
     }
 
+    // Set the content type, but override/ensure CORS is preserved for the response
     if (contentType) {
       res.setHeader('Content-Type', contentType);
     }
     
+    // Set robust caching headers
     res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600');
 
     const arrayBuffer = await response.arrayBuffer();
@@ -97,7 +96,6 @@ function normalizeUrl(url: string): string {
   if (url.startsWith('ipfs://')) {
     return `https://ipfs.io/ipfs/${url.replace('ipfs://', '')}`;
   }
-  // Handle case where CID is provided without protocol
   if (url.match(/^[a-zA-Z0-9]{46,59}$/)) {
     return `https://ipfs.io/ipfs/${url}`;
   }
