@@ -129,7 +129,6 @@
                             <select id="banner-position" class="w-full bg-[#0a0f1e] border border-slate-600 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500">
                                 <option value="bottom">Bottom</option>
                                 <option value="top">Top</option>
-                                <option value="center">Center</option>
                                 <option value="left">Left Side</option>
                                 <option value="right">Right Side</option>
                             </select>
@@ -398,15 +397,15 @@
             const position = document.getElementById('banner-position').value;
             
             try {
-                // Ensure grid is captured first
-                const canvas = await html2canvas(wrapper, { 
+                // 1. Capture the initial grid
+                const gridCanvas = await html2canvas(wrapper, { 
                     scale: 3, 
                     backgroundColor: '#0f172a', 
                     useCORS: true, 
                     logging: false 
                 });
 
-                // Load Logo Image
+                // 2. Load Logo Image
                 const logoImg = new Image();
                 logoImg.crossOrigin = 'anonymous';
                 logoImg.src = '/api/proxy?url=' + encodeURIComponent('https://storage.googleapis.com/interaction-media-bucket/a0718422-582f-468c-a0c2-44452572707f/4e981d41-b8a2-5040-b22e-bfa12613b472');
@@ -416,58 +415,84 @@
                     logoImg.onerror = () => { console.warn('Logo failed to load'); resolve(); };
                 });
 
-                const brandingCanvas = document.createElement('canvas');
-                brandingCanvas.width = canvas.width;
-                brandingCanvas.height = canvas.height;
-                const bctx = brandingCanvas.getContext('2d');
-                bctx.drawImage(canvas, 0, 0);
+                // 3. Setup final canvas dimensions
+                const bannerThickness = gridCanvas.height * 0.12;
+                let finalWidth = gridCanvas.width;
+                let finalHeight = gridCanvas.height;
+                let gridX = 0, gridY = 0;
+                let bannerX = 0, bannerY = 0, bannerW = finalWidth, bannerH = bannerThickness;
 
-                const bannerHeight = canvas.height * 0.1;
-                const bannerWidth = canvas.width;
-                const logoSize = bannerHeight * 0.5;
-                bctx.font = `bold ${Math.floor(bannerHeight * 0.4)}px system-ui, sans-serif`;
-                const text = "XRPGridz";
-                const textMetrics = bctx.measureText(text);
-                const logoAvailable = logoImg.complete && logoImg.naturalWidth > 0;
-                const contentWidth = (logoAvailable ? logoSize : 0) + (canvas.width * 0.02) + textMetrics.width;
+                if (position === 'top') {
+                    finalHeight += bannerThickness;
+                    gridY = bannerThickness;
+                    bannerY = 0;
+                } else if (position === 'bottom') {
+                    finalHeight += bannerThickness;
+                    gridY = 0;
+                    bannerY = gridCanvas.height;
+                } else if (position === 'left') {
+                    finalWidth += bannerThickness;
+                    gridX = bannerThickness;
+                    bannerW = bannerThickness;
+                    bannerH = gridCanvas.height;
+                    bannerX = 0; bannerY = 0;
+                } else if (position === 'right') {
+                    finalWidth += bannerThickness;
+                    gridX = 0;
+                    bannerW = bannerThickness;
+                    bannerH = gridCanvas.height;
+                    bannerX = gridCanvas.width;
+                    bannerY = 0;
+                }
 
-                let bx = 0, by = 0, bw = canvas.width, bh = bannerHeight;
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = finalWidth;
+                finalCanvas.height = finalHeight;
+                const ctx = finalCanvas.getContext('2d');
+
+                // 4. Fill background and draw grid
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, finalWidth, finalHeight);
+                ctx.drawImage(gridCanvas, gridX, gridY);
+
+                // 5. Draw solid banner (0% overlap)
+                ctx.fillStyle = '#0a0f1e';
+                ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
+
+                // 6. Draw branding content centered in the banner
+                ctx.save();
+                let centerX = bannerX + bannerW / 2;
+                let centerY = bannerY + bannerH / 2;
                 
-                if (position === 'top') { by = 0; }
-                else if (position === 'bottom') { by = canvas.height - bh; }
-                else if (position === 'center') { by = (canvas.height - bh) / 2; }
-                else if (position === 'left') { bx = 0; by = 0; bw = bannerHeight; bh = canvas.height; }
-                else if (position === 'right') { bx = canvas.width - bannerHeight; by = 0; bw = bannerHeight; bh = canvas.height; }
-
-                // Draw solid rectangular banner
-                bctx.fillStyle = 'rgba(10, 15, 30, 0.95)';
-                bctx.fillRect(bx, by, bw, bh);
-
-                // Center content inside the banner
-                bctx.save();
                 if (position === 'left' || position === 'right') {
-                    bctx.translate(bx + bw / 2, by + bh / 2);
-                    bctx.rotate(-Math.PI / 2);
-                    bctx.translate(-(bx + bw / 2), -(by + bh / 2));
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(-Math.PI / 2);
+                    ctx.translate(-centerX, -centerY);
                 }
-                
-                const centerX = bx + bw / 2;
-                const centerY = by + bh / 2;
+
+                ctx.font = `bold ${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif`;
+                const text = "XRPGridz";
+                const textMetrics = ctx.measureText(text);
+                const logoSize = bannerThickness * 0.6;
+                const logoAvailable = logoImg.complete && logoImg.naturalWidth > 0;
+                const spacing = finalCanvas.width * 0.02;
+                const contentWidth = (logoAvailable ? logoSize : 0) + (logoAvailable ? spacing : 0) + textMetrics.width;
+
                 let startX = centerX - contentWidth / 2;
-
                 if (logoAvailable) {
-                    bctx.drawImage(logoImg, startX, centerY - logoSize / 2, logoSize, logoSize);
-                    startX += logoSize + (canvas.width * 0.02);
+                    ctx.drawImage(logoImg, startX, centerY - logoSize / 2, logoSize, logoSize);
+                    startX += logoSize + spacing;
                 }
-                
-                bctx.fillStyle = '#ffffff';
-                bctx.textBaseline = 'middle';
-                bctx.fillText(text, startX, centerY);
-                bctx.restore();
 
+                ctx.fillStyle = '#ffffff';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, startX, centerY);
+                ctx.restore();
+
+                // 7. Trigger download
                 const a = document.createElement('a');
                 a.download = `xrpgridz-${new Date().getTime()}.png`;
-                a.href = brandingCanvas.toDataURL('image/png'); 
+                a.href = finalCanvas.toDataURL('image/png'); 
                 a.click();
             } catch (e) { 
                 console.error(e);
