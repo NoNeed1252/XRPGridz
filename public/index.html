@@ -33,6 +33,7 @@
         .tab-content.active { display: block; }
         .meme-btn { position: absolute; bottom: 8px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
         .nft-card:hover .meme-btn { opacity: 1; }
+        #meme-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
     </style>
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
@@ -183,22 +184,23 @@
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
-                <div id="meme-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800">
-                    <div id="meme-image-container" class="w-full h-full flex items-center justify-center text-slate-500">
-                        Select an NFT to start meming
+                <div id="meme-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                    <canvas id="meme-canvas"></canvas>
+                    <div id="meme-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500">
+                        Select an NFT from the Grid tab to start meming
                     </div>
                 </div>
                 
                 <div class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Top Text</label>
-                        <input id="meme-top-text" type="text" placeholder="Top text..." class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none">
+                        <input id="meme-top-text" type="text" placeholder="TOP TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Bottom Text</label>
-                        <input id="meme-bottom-text" type="text" placeholder="Bottom text..." class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none">
+                        <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
-                    <button onclick="alert('Meme generation coming soon!')" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Generate Meme</button>
+                    <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
                 </div>
             </div>
@@ -210,6 +212,7 @@
         let selectedNFTs = [];
         let currentWallet = '';
         let currentMarker = null;
+        let activeMemeImage = null;
         const metadataCache = new Map();
         const collectionNameCache = new Map();
         let isLoadingMore = false;
@@ -225,18 +228,85 @@
             const nft = allNFTs.find(n => n.NFTokenID === nftId);
             if (!nft) return;
             
-            const container = document.getElementById('meme-image-container');
-            container.innerHTML = '<div class="loading-skeleton w-full h-full"></div>';
+            const placeholder = document.getElementById('meme-placeholder');
+            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
+            placeholder.classList.remove('hidden');
             
             switchTab('meme');
             
             resolveNFTImageSources(nft).then(sources => {
                 if (sources.length > 0) {
-                    container.innerHTML = `<img src="${sources[0]}" class="max-w-full max-h-full object-contain" crossOrigin="anonymous">`;
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.onload = () => {
+                        activeMemeImage = img;
+                        placeholder.classList.add('hidden');
+                        drawMeme();
+                    };
+                    img.onerror = () => {
+                        placeholder.innerHTML = "Failed to load NFT image";
+                    };
+                    img.src = sources[0];
                 } else {
-                    container.innerHTML = createPlaceholder(nft.NFTokenID);
+                    placeholder.innerHTML = "No image available for this NFT";
                 }
             });
+        }
+
+        function drawMeme() {
+            if (!activeMemeImage) return;
+            const canvas = document.getElementById('meme-canvas');
+            const ctx = canvas.getContext('2d');
+            const topText = document.getElementById('meme-top-text').value.toUpperCase();
+            const bottomText = document.getElementById('meme-bottom-text').value.toUpperCase();
+
+            // Match canvas size to image aspect ratio, but keep resolution decent
+            const maxSize = 1024;
+            let width = activeMemeImage.naturalWidth;
+            let height = activeMemeImage.naturalHeight;
+
+            if (width > maxSize || height > maxSize) {
+                const ratio = Math.min(maxSize / width, maxSize / height);
+                width *= ratio;
+                height *= ratio;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw image
+            ctx.drawImage(activeMemeImage, 0, 0, width, height);
+
+            // Font Settings
+            const fontSize = Math.floor(width * 0.1);
+            ctx.font = `bold ${fontSize}px Impact, system-ui, sans-serif`;
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = fontSize / 12;
+            ctx.textAlign = 'center';
+
+            // Top Text
+            if (topText) {
+                ctx.textBaseline = 'top';
+                ctx.strokeText(topText, width / 2, height * 0.05, width * 0.9);
+                ctx.fillText(topText, width / 2, height * 0.05, width * 0.9);
+            }
+
+            // Bottom Text
+            if (bottomText) {
+                ctx.textBaseline = 'bottom';
+                ctx.strokeText(bottomText, width / 2, height * 0.95, width * 0.9);
+                ctx.fillText(bottomText, width / 2, height * 0.95, width * 0.9);
+            }
+        }
+
+        function saveMeme() {
+            const canvas = document.getElementById('meme-canvas');
+            if (!activeMemeImage) return alert('Select an NFT first!');
+            const link = document.createElement('a');
+            link.download = `xrpmeme-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
         }
 
         // --- Throttling / Request Queueing ---
