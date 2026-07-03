@@ -12,6 +12,17 @@ const COLLECTION_MAPPING: Record<string, string> = {
   'Fuzzy': '00080000D0937A08B019E094D68A8E8D5F661B1B5490BA9C000009D500000000'
 };
 
+// Known scam/burn collections to ignore
+const IGNORED_COLLECTIONS = ['Pixel Miner', 'SMILE'];
+
+// High-speed resilient IPFS gateways
+const IPFS_GATEWAYS = [
+  'https://cloudflare-ipfs.com/ipfs/',
+  'https://ipfs.io/ipfs/',
+  'https://gateway.pinata.cloud/ipfs/',
+  'https://4everland.io/ipfs/'
+];
+
 // Global Request Queue to prevent traffic jams (max 5 concurrent)
 class RequestQueue {
   private active = 0;
@@ -120,6 +131,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Recursive Resolution: If target is JSON, extract image link and re-fetch
     if (contentType.includes('application/json')) {
       const metadata = await response.json();
+      
+      // Ignore known scam/burn collections
+      const collectionName = metadata.collection?.name || metadata.name || '';
+      if (IGNORED_COLLECTIONS.some(scam => collectionName.includes(scam))) {
+        return res.status(403).json({ error: 'Ignored collection' });
+      }
+
       const mediaUrl = metadata.image || metadata.video || metadata.animation_url || metadata.image_url;
       if (mediaUrl) {
         targetUrl = normalizeUrl(mediaUrl);
@@ -184,6 +202,13 @@ async function resolveMetadata(nftId: string): Promise<string | null> {
     const cafeResponse = await globalQueue.run(() => fetch(`https://api.xrp.cafe/api/v1/nft/${mappedNftId}`));
     if (cafeResponse.ok) {
       const data = await cafeResponse.json();
+      
+      // Force a CID re-parse for "big name" collections mapped in COLLECTION_MAPPING
+      if (COLLECTION_MAPPING[nftId] && data.image) {
+        const cid = extractCID(data.image);
+        if (cid) return `${IPFS_GATEWAYS[0]}${cid}`;
+      }
+
       if (data.image && typeof data.image === 'string' && data.image.length > 5) {
         return normalizeUrl(data.image);
       }
@@ -199,6 +224,12 @@ async function resolveMetadata(nftId: string): Promise<string | null> {
     const bithompResponse = await globalQueue.run(() => fetch(`https://bithomp.com/api/v2/nft/${mappedNftId}`));
     if (bithompResponse.ok) {
       const data = await bithompResponse.json();
+      
+      if (COLLECTION_MAPPING[nftId] && data.image) {
+        const cid = extractCID(data.image);
+        if (cid) return `${IPFS_GATEWAYS[0]}${cid}`;
+      }
+
       if (data.image && typeof data.image === 'string' && data.image.length > 5) {
         return normalizeUrl(data.image);
       }
@@ -218,6 +249,12 @@ async function resolveMetadata(nftId: string): Promise<string | null> {
     return await Promise.any(others.map(p => p().then(img => {
       if (img && typeof img === 'string' && img.length > 5) {
         controller.abort();
+        
+        if (COLLECTION_MAPPING[nftId]) {
+          const cid = extractCID(img);
+          if (cid) return `${IPFS_GATEWAYS[0]}${cid}`;
+        }
+
         return normalizeUrl(img);
       }
       throw new Error('invalid');
@@ -228,7 +265,7 @@ async function resolveMetadata(nftId: string): Promise<string | null> {
 }
 
 function resolveTargetUrl(cid: string | null, hex: string | null, url: string | null): string | null {
-  if (cid) return `https://ipfs.io/ipfs/${cid}`;
+  if (cid) return `${IPFS_GATEWAYS[0]}${cid}`;
   if (url) return url;
   if (hex) {
     let decoded = '';
@@ -244,12 +281,25 @@ function resolveTargetUrl(cid: string | null, hex: string | null, url: string | 
 
 function normalizeUrl(url: string): string {
   if (url.startsWith('ipfs://')) {
-    return `https://ipfs.io/ipfs/${url.replace('ipfs://', '')}`;
+    return `${IPFS_GATEWAYS[0]}${url.replace('ipfs://', '')}`;
   }
   if (url.match(/^[a-zA-Z0-9]{46,59}$/)) {
-    return `https://ipfs.io/ipfs/${url}`;
+    return `${IPFS_GATEWAYS[0]}${url}`;
+  }
+  // If it's a known failing gateway, swap to Cloudflare
+  if (url.includes('filebase.io/ipfs/') || url.includes('ipfs.io/ipfs/')) {
+    const cid = extractCID(url);
+    if (cid) return `${IPFS_GATEWAYS[0]}${cid}`;
   }
   return url;
+}
+
+function extractCID(uri: string): string | null {
+  if (!uri) return null;
+  if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', '');
+  if (uri.includes('ipfs/')) return uri.split('ipfs/').pop()?.split('?')[0] || null;
+  if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) return uri;
+  return null;
 }
 
 async function fetchWithTimeout(url: string, ms: number) {
