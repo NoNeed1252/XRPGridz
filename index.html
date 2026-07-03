@@ -126,9 +126,14 @@
                                 <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
                                 <span class="font-semibold">Live Preview</span>
                             </div>
-                            <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
-                                <i class="fa-solid fa-download"></i> Download PNG
-                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="exportForX()" class="px-5 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2 border border-white/20">
+                                    <i class="fa-brands fa-x-twitter"></i> Export for X
+                                </button>
+                                <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
+                                    <i class="fa-solid fa-download"></i> Download PNG
+                                </button>
+                            </div>
                         </div>
 
                         <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center">
@@ -567,6 +572,71 @@
             const a = document.createElement('a');
             a.download = `xrpgridz-${currentWallet.slice(0,6)}-${new Date().toISOString().slice(0,10)}.png`;
             a.href = canvas.toDataURL('image/png'); a.click();
+        }
+        async function exportForX() {
+            const gridPreview = document.getElementById('grid-preview');
+            if (!gridPreview.children.length) return alert('Build a preview first!');
+
+            // Create a temporary container for 16:9 export
+            const exportContainer = document.createElement('div');
+            exportContainer.style.position = 'fixed';
+            exportContainer.style.top = '-9999px';
+            exportContainer.style.left = '-9999px';
+            exportContainer.style.width = '1600px';
+            exportContainer.style.height = '900px';
+            exportContainer.style.backgroundColor = '#0a0f1e';
+            exportContainer.style.display = 'flex';
+            exportContainer.style.flexDirection = 'column';
+            exportContainer.style.alignItems = 'center';
+            exportContainer.style.justifyContent = 'center';
+            exportContainer.style.padding = '40px';
+            exportContainer.id = 'temp-export-container';
+
+            // 1. Create Banner (Squared corners as requested)
+            const banner = document.createElement('div');
+            banner.className = "flex items-center gap-x-6 mb-12";
+            banner.innerHTML = `
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+                    <i class="fa-solid fa-th-large text-white text-5xl"></i>
+                </div>
+                <div class="font-semibold text-7xl tracking-tighter text-white">
+                    <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
+                </div>
+            `;
+            exportContainer.appendChild(banner);
+
+            // 2. Clone the Grid
+            const clonedGrid = gridPreview.cloneNode(true);
+            clonedGrid.style.width = '100%';
+            clonedGrid.style.maxWidth = '1000px';
+            // Important: cloned nodes might lose images if they weren't fully loaded or have CORS issues
+            // but html2canvas usually handles the DOM tree well.
+            
+            // Remove 'remove-btn' from clone
+            clonedGrid.querySelectorAll('.remove-btn').forEach(btn => btn.remove());
+            
+            exportContainer.appendChild(clonedGrid);
+            document.body.appendChild(exportContainer);
+
+            try {
+                const canvas = await html2canvas(exportContainer, {
+                    scale: 2,
+                    backgroundColor: '#0a0f1e',
+                    useCORS: true,
+                    allowTaint: false,
+                    logging: false
+                });
+
+                const a = document.createElement('a');
+                a.download = `xrpgridz-x-export-${new Date().toISOString().slice(0,10)}.png`;
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+            } catch (err) {
+                console.error("Export failed", err);
+                alert("Failed to export image. Please try again.");
+            } finally {
+                document.body.removeChild(exportContainer);
+            }
         }
         function showStatus(el, msg, type) {
             el.innerHTML = msg;
