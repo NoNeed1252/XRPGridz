@@ -15,8 +15,26 @@
         .grid-cell img { width: 100%; height: 100%; object-fit: cover; }
         .remove-btn { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; background: rgba(0,0,0,0.75); color: white; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 12px; z-index: 20; }
         .remove-btn:hover { background: #dc2626; }
-        .loading-skeleton { background: linear-gradient(90deg, #1e2937 25%, #334155 50%, #1e2937 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
+        /* Social Style overrides */
+        .social-style #grid-preview { 
+            padding: 24px; 
+            border-radius: 48px; 
+            background: #0f172a;
+            aspect-ratio: 16 / 9;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .social-style .grid-inner {
+            display: grid;
+            width: 100%;
+            height: 100%;
+        }
+        .social-style .grid-cell {
+            border-radius: 24px;
+        }
     </style>
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
@@ -76,8 +94,8 @@
                     </select>
                 </div>
 
-                <div class="text-xs text-slate-400 mb-2">Lazy loading enabled for high-count wallets.</div>
-                <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[500px] overflow-auto p-1"></div>
+                <div class="text-xs text-slate-400 mb-2">Images &amp; collection names come from Bithomp + xrpl.to — some NFTs have limited public data</div>
+                <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[420px] overflow-auto"></div>
 
                 <div class="mt-4 flex justify-between text-sm">
                     <div class="text-blue-400"><span id="selected-count">0</span> selected</div>
@@ -114,6 +132,20 @@
                             </div>
                         </div>
 
+                        <div class="mb-5 p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-x-2">
+                                    <i class="fa-brands fa-x-twitter text-lg"></i>
+                                    <span class="text-sm font-semibold">Social Style (X)</span>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="social-style-toggle" class="sr-only peer" onchange="updateGridPreview()">
+                                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2">Adds 16:9 padding and rounded corners for X sharing.</p>
+                        </div>
+
                         <div class="flex gap-2">
                             <button onclick="shuffleSelected()" class="flex-1 py-2 text-xs border border-slate-600 rounded-2xl">Shuffle</button>
                             <button onclick="updateGridPreview()" class="flex-1 py-2 text-xs bg-emerald-600 text-white rounded-2xl">Refresh Preview</button>
@@ -127,7 +159,7 @@
                                 <span class="font-semibold">Live Preview</span>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="exportForX()" class="px-5 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2 border border-white/20">
+                                <button onclick="exportForX()" class="px-5 py-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
                                     <i class="fa-brands fa-x-twitter"></i> Export for X
                                 </button>
                                 <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
@@ -136,8 +168,8 @@
                             </div>
                         </div>
 
-                        <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center">
-                            <div id="grid-preview" class="grid w-full max-w-[580px]" style="gap: 6px;"></div>
+                        <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center overflow-hidden">
+                            <div id="grid-preview" class="w-full max-w-[580px]"></div>
                         </div>
                     </div>
                 </div>
@@ -146,149 +178,106 @@
     </div>
 
     <script>
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+        const status = document.getElementById('wallet-status');
+        if (status) {
+            status.innerHTML = 'Critial Error: ' + msg + ' (Line ' + lineNo + ')';
+            status.className = 'mt-2 text-xs bg-red-900/80 text-red-100 p-3 rounded-xl';
+            status.classList.remove('hidden');
+        }
+        return false;
+    };
         let allNFTs = [];
         let selectedNFTs = [];
         let currentWallet = '';
         let currentMarker = null;
-        const metadataCache = new Map();
+        const bithompCache = new Map();
+        const xrplToCache = new Map();
         const collectionNameCache = new Map();
         let isLoadingMore = false;
-        
-        // Throttling/Queueing state
-        const fetchQueue = [];
-        let activeFetches = 0;
-        const MAX_CONCURRENT_FETCHES = 6;
+
+        async function getBithompNFT(nftId) {
+            if (bithompCache.has(nftId)) return bithompCache.get(nftId);
+            try {
+                const res = await fetch(`https://bithomp.com/api/v2/nft/${nftId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    bithompCache.set(nftId, data);
+                    return data;
+                }
+            } catch(e){}
+            return null;
+        }
+
+        async function getXRPLToNFT(nftId) {
+            if (xrplToCache.has(nftId)) return xrplToCache.get(nftId);
+            try {
+                const res = await fetch(`https://api.xrpl.to/v1/nft/${nftId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    xrplToCache.set(nftId, data);
+                    return data;
+                }
+            } catch(e){}
+            return null;
+        }
 
         /**
-         * Queued fetch wrapper to prevent browser connection limit saturation.
+         * Resolves an IPFS URI into a public gateway URL.
          */
-        async function throttledFetch(url, options = {}) {
-            return new Promise((resolve, reject) => {
-                const execute = async () => {
-                    activeFetches++;
-                    try {
-                        const res = await fetch(url, options);
-                        resolve(res);
-                    } catch (err) {
-                        reject(err);
-                    } finally {
-                        activeFetches--;
-                        if (fetchQueue.length > 0) {
-                            const next = fetchQueue.shift();
-                            next();
-                        }
-                    }
-                };
-
-                if (activeFetches < MAX_CONCURRENT_FETCHES) {
-                    execute();
-                } else {
-                    fetchQueue.push(execute);
-                }
-            });
-        }
-
-        async function getXRPScanMetadata(nftId) {
-            if (metadataCache.has(nftId)) return metadataCache.get(nftId);
-            try {
-                const res = await throttledFetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    metadataCache.set(nftId, data);
-                    return data;
-                }
-            } catch(e){}
-            return null;
-        }
-
-        async function getXRPLMetaMetadata(nftId) {
-            const cacheKey = `meta-${nftId}`;
-            if (metadataCache.has(cacheKey)) return metadataCache.get(cacheKey);
-            try {
-                const res = await throttledFetch(`https://xrplmeta.org/api/v1/nft/${nftId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    metadataCache.set(cacheKey, data);
-                    return data;
-                }
-            } catch(e){}
-            return null;
-        }
-
-        async function getBithompMetadata(nftId) {
-            const cacheKey = `bithomp-${nftId}`;
-            if (metadataCache.has(cacheKey)) return metadataCache.get(cacheKey);
-            try {
-                const res = await throttledFetch(`https://bithomp.com/api/v2/nft/${nftId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    metadataCache.set(cacheKey, data);
-                    return data;
-                }
-            } catch(e){}
-            return null;
-        }
-
-        async function resolveNFTImageSources(nft) {
-            const sources = [];
-            if (!nft?.NFTokenID) return sources;
-
-            // Prioritize our new backend proxy for hex-unwrapping and IPFS resolution
-            if (nft.URI) {
-                sources.push(`/api/proxy?hex=${nft.URI}`);
+        function resolveIpfsUrl(uri) {
+            if (!uri) return '';
+            
+            // Handle ipfs:// protocol
+            if (uri.startsWith('ipfs://')) {
+                return uri.replace('ipfs://', 'https://ipfs.io/ipfs/');
             }
 
-            const scanData = await getXRPScanMetadata(nft.NFTokenID);
-            if (scanData?.meta?.image) {
-                const url = formatImageUrl(scanData.meta.image);
-                if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
+            // Handle bare CID
+            if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) {
+                return `https://ipfs.io/ipfs/${uri}`;
             }
 
-            const metaData = await getXRPLMetaMetadata(nft.NFTokenID);
-            if (metaData?.image) {
-                const url = formatImageUrl(metaData.image);
-                if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
-            }
-
-            const bData = await getBithompMetadata(nft.NFTokenID);
-            if (bData?.image) {
-                const url = formatImageUrl(bData.image);
-                if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
-            }
-
-            // Fallback to extraction logic if proxy fails
-            let rawUri = nft.URI || '';
-            if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
-            if (rawUri) {
-                const cid = extractCID(rawUri);
-                if (cid) {
-                    sources.push(`/api/proxy?cid=${cid}`);
-                    // Direct fallbacks as last resort
-                    sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
-                    sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
-                } else if (rawUri.startsWith('http')) {
-                    sources.push(`/api/proxy?url=${encodeURIComponent(rawUri)}`);
-                    sources.push(rawUri);
-                }
-            }
-
-            return [...new Set(sources)];
+            return uri;
         }
 
-        function formatImageUrl(url) {
-            if (!url) return null;
-            if (url.startsWith('ipfs://')) {
-                const cid = url.replace('ipfs://', '');
-                return `https://ipfs.io/ipfs/${cid}`;
-            }
-            return url;
-        }
+        async function resolveNFTImage(nft) {
+            if (!nft?.NFTokenID) return null;
 
-        function extractCID(uri) {
+            // Try Bithomp first
+            let data = await getBithompNFT(nft.NFTokenID);
+            if (data?.image) {
+                return resolveIpfsUrl(data.image);
+            }
+
+            // Try xrpl.to as secondary
+            data = await getXRPLToNFT(nft.NFTokenID);
+            if (data?.image || data?.metadata?.image) {
+                return resolveIpfsUrl(data.image || data.metadata.image);
+            }
+
+            // Strong fallback on the NFT's own URI
+            let uri = nft.URI || '';
+            if (/^[0-9A-Fa-f]{20,}$/.test(uri)) uri = hexToString(uri);
             if (!uri) return null;
-            if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', '');
-            if (uri.includes('ipfs/')) return uri.split('ipfs/').pop();
-            if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) return uri;
+
+            if (/\.(jpg|jpeg|png|gif|webp)/i.test(uri) && uri.startsWith('http')) return uri;
+
+            const gatewayUrl = resolveIpfsUrl(uri);
+            if (gatewayUrl.includes('/ipfs/')) return gatewayUrl;
+
+            // Try as metadata JSON
+            try {
+                const res = await fetch(gatewayUrl);
+                if (res.ok) {
+                    const json = await res.json().catch(() => null);
+                    if (json) {
+                        const img = json.image || json.image_url || json.thumbnail || json.properties?.image || json.media;
+                        if (img) return resolveIpfsUrl(img);
+                    }
+                }
+            } catch(e){}
+
             return null;
         }
 
@@ -298,22 +287,38 @@
             return str;
         }
 
+        /**
+         * Decodes a Hex string to UTF-8 using TextDecoder.
+         */
         function decodeHexName(hex) {
             try {
                 if (!hex || hex.length % 2 !== 0) return hex;
                 const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
                 return new TextDecoder().decode(bytes);
-            } catch (e) { return hex; }
+            } catch (e) {
+                return hex;
+            }
         }
 
+        /**
+         * Formats the collection display name.
+         */
         function getCollectionDisplayName(collection, nft = null) {
             if (!collection && !nft) return "Unknown Collection";
+
             let name = collection?.name || collection?.collection_name;
-            if (name && /^[0-9A-Fa-f]+$/.test(name)) name = decodeHexName(name);
+
+            // If name is hex-encoded, decode it
+            if (name && /^[0-9A-Fa-f]+$/.test(name)) {
+                name = decodeHexName(name);
+            }
+
+            // Fallback to Taxon/ID
             if (!name && nft) {
                 const short = (nft.Issuer || '').slice(0,8) + '…' + (nft.Issuer || '').slice(-4);
-                return `Coll: ${short}`;
+                return `Collection (${short} • Taxon ${nft.NFTokenTaxon || 0})`;
             }
+
             return name || "Unknown Collection";
         }
 
@@ -351,27 +356,35 @@
             const address = document.getElementById('wallet-input').value.trim();
             if (!address) return alert('Please enter a wallet address');
             const statusEl = document.getElementById('wallet-status');
-            showStatus(statusEl, 'Syncing XRPL Wallet...', 'loading');
+            showStatus(statusEl, 'Loading NFTs from XRPL + Bithomp + xrpl.to...', 'loading');
             document.getElementById('nft-gallery-section').classList.add('hidden');
             document.getElementById('grid-config-section').classList.add('hidden');
 
             try {
                 const nfts = await loadAllNFTs(address);
                 if (nfts.length === 0) return showStatus(statusEl, 'No NFTs found.', 'info');
+
                 allNFTs = nfts;
                 currentWallet = address;
                 selectedNFTs = [];
+
                 document.getElementById('nft-count').textContent = allNFTs.length;
                 document.getElementById('nft-gallery-section').classList.remove('hidden');
                 document.getElementById('grid-config-section').classList.remove('hidden');
+
                 renderNFTGallery();
                 populateCollectionFilter();
+
                 if (currentMarker) document.getElementById('load-more-btn').classList.remove('hidden');
+
                 selectedNFTs = allNFTs.slice(0, Math.min(16, allNFTs.length));
                 updateSelectedCount();
                 setTimeout(() => setGridPreset(4, 4), 600);
+
                 showStatus(statusEl, `Loaded ${allNFTs.length} NFTs`, 'success');
-            } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
+            } catch (e) {
+                showStatus(statusEl, 'Error loading NFTs.', 'error');
+            }
         }
 
         async function loadMoreNFTs() {
@@ -379,40 +392,62 @@
             isLoadingMore = true;
             const btn = document.getElementById('load-more-btn');
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Loading...`;
+
             const result = await loadNFTsFromXRPL(currentWallet, currentMarker);
             const newOnes = result.nfts.filter(n => !allNFTs.some(e => e.NFTokenID === n.NFTokenID));
             allNFTs = allNFTs.concat(newOnes);
             currentMarker = result.marker;
+
             document.getElementById('nft-count').textContent = allNFTs.length;
             renderNFTGallery();
             populateCollectionFilter();
-            btn.innerHTML = currentMarker ? `<i class="fa-solid fa-plus"></i> Load More` : btn.classList.add('hidden');
+
+            if (currentMarker) btn.innerHTML = `<i class="fa-solid fa-plus"></i> Load More`;
+            else btn.classList.add('hidden');
             isLoadingMore = false;
         }
 
         async function populateCollectionFilter() {
             const select = document.getElementById('collection-filter');
             while (select.options.length > 1) select.remove(1);
+
             const map = new Map();
-            // Just use the first 50 for collection filters to avoid overwhelming 
-            const sample = allNFTs.slice(0, 50);
-            await Promise.all(sample.map(async (nft) => {
-                const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
-                if (!map.has(key)) {
-                    let label = "Unknown Collection";
-                    if (collectionNameCache.has(key)) label = collectionNameCache.get(key);
-                    map.set(key, { label, count: 0 });
-                }
-            }));
+            const BATCH_SIZE = 5;
+            
+            for (let i = 0; i < allNFTs.length; i += BATCH_SIZE) {
+                const batch = allNFTs.slice(i, i + BATCH_SIZE);
+                await Promise.all(batch.map(async (nft) => {
+                    const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
+                    if (!map.has(key)) {
+                        if (collectionNameCache.has(key)) {
+                            map.set(key, { label: collectionNameCache.get(key), count: 0 });
+                        } else {
+                            let collectionData = null;
+                            try {
+                                let data = await getBithompNFT(nft.NFTokenID);
+                                if (data?.metadata?.collection) collectionData = data.metadata.collection;
+                                else if (data?.issuer_info) collectionData = data.issuer_info;
 
-            allNFTs.forEach(nft => {
-                const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
-                if (map.has(key)) map.get(key).count++;
-            });
+                                if (!collectionData) {
+                                    data = await getXRPLToNFT(nft.NFTokenID);
+                                    if (data?.collection) collectionData = data.collection;
+                                }
+                            } catch(e){}
 
-            Array.from(map.entries()).sort((a,b) => b[1].count - a[1].count).forEach(([key, data]) => {
+                            const label = getCollectionDisplayName(collectionData, nft);
+                            collectionNameCache.set(key, label);
+                            map.set(key, { label, count: 0 });
+                        }
+                    }
+                    map.get(key).count++;
+                }));
+            }
+
+            const sorted = Array.from(map.entries()).sort((a,b) => b[1].count - a[1].count);
+            sorted.forEach(([key, data]) => {
                 const opt = document.createElement('option');
-                opt.value = key; opt.textContent = `${data.label} (${data.count})`;
+                opt.value = key;
+                opt.textContent = `${data.label} (${data.count})`;
                 select.appendChild(opt);
             });
         }
@@ -426,37 +461,15 @@
             renderNFTGallery(filtered);
         }
 
-        /**
-         * Intersection Observer for Lazy Loading.
-         * Only triggers image/metadata logic when card is visible.
-         */
-        const lazyObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const card = entry.target;
-                    const nftIndex = card.dataset.index;
-                    const nftId = card.dataset.nftid;
-                    const nft = allNFTs.find(n => n.NFTokenID === nftId);
-                    if (nft && !card.dataset.loaded) {
-                        card.dataset.loaded = "true";
-                        loadImageForCard(nft, nftIndex, card);
-                    }
-                    // Optional: Unobserve after loading to save resources
-                    // lazyObserver.unobserve(card);
-                }
-            });
-        }, { root: document.getElementById('nft-grid'), rootMargin: '200px' });
-
         function renderNFTGallery(filtered = null) {
             const container = document.getElementById('nft-grid');
             container.innerHTML = '';
             const list = filtered || allNFTs;
+
             list.forEach((nft, i) => {
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
                 card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer`;
-                card.dataset.index = i;
-                card.dataset.nftid = nft.NFTokenID;
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-4xl text-slate-700"></i></div>
@@ -465,7 +478,7 @@
                     </div>`;
                 card.onclick = () => toggleSelection(nft, card);
                 container.appendChild(card);
-                lazyObserver.observe(card);
+                setTimeout(() => loadImageForCard(nft, i, card), 60);
             });
             updateSelectedCount();
         }
@@ -474,24 +487,22 @@
             const skel = document.getElementById(`skel-${index}`);
             const wrap = document.getElementById(`imgwrap-${index}`);
             if (!skel || !wrap) return;
-            
-            const sources = await resolveNFTImageSources(nft);
+
+            const url = await resolveNFTImage(nft);
             skel.style.display = 'none';
             wrap.style.display = 'block';
             wrap.className = 'w-full h-full';
-            
-            if (sources.length === 0) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
-            
-            const img = document.createElement('img');
-            img.className = 'w-full h-full object-cover';
-            let currentTry = 0;
-            img.onerror = () => {
-                currentTry++;
-                if (currentTry < sources.length) img.src = sources[currentTry];
-                else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
-            };
-            img.src = sources[0];
-            wrap.appendChild(img);
+
+            if (url) {
+                const img = document.createElement('img');
+                img.src = url;
+                img.className = 'w-full h-full object-cover';
+                img.crossOrigin = 'anonymous';
+                img.onerror = () => { wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
+                wrap.appendChild(img);
+            } else {
+                wrap.innerHTML = createPlaceholder(nft.NFTokenID);
+            }
         }
 
         function toggleSelection(nft, card) {
@@ -506,55 +517,89 @@
                 card.classList.add('selected', 'border-blue-500');
                 card.classList.remove('border-slate-700');
             }
-            updateSelectedCount(); updateGridPreview();
+            updateSelectedCount();
+            updateGridPreview();
         }
 
         function updateGridPreview() {
             const grid = document.getElementById('grid-preview');
+            const wrapper = document.getElementById('preview-wrapper');
             const rows = parseInt(document.getElementById('rows-slider').value);
             const cols = parseInt(document.getElementById('cols-slider').value);
-            if (!selectedNFTs.length) { grid.innerHTML = ''; return; }
-            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            const socialStyle = document.getElementById('social-style-toggle').checked;
+
+            if (socialStyle) wrapper.classList.add('social-style');
+            else wrapper.classList.remove('social-style');
+
+            if (!selectedNFTs.length) {
+                grid.innerHTML = '';
+                return;
+            }
+
             grid.innerHTML = '';
-            selectedNFTs.slice(0, rows * cols).forEach(nft => {
+            
+            const inner = document.createElement('div');
+            inner.className = 'grid-inner';
+            inner.style.display = 'grid';
+            inner.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            inner.style.gap = socialStyle ? '12px' : '6px';
+            grid.appendChild(inner);
+
+            const toShow = selectedNFTs.slice(0, rows * cols);
+
+            toShow.forEach(nft => {
                 const cell = document.createElement('div');
-                cell.className = `grid-cell rounded-2xl border border-slate-600 overflow-hidden group`;
+                cell.className = `grid-cell border border-slate-600 overflow-hidden group`;
+                if (!socialStyle) cell.classList.add('rounded-2xl');
+
                 const x = document.createElement('button');
-                x.className = `remove-btn`; x.innerHTML = `<i class="fa-solid fa-times"></i>`;
+                x.className = `remove-btn`;
+                x.innerHTML = `<i class="fa-solid fa-times"></i>`;
                 x.onclick = (e) => {
                     e.stopImmediatePropagation();
                     const i = selectedNFTs.findIndex(s => s.NFTokenID === nft.NFTokenID);
-                    if (i > -1) { selectedNFTs.splice(i, 1); updateSelectedCount(); renderNFTGallery(); updateGridPreview(); }
+                    if (i > -1) {
+                        selectedNFTs.splice(i, 1);
+                        updateSelectedCount();
+                        renderNFTGallery();
+                        updateGridPreview();
+                    }
                 };
                 cell.appendChild(x);
+
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full relative bg-[#1e2937]';
                 cell.appendChild(wrap);
-                resolveNFTImageSources(nft).then(sources => {
-                    if (sources.length > 0) {
+
+                resolveNFTImage(nft).then(url => {
+                    if (url) {
                         const img = document.createElement('img');
-                        img.className = 'w-full h-full object-cover'; 
+                        img.src = url;
+                        img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
-                        let currentTry = 0;
-                        img.onerror = () => {
-                            currentTry++;
-                            if (currentTry < sources.length) img.src = sources[currentTry];
-                            else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
-                        };
-                        img.src = sources[0];
                         wrap.appendChild(img);
-                    } else wrap.innerHTML = createPlaceholder(nft.NFTokenID);
+                    } else {
+                        wrap.innerHTML = createPlaceholder(nft.NFTokenID);
+                    }
                 });
-                grid.appendChild(cell);
+
+                inner.appendChild(cell);
             });
         }
 
-        function updateSelectedCount() { document.getElementById('selected-count').textContent = selectedNFTs.length; }
+        function updateSelectedCount() {
+            const el = document.getElementById('selected-count');
+            if (el) el.textContent = selectedNFTs.length;
+        }
+
         function setGridPreset(r, c) {
-            document.getElementById('rows-slider').value = r; document.getElementById('cols-slider').value = c;
-            document.getElementById('rows-value').textContent = r; document.getElementById('cols-value').textContent = c;
+            document.getElementById('rows-slider').value = r;
+            document.getElementById('cols-slider').value = c;
+            document.getElementById('rows-value').textContent = r;
+            document.getElementById('cols-value').textContent = c;
             updateGridPreview();
         }
+
         function shuffleSelected() {
             for (let i = selectedNFTs.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -562,92 +607,76 @@
             }
             updateGridPreview();
         }
-        function clearSelected() { selectedNFTs = []; renderNFTGallery(); updateSelectedCount(); document.getElementById('grid-preview').innerHTML = ''; }
-        function selectAllNFTs() { selectedNFTs = [...allNFTs].slice(0, 100); renderNFTGallery(); updateSelectedCount(); updateGridPreview(); }
-        function deselectAllNFTs() { selectedNFTs = []; renderNFTGallery(); updateSelectedCount(); document.getElementById('grid-preview').innerHTML = ''; }
+
+        function clearSelected() {
+            selectedNFTs = [];
+            renderNFTGallery();
+            updateSelectedCount();
+            document.getElementById('grid-preview').innerHTML = '';
+        }
+
+        function selectAllNFTs() {
+            selectedNFTs = [...allNFTs].slice(0, 100);
+            renderNFTGallery();
+            updateSelectedCount();
+            updateGridPreview();
+        }
+
+        function deselectAllNFTs() {
+            selectedNFTs = [];
+            renderNFTGallery();
+            updateSelectedCount();
+            document.getElementById('grid-preview').innerHTML = '';
+        }
+
+        async function exportForX() {
+            const toggle = document.getElementById('social-style-toggle');
+            if (!toggle.checked) {
+                toggle.checked = true;
+                updateGridPreview();
+            }
+            // Small delay to ensure preview update
+            setTimeout(() => downloadGridPNG(), 300);
+        }
+
         async function downloadGridPNG() {
             const wrapper = document.getElementById('grid-preview');
-            if (!wrapper.children.length) return alert('Build a preview first!');
-            const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true });
+            if (!wrapper.querySelector('.grid-inner')) return alert('Build a preview first!');
+            
+            const isSocial = document.getElementById('social-style-toggle').checked;
+            
+            const canvas = await html2canvas(wrapper, { 
+                scale: 3, 
+                backgroundColor: '#0f172a', 
+                useCORS: true,
+                onclone: (clonedDoc) => {
+                    const clonedWrapper = clonedDoc.getElementById('grid-preview');
+                    if (isSocial) {
+                        clonedWrapper.style.padding = '48px';
+                        clonedWrapper.style.borderRadius = '64px';
+                        clonedWrapper.style.width = '1200px';
+                        clonedWrapper.style.height = '675px'; // 16:9
+                    }
+                }
+            });
+            
             const a = document.createElement('a');
             a.download = `xrpgridz-${currentWallet.slice(0,6)}-${new Date().toISOString().slice(0,10)}.png`;
-            a.href = canvas.toDataURL('image/png'); a.click();
+            a.href = canvas.toDataURL('image/png');
+            a.click();
         }
-        async function exportForX() {
-            const gridPreview = document.getElementById('grid-preview');
-            if (!gridPreview.children.length) return alert('Build a preview first!');
 
-            // Create a temporary container for 16:9 export
-            const exportContainer = document.createElement('div');
-            exportContainer.style.position = 'fixed';
-            exportContainer.style.top = '-9999px';
-            exportContainer.style.left = '-9999px';
-            exportContainer.style.width = '1600px';
-            exportContainer.style.height = '900px';
-            exportContainer.style.backgroundColor = '#0a0f1e';
-            exportContainer.style.display = 'flex';
-            exportContainer.style.flexDirection = 'column';
-            exportContainer.style.alignItems = 'center';
-            exportContainer.style.justifyContent = 'center';
-            exportContainer.style.padding = '40px';
-            exportContainer.id = 'temp-export-container';
-
-            // 1. Create Banner (Squared corners as requested)
-            const banner = document.createElement('div');
-            banner.className = "flex items-center gap-x-6 mb-12";
-            banner.innerHTML = `
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
-                    <i class="fa-solid fa-th-large text-white text-5xl"></i>
-                </div>
-                <div class="font-semibold text-7xl tracking-tighter text-white">
-                    <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
-                </div>
-            `;
-            exportContainer.appendChild(banner);
-
-            // 2. Clone the Grid
-            const clonedGrid = gridPreview.cloneNode(true);
-            clonedGrid.style.width = '100%';
-            clonedGrid.style.maxWidth = '1000px';
-            // Important: cloned nodes might lose images if they weren't fully loaded or have CORS issues
-            // but html2canvas usually handles the DOM tree well.
-            
-            // Remove 'remove-btn' from clone
-            clonedGrid.querySelectorAll('.remove-btn').forEach(btn => btn.remove());
-            
-            exportContainer.appendChild(clonedGrid);
-            document.body.appendChild(exportContainer);
-
-            try {
-                const canvas = await html2canvas(exportContainer, {
-                    scale: 2,
-                    backgroundColor: '#0a0f1e',
-                    useCORS: true,
-                    allowTaint: false,
-                    logging: false
-                });
-
-                const a = document.createElement('a');
-                a.download = `xrpgridz-x-export-${new Date().toISOString().slice(0,10)}.png`;
-                a.href = canvas.toDataURL('image/png');
-                a.click();
-            } catch (err) {
-                console.error("Export failed", err);
-                alert("Failed to export image. Please try again.");
-            } finally {
-                document.body.removeChild(exportContainer);
-            }
-        }
         function showStatus(el, msg, type) {
             el.innerHTML = msg;
             el.className = `mt-2 text-sm px-4 py-2 rounded-2xl flex items-center ${type === 'error' ? 'bg-red-950/60 text-red-400 border border-red-900/50' : type === 'success' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-900/50' : 'bg-blue-950/60 text-blue-400 border border-blue-900/50'}`;
             el.classList.remove('hidden');
             if (type === 'success') setTimeout(() => el.classList.add('hidden'), 4000);
         }
+
         const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
         function showDonateModal() {
             const modal = document.createElement('div');
-            modal.className = `fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4`;
+            modal.className = `fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4`;
             modal.innerHTML = `
                 <div class="glass border border-white/10 rounded-3xl max-w-md w-full p-8 relative" onclick="event.target === this && this.remove()">
                     <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl">×</button>
@@ -660,22 +689,30 @@
                             <div class="font-mono text-lg break-all mb-3">${DONATE_ADDRESS}</div>
                             <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
                         </div>
+                        <div class="flex gap-3 justify-center text-xs">
+                            <a href="https://xrpscan.com/account/${DONATE_ADDRESS}" target="_blank" class="px-4 py-2 border border-white/20 rounded-2xl">View on XRPSCAN</a>
+                            <a href="https://bithomp.com/explorer/${DONATE_ADDRESS}" target="_blank" class="px-4 py-2 border border-white/20 rounded-2xl">View on Bithomp</a>
+                        </div>
                     </div>
                 </div>`;
             document.body.appendChild(modal);
         }
+
         function initializeApp() {
-            const r = document.getElementById('rows-slider'); const c = document.getElementById('cols-slider');
+            const r = document.getElementById('rows-slider');
+            const c = document.getElementById('cols-slider');
             if (r && c) {
                 r.oninput = c.oninput = () => {
                     document.getElementById('rows-value').textContent = r.value;
                     document.getElementById('cols-value').textContent = c.value;
                     updateGridPreview();
                 };
-                r.value = c.value = 4;
+                r.value = 4; c.value = 4;
+                document.getElementById('rows-value').textContent = 4;
+                document.getElementById('cols-value').textContent = 4;
             }
         }
-        window.onload = initializeApp;
+        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
