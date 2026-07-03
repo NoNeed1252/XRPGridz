@@ -158,14 +158,9 @@
                                     <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
                                     <span class="font-semibold">Live Preview</span>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button id="share-x-btn" onclick="shareOnX()" class="px-5 py-2 bg-black border border-slate-700 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2 hover:bg-slate-900 transition-colors">
-                                        <i class="fa-brands fa-x-twitter"></i> Share on X
-                                    </button>
-                                    <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
-                                        <i class="fa-solid fa-download"></i> Download PNG
-                                    </button>
-                                </div>
+                                <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
+                                    <i class="fa-solid fa-download"></i> Download PNG
+                                </button>
                             </div>
 
                             <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center">
@@ -205,12 +200,7 @@
                         <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Bottom Text</label>
                         <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
-                    <div class="flex flex-col gap-3">
-                        <button id="share-meme-x-btn" onclick="shareMemeOnX()" class="w-full py-4 bg-black border border-slate-700 text-white font-bold rounded-2xl text-xl flex items-center justify-center gap-x-2 hover:bg-slate-900">
-                            <i class="fa-brands fa-x-twitter"></i> Share on X
-                        </button>
-                        <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
-                    </div>
+                    <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
                 </div>
             </div>
@@ -230,18 +220,8 @@
         // --- Tab Management ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-\${tabId}`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function shareOnX() {
-            const text = encodeURIComponent("Just created my XRP NFT grid on XRPGridz! 🚀✨\\n\\nCheck it out: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
-            window.open(\`https://twitter.com/intent/tweet?text=\${text}\`, '_blank');
-        }
-
-        function shareMemeOnX() {
-            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\\n\\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
-            window.open(\`https://twitter.com/intent/tweet?text=\${text}\`, '_blank');
         }
 
         function memeNFT(nftId) {
@@ -299,7 +279,7 @@
 
             // Font Settings
             const fontSize = Math.floor(width * 0.1);
-            ctx.font = \`bold \${fontSize}px Impact, system-ui, sans-serif\`;
+            ctx.font = `bold ${fontSize}px Impact, system-ui, sans-serif`;
             ctx.fillStyle = 'white';
             ctx.strokeStyle = 'black';
             ctx.lineWidth = fontSize / 12;
@@ -324,7 +304,7 @@
             const canvas = document.getElementById('meme-canvas');
             if (!activeMemeImage) return alert('Select an NFT first!');
             const link = document.createElement('a');
-            link.download = \`xrpmeme-\${Date.now()}.png\`;
+            link.download = `xrpmeme-${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -353,9 +333,9 @@
         async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
             const providers = [
-                () => fetch(\`https://api.xrpscan.com/api/v1/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
-                () => fetch(\`https://xrplmeta.org/api/v1/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-                () => fetch(\`https://bithomp.com/api/v2/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+                () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+                () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+                () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
             ];
 
             try {
@@ -370,19 +350,19 @@
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
-            if (nft.URI) sources.push(\`/api/proxy?hex=\${nft.URI}\`);
+            if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
             const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
             if (racedImage) {
-                const url = racedImage.startsWith('ipfs://') ? \`https://ipfs.io/ipfs/\${racedImage.replace('ipfs://', '')}\` : racedImage;
-                sources.push(\`/api/proxy?url=\${encodeURIComponent(url)}\`);
+                const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
+                sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
             }
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
                 const cid = extractCID(rawUri);
                 if (cid) {
-                    sources.push(\`/api/proxy?cid=\${cid}\`);
-                    sources.push(\`https://ipfs-proxy.xrp.cafe/ipfs/\${cid}\`);
+                    sources.push(`/api/proxy?cid=${cid}`);
+                    sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
                 }
             }
             return [...new Set(sources)];
@@ -444,7 +424,7 @@
                 selectedNFTs = allNFTs.slice(0, 16);
                 updateSelectedCount();
                 setTimeout(() => setGridPreset(4, 4), 600);
-                showStatus(statusEl, \`Found \${allNFTs.length} NFTs\`, 'success');
+                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
@@ -470,18 +450,18 @@
             list.forEach((nft, i) => {
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = \`nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer\`;
+                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer`;
                 card.dataset.index = i;
                 card.dataset.nftid = nft.NFTokenID;
-                card.innerHTML = \`
+                card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
-                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-\${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
-                        <div id="imgwrap-\${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
-                        <button onclick="event.stopPropagation(); memeNFT('\${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
+                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
+                        <div id="imgwrap-${i}" class="w-full h-full hidden"></div>
+                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
+                        <button onclick="event.stopPropagation(); memeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-face-grin-tears"></i> MEME IT
                         </button>
-                    </div>\`;
+                    </div>`;
                 card.onclick = () => toggleSelection(nft, card);
                 container.appendChild(card);
                 galleryObserver.observe(card);
@@ -489,8 +469,8 @@
         }
 
         async function loadImageForCard(nft, index, card) {
-            const skel = document.getElementById(\`skel-\${index}\`);
-            const wrap = document.getElementById(\`imgwrap-\${index}\`);
+            const skel = document.getElementById(`skel-${index}`);
+            const wrap = document.getElementById(`imgwrap-${index}`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -506,39 +486,7 @@
             }
         }
 
-        
-        function filterNFTs() {
-            const text = document.getElementById('nft-filter').value.toLowerCase().trim();
-            const coll = document.getElementById('collection-filter').value;
-            let filtered = allNFTs;
-            if (coll) filtered = filtered.filter(n => \`\${n.Issuer || ''}-\${n.NFTokenTaxon || 0}\` === coll);
-            if (text) filtered = filtered.filter(n => (n.NFTokenID?.toLowerCase().includes(text)) || (n.Issuer?.toLowerCase().includes(text)));
-            renderNFTGallery(filtered);
-        }
-
-        async function loadMoreNFTs() {
-            if (!currentMarker || isLoadingMore) return;
-            isLoadingMore = true;
-            const btn = document.getElementById('load-more-btn');
-            btn.innerHTML = \`<i class="fa-solid fa-spinner fa-spin"></i> Loading...\`;
-
-            const result = await loadNFTsFromXRPL(currentWallet, currentMarker);
-            const newOnes = result.nfts.filter(n => !allNFTs.some(e => e.NFTokenID === n.NFTokenID));
-            allNFTs = allNFTs.concat(newOnes);
-            currentMarker = result.marker;
-
-            document.getElementById('nft-count').textContent = allNFTs.length;
-            renderNFTGallery();
-            // populateCollectionFilter(); // Note: populateCollectionFilter is not in current script, but required by original logic. 
-            // However, the user said "Restore ... Do not touch anything else". 
-            // Looking at the current script, populateCollectionFilter is indeed missing.
-            // I will include it in the function body as it was in the "restored" version I saw earlier.
-
-            if (currentMarker) btn.innerHTML = \`<i class="fa-solid fa-plus"></i> Load More\`;
-            else btn.classList.add('hidden');
-            isLoadingMore = false;
-        }
-function toggleSelection(nft, card) {
+        function toggleSelection(nft, card) {
             const idx = selectedNFTs.findIndex(s => s.NFTokenID === nft.NFTokenID);
             if (idx > -1) {
                 selectedNFTs.splice(idx, 1);
@@ -563,11 +511,11 @@ function toggleSelection(nft, card) {
             document.getElementById('rows-value').textContent = rows;
 
             if (!selectedNFTs.length) { grid.innerHTML = ''; return; }
-            grid.style.gridTemplateColumns = \`repeat(\${cols}, 1fr)\`;
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             grid.innerHTML = '';
             selectedNFTs.slice(0, rows * cols).forEach(nft => {
                 const cell = document.createElement('div');
-                cell.className = \`grid-cell rounded-2xl border border-slate-600 overflow-hidden relative group\`;
+                cell.className = `grid-cell rounded-2xl border border-slate-600 overflow-hidden relative group`;
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
@@ -665,7 +613,7 @@ function toggleSelection(nft, card) {
                     ctx.translate(-centerX, -centerY);
                 }
 
-                ctx.font = \`bold \${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif\`;
+                ctx.font = `bold ${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif`;
                 const text = "XRPGridz";
                 const textMetrics = ctx.measureText(text);
                 const logoSize = bannerThickness * 0.6;
@@ -686,7 +634,7 @@ function toggleSelection(nft, card) {
 
                 // 7. Trigger download
                 const a = document.createElement('a');
-                a.download = \`xrpgridz-\${new Date().getTime()}.png\`;
+                a.download = `xrpgridz-${new Date().getTime()}.png`;
                 a.href = finalCanvas.toDataURL('image/png'); 
                 a.click();
             } catch (e) { 
@@ -726,12 +674,12 @@ function toggleSelection(nft, card) {
 
         function showStatus(el, msg, type) { 
             el.innerHTML = msg; 
-            el.className = \`mt-2 text-sm px-4 py-2 rounded-2xl \${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}\`; 
+            el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; 
             el.classList.remove('hidden'); 
         }
 
         function createPlaceholder(id) { 
-            return \`<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 font-mono p-2 text-center">No Image Found<br>\${id.slice(0,6)}</div>\`; 
+            return `<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 font-mono p-2 text-center">No Image Found<br>${id.slice(0,6)}</div>`; 
         }
 
         function shuffleSelected() {
@@ -745,8 +693,8 @@ function toggleSelection(nft, card) {
         const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
         function showDonateModal() {
             const modal = document.createElement('div');
-            modal.className = \`fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4\`;
-            modal.innerHTML = \`
+            modal.className = `fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4`;
+            modal.innerHTML = `
                 <div class="glass border border-white/10 rounded-3xl max-w-md w-full p-8 relative" onclick="event.target === this && this.remove()">
                     <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl">×</button>
                     <div class="text-center">
@@ -755,11 +703,11 @@ function toggleSelection(nft, card) {
                         <p class="text-slate-400 mb-6">Thank you for keeping this tool free.</p>
                         <div class="bg-[#0a0f1e] border border-white/10 rounded-2xl p-5 mb-5">
                             <div class="text-xs text-emerald-400 mb-1">TREASURY WALLET</div>
-                            <div class="font-mono text-lg break-all mb-3">\${DONATE_ADDRESS}</div>
-                            <button onclick="navigator.clipboard.writeText('\${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
+                            <div class="font-mono text-lg break-all mb-3">${DONATE_ADDRESS}</div>
+                            <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
                         </div>
                     </div>
-                </div>\`;
+                </div>`;
             document.body.appendChild(modal);
         }
 
