@@ -146,14 +146,9 @@
                                 <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
                                 <span class="font-semibold">Live Preview</span>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="downloadGridPNG()" class="px-5 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
-                                    <i class="fa-solid fa-download"></i> PNG
-                                </button>
-                                <button onclick="downloadGridPNG(true)" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
-                                    <i class="fa-brands fa-x-twitter"></i> Export for X
-                                </button>
-                            </div>
+                            <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
+                                <i class="fa-solid fa-download"></i> Download PNG
+                            </button>
                         </div>
 
                         <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center">
@@ -396,7 +391,7 @@
             });
         }
 
-        async function downloadGridPNG(isXFormat = false) {
+        async function downloadGridPNG() {
             const wrapper = document.getElementById('grid-preview');
             if (!wrapper.children.length) return alert('Build a grid first!');
             const position = document.getElementById('banner-position').value;
@@ -420,77 +415,56 @@
                     logoImg.onerror = () => { console.warn('Logo failed to load'); resolve(); };
                 });
 
-                let finalCanvasWidth, finalCanvasHeight;
-                let gridX, gridY, bannerX, bannerY, bannerW, bannerH;
+                // 3. Setup final canvas dimensions
                 const bannerThickness = gridCanvas.height * 0.12;
+                let finalWidth = gridCanvas.width;
+                let finalHeight = gridCanvas.height;
+                let gridX = 0, gridY = 0;
+                let bannerX = 0, bannerY = 0, bannerW = finalWidth, bannerH = bannerThickness;
 
-                if (isXFormat) {
-                    // Logic for 16:9 X Canvas
-                    finalCanvasWidth = gridCanvas.width;
-                    finalCanvasHeight = (gridCanvas.width * 9) / 16;
-                    
-                    if (finalCanvasHeight < gridCanvas.height + bannerThickness) {
-                        finalCanvasHeight = gridCanvas.height + bannerThickness;
-                        finalCanvasWidth = (finalCanvasHeight * 16) / 9;
-                    }
-
-                    gridX = (finalCanvasWidth - gridCanvas.width) / 2;
-                    gridY = (finalCanvasHeight - (gridCanvas.height + bannerThickness)) / 2;
-                    bannerX = 0;
-                    bannerY = gridY + gridCanvas.height;
-                    bannerW = finalCanvasWidth;
-                    bannerH = bannerThickness;
-                } else {
-                    // Original Square Logic
-                    finalCanvasWidth = gridCanvas.width;
-                    finalCanvasHeight = gridCanvas.height;
-                    gridX = 0; gridY = 0;
-                    bannerX = 0; bannerY = 0; bannerW = finalCanvasWidth; bannerH = bannerThickness;
-
-                    if (position === 'top') {
-                        finalCanvasHeight += bannerThickness;
-                        gridY = bannerThickness;
-                        bannerY = 0;
-                    } else if (position === 'bottom') {
-                        finalCanvasHeight += bannerThickness;
-                        gridY = 0;
-                        bannerY = gridCanvas.height;
-                    } else if (position === 'left') {
-                        finalCanvasWidth += bannerThickness;
-                        gridX = bannerThickness;
-                        bannerW = bannerThickness;
-                        bannerH = gridCanvas.height;
-                        bannerX = 0; bannerY = 0;
-                    } else if (position === 'right') {
-                        finalCanvasWidth += bannerThickness;
-                        gridX = 0;
-                        bannerW = bannerThickness;
-                        bannerH = gridCanvas.height;
-                        bannerX = gridCanvas.width;
-                        bannerY = 0;
-                    }
+                if (position === 'top') {
+                    finalHeight += bannerThickness;
+                    gridY = bannerThickness;
+                    bannerY = 0;
+                } else if (position === 'bottom') {
+                    finalHeight += bannerThickness;
+                    gridY = 0;
+                    bannerY = gridCanvas.height;
+                } else if (position === 'left') {
+                    finalWidth += bannerThickness;
+                    gridX = bannerThickness;
+                    bannerW = bannerThickness;
+                    bannerH = gridCanvas.height;
+                    bannerX = 0; bannerY = 0;
+                } else if (position === 'right') {
+                    finalWidth += bannerThickness;
+                    gridX = 0;
+                    bannerW = bannerThickness;
+                    bannerH = gridCanvas.height;
+                    bannerX = gridCanvas.width;
+                    bannerY = 0;
                 }
 
                 const finalCanvas = document.createElement('canvas');
-                finalCanvas.width = finalCanvasWidth;
-                finalCanvas.height = finalCanvasHeight;
+                finalCanvas.width = finalWidth;
+                finalCanvas.height = finalHeight;
                 const ctx = finalCanvas.getContext('2d');
 
-                // Fill background and draw grid
+                // 4. Fill background and draw grid
                 ctx.fillStyle = '#0f172a';
-                ctx.fillRect(0, 0, finalCanvasWidth, finalCanvasHeight);
+                ctx.fillRect(0, 0, finalWidth, finalHeight);
                 ctx.drawImage(gridCanvas, gridX, gridY);
 
-                // Draw solid banner
+                // 5. Draw solid banner (0% overlap)
                 ctx.fillStyle = '#0a0f1e';
                 ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
 
-                // Draw branding content
+                // 6. Draw branding content centered in the banner
                 ctx.save();
                 let centerX = bannerX + bannerW / 2;
                 let centerY = bannerY + bannerH / 2;
                 
-                if (!isXFormat && (position === 'left' || position === 'right')) {
+                if (position === 'left' || position === 'right') {
                     ctx.translate(centerX, centerY);
                     ctx.rotate(-Math.PI / 2);
                     ctx.translate(-centerX, -centerY);
@@ -501,7 +475,7 @@
                 const textMetrics = ctx.measureText(text);
                 const logoSize = bannerThickness * 0.6;
                 const logoAvailable = logoImg.complete && logoImg.naturalWidth > 0;
-                const spacing = finalCanvasWidth * 0.02;
+                const spacing = finalCanvas.width * 0.02;
                 const contentWidth = (logoAvailable ? logoSize : 0) + (logoAvailable ? spacing : 0) + textMetrics.width;
 
                 let startX = centerX - contentWidth / 2;
@@ -515,9 +489,9 @@
                 ctx.fillText(text, startX, centerY);
                 ctx.restore();
 
-                // Trigger download
+                // 7. Trigger download
                 const a = document.createElement('a');
-                a.download = `xrpgridz-${isXFormat ? 'x-' : ''}${new Date().getTime()}.png`;
+                a.download = `xrpgridz-${new Date().getTime()}.png`;
                 a.href = finalCanvas.toDataURL('image/png'); 
                 a.click();
             } catch (e) { 
