@@ -9,10 +9,10 @@
     <meta name="description" content="Turn your XRP NFTs into beautiful grids. Search wallet, filter by collection, and download a high-res PNG of your favorite assets.">
     <meta property="og:title" content="XRPGridz">
     <meta property="og:description" content="Generate NFT grids from XRP Ledger wallets.">
-    <meta property="og:image" content="https://xrpgridz.com/preview.png">
-    <meta property="og:url" content="https://xrpgridz.com">
+    <meta property="og:image" content="https://xrpgridz.vercel.app/preview.png">
+    <meta property="og:url" content="https://xrpgridz.vercel.app">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://xrpgridz.com/preview.png">
+    <meta name="twitter:image" content="https://xrpgridz.vercel.app/preview.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -230,124 +230,18 @@
         // --- Tab Management ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.getElementById(`tab-\${tabId}`).classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        async function captureGrid() {
-            const wrapper = document.getElementById('grid-preview');
-            const position = document.getElementById('banner-position').value;
-            
-            const gridCanvas = await html2canvas(wrapper, { 
-                scale: 2, 
-                backgroundColor: '#0f172a', 
-                useCORS: true, 
-                logging: false 
-            });
-
-            const logoImg = new Image();
-            logoImg.crossOrigin = 'anonymous';
-            logoImg.src = '/api/proxy?url=' + encodeURIComponent('https://storage.googleapis.com/interaction-media-bucket/a0718422-582f-468c-a0c2-44452572707f/4e981d41-b8a2-5040-b22e-bfa12613b472');
-
-            await new Promise((resolve) => {
-                logoImg.onload = resolve;
-                logoImg.onerror = () => resolve();
-            });
-
-            const bannerThickness = gridCanvas.height * 0.12;
-            let finalWidth = gridCanvas.width, finalHeight = gridCanvas.height;
-            let gridX = 0, gridY = 0, bannerX = 0, bannerY = 0, bannerW = finalWidth, bannerH = bannerThickness;
-
-            if (position === 'top') { finalHeight += bannerThickness; gridY = bannerThickness; }
-            else if (position === 'bottom') { finalHeight += bannerThickness; bannerY = gridCanvas.height; }
-            else if (position === 'left') { finalWidth += bannerThickness; gridX = bannerThickness; bannerW = bannerThickness; bannerH = gridCanvas.height; }
-            else if (position === 'right') { finalWidth += bannerThickness; bannerW = bannerThickness; bannerH = gridCanvas.height; bannerX = gridCanvas.width; }
-
-            const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = finalWidth; finalCanvas.height = finalHeight;
-            const ctx = finalCanvas.getContext('2d');
-            ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, finalWidth, finalHeight);
-            ctx.drawImage(gridCanvas, gridX, gridY);
-            ctx.fillStyle = '#0a0f1e'; ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
-
-            ctx.save();
-            let centerX = bannerX + bannerW / 2, centerY = bannerY + bannerH / 2;
-            if (position === 'left' || position === 'right') { ctx.translate(centerX, centerY); ctx.rotate(-Math.PI/2); ctx.translate(-centerX, -centerY); }
-            ctx.font = `bold ${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif`;
-            const text = "XRPGridz";
-            const textMetrics = ctx.measureText(text);
-            const logoSize = bannerThickness * 0.6;
-            const logoAvailable = logoImg.complete && logoImg.naturalWidth > 0;
-            const contentWidth = (logoAvailable ? logoSize : 0) + (logoAvailable ? finalCanvas.width * 0.02 : 0) + textMetrics.width;
-            let startX = centerX - contentWidth / 2;
-            if (logoAvailable) { ctx.drawImage(logoImg, startX, centerY - logoSize / 2, logoSize, logoSize); startX += logoSize + (finalCanvas.width * 0.02); }
-            ctx.fillStyle = '#ffffff'; ctx.textBaseline = 'middle'; ctx.fillText(text, startX, centerY);
-            ctx.restore();
-
-            return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+        function shareOnX() {
+            const text = encodeURIComponent("Just created my XRP NFT grid on XRPGridz! 🚀✨\\n\\nCheck it out: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
+            window.open(\`https://twitter.com/intent/tweet?text=\${text}\`, '_blank');
         }
 
-        async function shareOnX() {
-            if (!selectedNFTs.length) return alert('Select NFTs first!');
-            const btn = document.getElementById('share-x-btn');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing...';
-            btn.disabled = true;
-
-            try {
-                const blob = await captureGrid();
-                const file = new File([blob], 'xrpgrid.png', { type: 'image/png' });
-                const text = "Just created my XRP NFT grid on XRPGridz! 🚀✨\n\nCheck it out: https://xrpgridz.com #XRPL #NFTs #XRPGridz";
-
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'XRPGridz',
-                        text: text
-                    });
-                } else {
-                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-                    window.open(twitterUrl, '_blank');
-                    alert("Image attachment is only supported via the native share menu on mobile/supported browsers. We've opened the tweet composer for you!");
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            }
-        }
-
-        async function shareMemeOnX() {
-            if (!activeMemeImage) return alert('Select an NFT first!');
-            const btn = document.getElementById('share-meme-x-btn');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing...';
-            btn.disabled = true;
-
-            try {
-                const canvas = document.getElementById('meme-canvas');
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                const file = new File([blob], 'xrpmeme.png', { type: 'image/png' });
-                const text = "Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.com #XRPL #NFTs #Meme #XRPGridz";
-
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'XRPGridz Meme',
-                        text: text
-                    });
-                } else {
-                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-                    window.open(twitterUrl, '_blank');
-                    alert("Image attachment is only supported via the native share menu on mobile/supported browsers. We've opened the tweet composer for you!");
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            }
+        function shareMemeOnX() {
+            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\\n\\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
+            window.open(\`https://twitter.com/intent/tweet?text=\${text}\`, '_blank');
         }
 
         function memeNFT(nftId) {
@@ -405,7 +299,7 @@
 
             // Font Settings
             const fontSize = Math.floor(width * 0.1);
-            ctx.font = `bold ${fontSize}px Impact, system-ui, sans-serif`;
+            ctx.font = \`bold \${fontSize}px Impact, system-ui, sans-serif\`;
             ctx.fillStyle = 'white';
             ctx.strokeStyle = 'black';
             ctx.lineWidth = fontSize / 12;
@@ -430,7 +324,7 @@
             const canvas = document.getElementById('meme-canvas');
             if (!activeMemeImage) return alert('Select an NFT first!');
             const link = document.createElement('a');
-            link.download = `xrpmeme-${Date.now()}.png`;
+            link.download = \`xrpmeme-\${Date.now()}.png\`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -459,9 +353,9 @@
         async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
             const providers = [
-                () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
-                () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-                () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+                () => fetch(\`https://api.xrpscan.com/api/v1/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+                () => fetch(\`https://xrplmeta.org/api/v1/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+                () => fetch(\`https://bithomp.com/api/v2/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
             ];
 
             try {
@@ -476,19 +370,19 @@
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
-            if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
+            if (nft.URI) sources.push(\`/api/proxy?hex=\${nft.URI}\`);
             const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
             if (racedImage) {
-                const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
-                sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
+                const url = racedImage.startsWith('ipfs://') ? \`https://ipfs.io/ipfs/\${racedImage.replace('ipfs://', '')}\` : racedImage;
+                sources.push(\`/api/proxy?url=\${encodeURIComponent(url)}\`);
             }
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
                 const cid = extractCID(rawUri);
                 if (cid) {
-                    sources.push(`/api/proxy?cid=${cid}`);
-                    sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
+                    sources.push(\`/api/proxy?cid=\${cid}\`);
+                    sources.push(\`https://ipfs-proxy.xrp.cafe/ipfs/\${cid}\`);
                 }
             }
             return [...new Set(sources)];
@@ -550,7 +444,7 @@
                 selectedNFTs = allNFTs.slice(0, 16);
                 updateSelectedCount();
                 setTimeout(() => setGridPreset(4, 4), 600);
-                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, \`Found \${allNFTs.length} NFTs\`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
@@ -576,18 +470,18 @@
             list.forEach((nft, i) => {
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer`;
+                card.className = \`nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer\`;
                 card.dataset.index = i;
                 card.dataset.nftid = nft.NFTokenID;
-                card.innerHTML = `
+                card.innerHTML = \`
                     <div class="relative aspect-square bg-slate-900">
-                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
-                        <div id="imgwrap-${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
-                        <button onclick="event.stopPropagation(); memeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
+                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-\${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
+                        <div id="imgwrap-\${i}" class="w-full h-full hidden"></div>
+                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
+                        <button onclick="event.stopPropagation(); memeNFT('\${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-face-grin-tears"></i> MEME IT
                         </button>
-                    </div>`;
+                    </div>\`;
                 card.onclick = () => toggleSelection(nft, card);
                 container.appendChild(card);
                 galleryObserver.observe(card);
@@ -595,8 +489,8 @@
         }
 
         async function loadImageForCard(nft, index, card) {
-            const skel = document.getElementById(`skel-${index}`);
-            const wrap = document.getElementById(`imgwrap-${index}`);
+            const skel = document.getElementById(\`skel-\${index}\`);
+            const wrap = document.getElementById(\`imgwrap-\${index}\`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -637,11 +531,11 @@
             document.getElementById('rows-value').textContent = rows;
 
             if (!selectedNFTs.length) { grid.innerHTML = ''; return; }
-            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateColumns = \`repeat(\${cols}, 1fr)\`;
             grid.innerHTML = '';
             selectedNFTs.slice(0, rows * cols).forEach(nft => {
                 const cell = document.createElement('div');
-                cell.className = `grid-cell rounded-2xl border border-slate-600 overflow-hidden relative group`;
+                cell.className = \`grid-cell rounded-2xl border border-slate-600 overflow-hidden relative group\`;
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
@@ -739,7 +633,7 @@
                     ctx.translate(-centerX, -centerY);
                 }
 
-                ctx.font = `bold ${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif`;
+                ctx.font = \`bold \${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif\`;
                 const text = "XRPGridz";
                 const textMetrics = ctx.measureText(text);
                 const logoSize = bannerThickness * 0.6;
@@ -760,7 +654,7 @@
 
                 // 7. Trigger download
                 const a = document.createElement('a');
-                a.download = `xrpgridz-${new Date().getTime()}.png`;
+                a.download = \`xrpgridz-\${new Date().getTime()}.png\`;
                 a.href = finalCanvas.toDataURL('image/png'); 
                 a.click();
             } catch (e) { 
@@ -800,12 +694,12 @@
 
         function showStatus(el, msg, type) { 
             el.innerHTML = msg; 
-            el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; 
+            el.className = \`mt-2 text-sm px-4 py-2 rounded-2xl \${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}\`; 
             el.classList.remove('hidden'); 
         }
 
         function createPlaceholder(id) { 
-            return `<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 font-mono p-2 text-center">No Image Found<br>${id.slice(0,6)}</div>`; 
+            return \`<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 font-mono p-2 text-center">No Image Found<br>\${id.slice(0,6)}</div>\`; 
         }
 
         function shuffleSelected() {
@@ -819,8 +713,8 @@
         const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
         function showDonateModal() {
             const modal = document.createElement('div');
-            modal.className = `fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4`;
-            modal.innerHTML = `
+            modal.className = \`fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4\`;
+            modal.innerHTML = \`
                 <div class="glass border border-white/10 rounded-3xl max-w-md w-full p-8 relative" onclick="event.target === this && this.remove()">
                     <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl">×</button>
                     <div class="text-center">
@@ -829,11 +723,11 @@
                         <p class="text-slate-400 mb-6">Thank you for keeping this tool free.</p>
                         <div class="bg-[#0a0f1e] border border-white/10 rounded-2xl p-5 mb-5">
                             <div class="text-xs text-emerald-400 mb-1">TREASURY WALLET</div>
-                            <div class="font-mono text-lg break-all mb-3">${DONATE_ADDRESS}</div>
-                            <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
+                            <div class="font-mono text-lg break-all mb-3">\${DONATE_ADDRESS}</div>
+                            <button onclick="navigator.clipboard.writeText('\${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
                         </div>
                     </div>
-                </div>`;
+                </div>\`;
             document.body.appendChild(modal);
         }
 
