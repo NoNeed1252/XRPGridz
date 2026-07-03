@@ -117,7 +117,10 @@ async function raceMetadataProviders(nftId: string, highRes: boolean = false): P
   
   const providers = [
     // XRPScan
-    () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+    () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => {
+        // High-res check: some providers have raw/original fields
+        return d.meta?.image_original || d.meta?.image;
+    })),
     // XRPLMeta
     () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
     // Bithomp
@@ -131,7 +134,6 @@ async function raceMetadataProviders(nftId: string, highRes: boolean = false): P
       if (img && typeof img === 'string' && img.length > 5) {
         controller.abort();
         let url = normalizeUrl(img);
-        // High-res prioritization: if it's an IPFS CID, we could potentially swap the gateway or add params
         return url;
       }
       throw new Error('invalid');

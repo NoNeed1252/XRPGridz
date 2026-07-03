@@ -53,7 +53,7 @@
         .banner-cell img { width: 100%; height: 100%; object-fit: cover; }
         
         #banner-preview {
-            aspect-ratio: 16 / 9;
+            aspect-ratio: 3 / 1;
             background: #1e2937;
             overflow: hidden;
             width: 100%;
@@ -224,7 +224,7 @@
 
                             <div class="mb-5 p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
                                 <h4 class="text-sm font-semibold mb-2">Instructions</h4>
-                                <p class="text-xs text-slate-400">Select NFTs from the gallery above to fill the banner slots. The first few selected NFTs will be used. 16:9 aspect ratio is fixed for X profiles.</p>
+                                <p class="text-xs text-slate-400">Select NFTs from the gallery above to fill the banner slots. The first few selected NFTs will be used. 3:1 aspect ratio is fixed for X profiles.</p>
                             </div>
 
                             <div class="flex gap-2">
@@ -356,8 +356,8 @@
             if (!nft?.NFTokenID) return null;
             if (resolvedImageCache.has(nft.NFTokenID)) return resolvedImageCache.get(nft.NFTokenID);
 
-            // Use the proxy to handle recursive high-res resolution and CORS
-            const url = \`/api/proxy?nftId=\${nft.NFTokenID}\`;
+            // Use highRes=true to prioritize quality in proxy resolution
+            const url = \`/api/proxy?nftId=\${nft.NFTokenID}&highRes=true\`;
             resolvedImageCache.set(nft.NFTokenID, url);
             return url;
         }
