@@ -6,6 +6,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
  * Enhanced with Multi-Provider Metadata Racing for maximum reliability.
  */
 
+// Specific collection mapping for XRP Ledger NFTs
+const COLLECTION_MAPPING: Record<string, string> = {
+  'Virtual Origins': '00080000D0937A08B019E094D68A8E8D5F661B1B5490BA9C000009D400000000',
+  'Fuzzy': '00080000D0937A08B019E094D68A8E8D5F661B1B5490BA9C000009D500000000'
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Force clean CORS headers to satisfy html2canvas and cross-origin pixel reads
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -32,8 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // If we have an nftId but no direct image URL yet, start the Metadata Resolution Chain
     if (!targetUrl && nftId) {
-      console.log(`[Proxy] Starting Metadata Race for NFT: ${nftId}`);
-      targetUrl = await raceMetadataProviders(nftId);
+      console.log(`[Proxy] Starting Metadata Resolution for NFT: ${nftId}`);
+      targetUrl = await resolveMetadata(nftId);
     }
 
     if (!targetUrl) {
@@ -86,30 +92,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function raceMetadataProviders(nftId: string): Promise<string | null> {
-  const controller = new AbortController();
+/**
+ * Sequential metadata resolution with priority logic:
+ * Try XRP Cafe first, then Bithomp if XRP Cafe fails or returns 403.
+ * Includes explicit handling for hardcoded collection mappings.
+ */
+async function resolveMetadata(nftId: string): Promise<string | null> {
+  // Check if nftId is actually a collection name that needs mapping
+  const mappedNftId = COLLECTION_MAPPING[nftId] || nftId;
   
-  // Resolution strategy: Start several requests in parallel, return the first one that has a valid image URL
-  const providers = [
-    // XRPScan
-    () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
-    // XRPLMeta
-    () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-    // Bithomp
-    () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-    // XRP Cafe
-    () => fetch(`https://api.xrp.cafe/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+  // Try XRP Cafe First
+  try {
+    const cafeResponse = await fetch(`https://api.xrp.cafe/api/v1/nft/${mappedNftId}`);
+    if (cafeResponse.ok) {
+      const data = await cafeResponse.json();
+      if (data.image && typeof data.image === 'string' && data.image.length > 5) {
+        return normalizeUrl(data.image);
+      }
+    } else if (cafeResponse.status === 403) {
+      console.warn(`[Proxy] XRP Cafe returned 403 for ${mappedNftId}, falling back to Bithomp`);
+    }
+  } catch (e) {
+    console.error(`[Proxy] XRP Cafe fetch failed for ${mappedNftId}`, e);
+  }
+
+  // Fallback to Bithomp
+  try {
+    const bithompResponse = await fetch(`https://bithomp.com/api/v2/nft/${mappedNftId}`);
+    if (bithompResponse.ok) {
+      const data = await bithompResponse.json();
+      if (data.image && typeof data.image === 'string' && data.image.length > 5) {
+        return normalizeUrl(data.image);
+      }
+    }
+  } catch (e) {
+    console.error(`[Proxy] Bithomp fallback failed for ${mappedNftId}`, e);
+  }
+
+  // Final race between other providers if priority ones failed
+  const controller = new AbortController();
+  const others = [
+    () => fetch(`https://api.xrpscan.com/api/v1/nft/${mappedNftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+    () => fetch(`https://xrplmeta.org/api/v1/nft/${mappedNftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
   ];
 
   try {
-    const winner = await Promise.any(providers.map(p => p().then(img => {
+    return await Promise.any(others.map(p => p().then(img => {
       if (img && typeof img === 'string' && img.length > 5) {
-        controller.abort(); // Cancel other pending requests
+        controller.abort();
         return normalizeUrl(img);
       }
       throw new Error('invalid');
     })));
-    return winner;
   } catch (e) {
     return null;
   }
