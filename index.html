@@ -178,7 +178,7 @@
                                         <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
                                 </div>
-                                <p class="text-[10px] text-slate-400 mt-2">High-res assets are fetched only for final preview and download.</p>
+                                <p class="text-[10px] text-slate-400 mt-2">Low-res thumbnails used for preview. High-res fetched only for download.</p>
                             </div>
 
                             <div class="flex gap-2">
@@ -191,7 +191,7 @@
                             <div class="flex justify-between items-center mb-3">
                                 <div class="flex items-center gap-x-2">
                                     <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
-                                    <span class="font-semibold">Live Preview (High-Res)</span>
+                                    <span class="font-semibold">Live Preview (Thumbnail)</span>
                                 </div>
                                 <div class="flex gap-2">
                                     <button onclick="shareOnX()" class="px-5 py-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
@@ -239,7 +239,7 @@
                             <div class="flex justify-between items-center mb-3">
                                 <div class="flex items-center gap-x-2">
                                     <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
-                                    <span class="font-semibold">Banner Preview (High-Res)</span>
+                                    <span class="font-semibold">Banner Preview (Thumbnail)</span>
                                 </div>
                                 <div class="flex gap-2">
                                     <button onclick="downloadBannerPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
@@ -287,9 +287,6 @@
     let currentWallet = '';
     let currentMarker = null;
     let activeTab = 'grid';
-    const bithompCache = new Map();
-    const xrplToCache = new Map();
-    const collectionNameCache = new Map();
     let isLoadingMore = false;
 
     // --- Lazy Loading Intersector ---
@@ -308,24 +305,9 @@
         });
     }, { root: null, rootMargin: '200px' });
 
-    async function getBithompNFT(nftId) {
-        if (bithompCache.has(nftId)) return bithompCache.get(nftId);
-        return fetchQueue.add(async () => {
-            try {
-                const res = await fetch(\`https://bithomp.com/api/v2/nft/\${nftId}\`);
-                if (res.ok) {
-                    const data = await res.json();
-                    bithompCache.set(nftId, data);
-                    return data;
-                }
-            } catch(e){}
-            return null;
-        });
-    }
-
     async function resolveNFTImage(nft, highRes = false) {
         if (!nft?.NFTokenID) return null;
-        // Use thumbnail parameter for low-res requests
+        // thumbnail=true for low-res, highRes=true for high-res
         return \`/api/proxy?nftId=\${nft.NFTokenID}\${highRes ? '&highRes=true' : '&thumbnail=true'}\`;
     }
 
@@ -377,7 +359,7 @@
             selectedNFTs = allNFTs.slice(0, Math.min(16, allNFTs.length));
             updateSelectedCount();
             setTimeout(() => setGridPreset(4, 4), 600);
-            showStatus(statusEl, \`Loaded \${allNFTs.length} NFTs\`, 'success');
+            showStatus(statusEl, \\\`Loaded \\\${allNFTs.length} NFTs\\\`, 'success');
         } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
     }
 
@@ -389,15 +371,15 @@
         list.forEach((nft, i) => {
             const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
             const card = document.createElement('div');
-            card.className = \`nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer\`;
+            card.className = \\\`nft-card bg-[#0a0f1e] border \\\${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer\\\`;
             card.dataset.index = i;
             card.dataset.nftid = nft.NFTokenID;
-            card.innerHTML = \`
+            card.innerHTML = \\\`
                 <div class="relative aspect-square bg-slate-900">
-                    <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-\${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
-                    <div id="imgwrap-\${i}" class="w-full h-full hidden"></div>
-                    <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
-                </div>\`;
+                    <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-\\\${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
+                    <div id="imgwrap-\\\${i}" class="w-full h-full hidden"></div>
+                    <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center \\\${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \\\${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
+                </div>\\\`;
             card.onclick = () => toggleSelection(nft, card);
             container.appendChild(card);
             galleryObserver.observe(card);
@@ -405,9 +387,9 @@
     }
 
     async function loadImageForCard(nft, index, card) {
-        const skel = document.getElementById(\`skel-\${index}\`);
-        const wrap = document.getElementById(\`imgwrap-\${index}\`);
-        const url = await resolveNFTImage(nft, false); // Thumbnail for gallery
+        const skel = document.getElementById(\\\`skel-\\\${index}\\\`);
+        const wrap = document.getElementById(\\\`imgwrap-\\\${index}\\\`);
+        const url = await resolveNFTImage(nft, false); // STRICT THUMBNAIL
         if (skel) skel.style.display = 'none';
         if (wrap) {
             wrap.style.display = 'block';
@@ -458,21 +440,21 @@
         const inner = document.createElement('div');
         inner.className = 'grid-inner';
         inner.style.display = 'grid';
-        inner.style.gridTemplateColumns = \`repeat(\${cols}, 1fr)\`;
+        inner.style.gridTemplateColumns = \\\`repeat(\\\${cols}, 1fr)\\\`;
         inner.style.gap = socialStyle ? '12px' : '6px';
         grid.appendChild(inner);
 
         selectedNFTs.slice(0, rows * cols).forEach(nft => {
             const cell = document.createElement('div');
-            cell.className = \`grid-cell border border-slate-600 overflow-hidden relative group\`;
+            cell.className = \\\`grid-cell border border-slate-600 overflow-hidden relative group\\\`;
             if (!socialStyle) cell.classList.add('rounded-2xl');
             
             const wrap = document.createElement('div');
             wrap.className = 'w-full h-full bg-[#1e2937]';
             cell.appendChild(wrap);
 
-            // Fetch HIGH-RES for the builder preview
-            resolveNFTImage(nft, true).then(url => {
+            // Fetch THUMBNAIL for grid builder preview
+            resolveNFTImage(nft, false).then(url => {
                 if (url) {
                     const img = document.createElement('img');
                     img.src = url;
@@ -496,7 +478,8 @@
             cell.className = 'banner-cell flex-1';
             const nft = toShow[i];
             if (nft) {
-                resolveNFTImage(nft, true).then(url => {
+                // Fetch THUMBNAIL for banner builder preview
+                resolveNFTImage(nft, false).then(url => {
                     if (url) {
                         const img = document.createElement('img');
                         img.src = url;
@@ -514,8 +497,8 @@
         activeTab = tabId;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-        document.getElementById(\`tab-\${tabId}\`).classList.add('active');
-        document.getElementById(\`content-\${tabId}\`).classList.remove('hidden');
+        document.getElementById(\\\`tab-\\\${tabId}\\\`).classList.add('active');
+        document.getElementById(\\\`content-\\\${tabId}\\\`).classList.remove('hidden');
         updateActivePreview();
     }
 
@@ -561,37 +544,70 @@
         updateActivePreview();
     }
 
+    // Helper function to swap thumbnails for high-res images on demand
+    async function loadHighResAssetsForExport(container) {
+        const images = container.querySelectorAll('img');
+        const promises = Array.from(images).map(async (img) => {
+            const src = img.src;
+            if (src.includes('thumbnail=true')) {
+                const highResSrc = src.replace('thumbnail=true', 'highRes=true');
+                return new Promise((resolve) => {
+                    const tempImg = new Image();
+                    tempImg.crossOrigin = "anonymous";
+                    tempImg.onload = () => { img.src = highResSrc; resolve(); };
+                    tempImg.onerror = () => resolve(); // Fallback to thumbnail if high-res fails
+                    tempImg.src = highResSrc;
+                });
+            }
+        });
+        await Promise.all(promises);
+    }
+
     async function downloadGridPNG() {
         const wrapper = document.getElementById('grid-preview');
         if (!wrapper.children.length) return alert('Build a preview first!');
+        
+        // SWAP TO HIGH RES FOR DOWNLOAD
+        await loadHighResAssetsForExport(wrapper);
+        
         const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true });
         const a = document.createElement('a');
-        a.download = \`xrpgridz-\${new Date().getTime()}.png\`;
+        a.download = \\\`xrpgridz-\\\${new Date().getTime()}.png\\\`;
         a.href = canvas.toDataURL('image/png');
         a.click();
+        
+        // SWAP BACK TO THUMBNAILS to save memory/data
+        updateGridPreview();
     }
 
     async function downloadBannerPNG() {
         const wrapper = document.getElementById('banner-preview');
         if (!wrapper.innerHTML) return alert('Build a banner first!');
+        
+        // SWAP TO HIGH RES FOR DOWNLOAD
+        await loadHighResAssetsForExport(wrapper);
+
         const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true });
         const a = document.createElement('a');
-        a.download = \`xrpbanner-\${new Date().getTime()}.png\`;
+        a.download = \\\`xrpbanner-\\\${new Date().getTime()}.png\\\`;
         a.href = canvas.toDataURL('image/png');
         a.click();
+
+        // SWAP BACK TO THUMBNAILS
+        updateBannerPreview();
     }
 
     function showStatus(el, msg, type) {
         el.innerHTML = msg;
-        el.className = \`mt-2 text-sm px-4 py-2 rounded-2xl \${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}\`;
+        el.className = \\\`mt-2 text-sm px-4 py-2 rounded-2xl \\\${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}\\\`;
         el.classList.remove('hidden');
     }
 
     const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
     function showDonateModal() {
         const modal = document.createElement('div');
-        modal.className = \`fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4\`;
-        modal.innerHTML = \`
+        modal.className = \\\`fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4\\\`;
+        modal.innerHTML = \\\`
             <div class="glass border border-white/10 rounded-3xl max-w-md w-full p-8 relative" onclick="event.target === this && this.remove()">
                 <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl">×</button>
                 <div class="text-center">
@@ -600,11 +616,11 @@
                     <p class="text-slate-400 mb-6">Thank you for keeping this tool free.</p>
                     <div class="bg-[#0a0f1e] border border-white/10 rounded-2xl p-5 mb-5">
                         <div class="text-xs text-emerald-400 mb-1">TREASURY WALLET</div>
-                        <div class="font-mono text-lg break-all mb-3">\${DONATE_ADDRESS}</div>
-                        <button onclick="navigator.clipboard.writeText('\${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
+                        <div class="font-mono text-lg break-all mb-3">\\\${DONATE_ADDRESS}</div>
+                        <button onclick="navigator.clipboard.writeText('\\\${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
                     </div>
                 </div>
-            </div>\`;
+            </div>\\\`;
         document.body.appendChild(modal);
     }
     </script>
