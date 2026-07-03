@@ -49,8 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Recursive Resolution: If target is JSON, extract image link and re-fetch
     if (contentType.includes('application/json')) {
       const metadata = await response.json();
-      // Re-order priority: animation_url first, then others
-      const mediaUrl = metadata.animation_url || metadata.image || metadata.video || metadata.image_url;
+      const mediaUrl = extractMediaUrl(metadata);
+      
       if (mediaUrl) {
         targetUrl = normalizeUrl(mediaUrl);
         console.log(`[Proxy] Re-fetching actual media: ${targetUrl}`);
@@ -87,6 +87,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
+/**
+ * Extracts media URL from metadata using a robust set of keys and structures.
+ */
+function extractMediaUrl(metadata: any): string | null {
+  if (!metadata || typeof metadata !== 'object') return null;
+
+  // 1. Top-level keys (priority order)
+  const topLevel = metadata.animation_url || metadata.image || metadata.image_url || metadata.video;
+  if (topLevel && typeof topLevel === 'string') return topLevel;
+
+  // 2. Nested structures: properties.image
+  if (metadata.properties?.image && typeof metadata.properties.image === 'string') {
+    return metadata.properties.image;
+  }
+
+  // 3. Nested structures: files array (often found in reputable collections)
+  if (Array.isArray(metadata.files) && metadata.files.length > 0) {
+    // Look for the first file with a uri, prioritizing images or animations
+    const bestFile = metadata.files.find((f: any) => 
+      f.uri && (f.type?.startsWith('image/') || f.type?.startsWith('video/') || !f.type)
+    ) || metadata.files[0];
+    
+    if (bestFile?.uri && typeof bestFile.uri === 'string') {
+      return bestFile.uri;
+    }
+  }
+
+  return null;
+}
+
 async function raceMetadataProviders(nftId: string): Promise<string | null> {
   const controller = new AbortController();
   
@@ -117,7 +147,7 @@ async function raceMetadataProviders(nftId: string): Promise<string | null> {
 }
 
 function resolveTargetUrl(cid: string | null, hex: string | null, url: string | null): string | null {
-  if (cid) return `https://ipfs.io/ipfs/${cid}`;
+  if (cid) return `https://ipfs.io/ipfs/${encodeURIComponent(cid)}`;
   if (url) return url;
   if (hex) {
     let decoded = '';
@@ -132,15 +162,21 @@ function resolveTargetUrl(cid: string | null, hex: string | null, url: string | 
 }
 
 function normalizeUrl(url: string): string {
+  if (!url) return '';
+  
   // Handle ipfs:// protocol (CIDv0 and CIDv1/path-based)
   if (url.startsWith('ipfs://')) {
-    return `https://ipfs.io/ipfs/${url.replace('ipfs://', '')}`;
+    const path = url.replace('ipfs://', '');
+    // Ensure the path/CID is properly encoded for characters like spaces or symbols
+    return `https://ipfs.io/ipfs/${path.split('/').map(segment => encodeURIComponent(segment)).join('/')}`;
   }
+  
   // Handle raw CIDs (CIDv0 or CIDv1)
   // If it doesn't contain a dot or slash and is long enough, assume it's a CID
   if (!url.includes('.') && !url.includes('/') && url.length >= 46) {
-    return `https://ipfs.io/ipfs/${url}`;
+    return `https://ipfs.io/ipfs/${encodeURIComponent(url)}`;
   }
+  
   return url;
 }
 
