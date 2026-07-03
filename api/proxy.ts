@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 /**
  * Library Assistant Backend Proxy - Optimized for Node 24+
  * Implements Recursive Metadata Resolution and CORS Passthrough.
- * Enhanced with Multi-Provider Metadata Racing for maximum reliability.
+ * Enhanced with Multi-Provider Metadata Racing and IPFS Gateway Failover.
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -42,18 +42,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`[Proxy] Initial Target: ${targetUrl}`);
 
-    // Initial Fetch
-    let response = await fetchWithTimeout(targetUrl, 12000);
+    // Initial Fetch with Fallback Logic
+    let response = await fetchWithGatewayFallback(targetUrl, 12000);
     let contentType = response.headers.get('content-type') || '';
 
     // Recursive Resolution: If target is JSON, extract image link and re-fetch
     if (contentType.includes('application/json')) {
       const metadata = await response.json();
-      const mediaUrl = metadata.image || metadata.video || metadata.animation_url || metadata.image_url;
+      // Re-order priority: animation_url first, then others
+      const mediaUrl = metadata.animation_url || metadata.image || metadata.video || metadata.image_url;
       if (mediaUrl) {
         targetUrl = normalizeUrl(mediaUrl);
         console.log(`[Proxy] Re-fetching actual media: ${targetUrl}`);
-        response = await fetchWithTimeout(targetUrl, 12000);
+        response = await fetchWithGatewayFallback(targetUrl, 12000);
         contentType = response.headers.get('content-type') || '';
       }
     }
@@ -131,13 +132,48 @@ function resolveTargetUrl(cid: string | null, hex: string | null, url: string | 
 }
 
 function normalizeUrl(url: string): string {
+  // Handle ipfs:// protocol (CIDv0 and CIDv1/path-based)
   if (url.startsWith('ipfs://')) {
     return `https://ipfs.io/ipfs/${url.replace('ipfs://', '')}`;
   }
-  if (url.match(/^[a-zA-Z0-9]{46,59}$/)) {
+  // Handle raw CIDs (CIDv0 or CIDv1)
+  // If it doesn't contain a dot or slash and is long enough, assume it's a CID
+  if (!url.includes('.') && !url.includes('/') && url.length >= 46) {
     return `https://ipfs.io/ipfs/${url}`;
   }
   return url;
+}
+
+async function fetchWithGatewayFallback(url: string, ms: number) {
+  try {
+    const response = await fetchWithTimeout(url, ms);
+    // If successful (not 403, 404, or other error), return it
+    if (response.ok) return response;
+    
+    // Check if it's an IPFS link from the primary gateway
+    if (url.includes('ipfs.io/ipfs/')) {
+      const secondaryUrl = url.replace('ipfs.io', 'cloudflare-ipfs.com');
+      console.log(`[Proxy] Primary Gateway Failed (${response.status}). Trying Fallback: ${secondaryUrl}`);
+      const secondaryResponse = await fetchWithTimeout(secondaryUrl, ms);
+      if (secondaryResponse.ok) return secondaryResponse;
+      // If secondary also failed but primary was a response, prefer returning primary's status/context if secondary isn't better
+      return secondaryResponse;
+    }
+    
+    return response;
+  } catch (error) {
+    // If it timed out or network error and was IPFS, try fallback
+    if (url.includes('ipfs.io/ipfs/')) {
+      const secondaryUrl = url.replace('ipfs.io', 'cloudflare-ipfs.com');
+      console.log(`[Proxy] Primary Gateway Error/Timeout. Trying Fallback: ${secondaryUrl}`);
+      try {
+        return await fetchWithTimeout(secondaryUrl, ms);
+      } catch (fallbackError) {
+        throw error; // Throw original error if fallback also fails
+      }
+    }
+    throw error;
+  }
 }
 
 async function fetchWithTimeout(url: string, ms: number) {
