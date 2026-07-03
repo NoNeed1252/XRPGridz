@@ -3,6 +3,5 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "comment": "Force redeploy 2026-07-02"
+  ]
 }
