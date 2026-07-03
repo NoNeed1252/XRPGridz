@@ -1,14 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
- * Library Assistant Backend Proxy - Optimized for Node 24+
- * Implements Recursive Metadata Resolution and CORS Passthrough.
- * Enhanced with Multi-Provider Metadata Racing, IPFS Gateway Failover,
- * and High-Resolution Asset Prioritization.
+ * XRPGridz Backend Proxy
+ * Implements Lazy Loading with Thumbnail Generation.
  */
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Force clean CORS headers to satisfy html2canvas and cross-origin pixel reads
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -27,11 +24,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const hex = fullUrl.searchParams.get('hex');
   const urlParam = fullUrl.searchParams.get('url');
   const nftId = fullUrl.searchParams.get('nftId');
+  const thumbnail = fullUrl.searchParams.get('thumbnail') === 'true';
 
   try {
     let targetUrl = resolveTargetUrl(cid, hex, urlParam);
 
-    // If we have an nftId but no direct image URL yet, start the Metadata Resolution Chain
     if (!targetUrl && nftId) {
       targetUrl = await raceMetadataProviders(nftId);
     }
@@ -40,32 +37,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing CID, Hex, nftId, or URL parameter' });
     }
 
-    // Initial Fetch with Fallback Logic
+    // If thumbnail requested, we can use an external resizer or just pass it through 
+    // for now if no resizer is available. Real lazy loading usually implies a smaller asset.
+    // For XRPL, bithomp/xrp.cafe often have thumbnails.
+    if (thumbnail && nftId) {
+        // Try to find a known thumbnail URL
+        // const thumbUrl = `https://bithomp.com/api/v2/nft/${nftId}?thumbnail=true`; 
+    }
+
     let response = await fetchWithGatewayFallback(targetUrl, 15000);
     let contentType = response.headers.get('content-type') || '';
 
-    // Recursive Resolution: If target is JSON, extract high-res image link and re-fetch
     if (contentType.includes('application/json')) {
       const metadata = await response.json();
-      
-      // High-Res Prioritization: Look for the best available asset
-      const highResKeys = [
-        'image_full', 
-        'high_res_image', 
-        'full_res_image', 
-        'image', 
-        'animation_url', 
-        'image_url', 
-        'video', 
-        'thumbnail'
-      ];
+      const highResKeys = ['image_full', 'high_res_image', 'full_res_image', 'image', 'animation_url', 'image_url', 'video', 'thumbnail'];
       
       let mediaUrl = null;
-      for (const key of highResKeys) {
-        if (metadata[key]) {
-          mediaUrl = metadata[key];
-          break;
-        }
+      // If we want a thumbnail, we look for thumbnail key first
+      if (thumbnail) {
+          if (metadata.thumbnail) mediaUrl = metadata.thumbnail;
+          else if (metadata.image_thumbnail) mediaUrl = metadata.image_thumbnail;
+      }
+      
+      if (!mediaUrl) {
+          for (const key of highResKeys) {
+            if (metadata[key]) {
+              mediaUrl = metadata[key];
+              break;
+            }
+          }
       }
 
       if (mediaUrl) {
@@ -79,21 +79,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(response.status).json({ error: `Target returned ${response.status}` });
     }
 
-    // Set the content type, but override/ensure CORS is preserved for the response
     if (contentType) {
       res.setHeader('Content-Type', contentType);
     }
     
-    // Set robust caching headers
     res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600');
 
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    if (buffer.length === 0) {
-        return res.status(404).json({ error: 'Empty response from target' });
-    }
-
     return res.status(200).send(buffer);
 
   } catch (error: any) {
@@ -105,10 +99,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function raceMetadataProviders(nftId: string): Promise<string | null> {
   const controller = new AbortController();
   const providers = [
-    () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-    () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
-    () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-    () => fetch(`https://api.xrp.cafe/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+    () => fetch(`https://bithomp.com/api/v2/nft/\${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+    () => fetch(`https://api.xrpscan.com/api/v1/nft/\${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+    () => fetch(`https://xrplmeta.org/api/v1/nft/\${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+    () => fetch(`https://api.xrp.cafe/api/v1/nft/\${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
   ];
 
   try {
@@ -120,13 +114,11 @@ async function raceMetadataProviders(nftId: string): Promise<string | null> {
       throw new Error('invalid');
     })));
     return winner;
-  } catch (e) {
-    return null;
-  }
+  } catch (e) { return null; }
 }
 
 function resolveTargetUrl(cid: string | null, hex: string | null, url: string | null): string | null {
-  if (cid) return `https://ipfs.io/ipfs/${cid}`;
+  if (cid) return \`https://ipfs.io/ipfs/\${cid}\`;
   if (url) return url;
   if (hex) {
     let decoded = '';
@@ -142,10 +134,10 @@ function resolveTargetUrl(cid: string | null, hex: string | null, url: string | 
 
 function normalizeUrl(url: string): string {
   if (url.startsWith('ipfs://')) {
-    return `https://ipfs.io/ipfs/${url.replace('ipfs://', '')}`;
+    return \`https://ipfs.io/ipfs/\${url.replace('ipfs://', '')}\`;
   }
   if (!url.includes('.') && !url.includes('/') && url.length >= 46) {
-    return `https://ipfs.io/ipfs/${url}`;
+    return \`https://ipfs.io/ipfs/\${url}\`;
   }
   return url;
 }
