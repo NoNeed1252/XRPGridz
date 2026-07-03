@@ -9,10 +9,10 @@
     <meta name="description" content="Turn your XRP NFTs into beautiful grids. Search wallet, filter by collection, and download a high-res PNG of your favorite assets.">
     <meta property="og:title" content="XRPGridz">
     <meta property="og:description" content="Generate NFT grids from XRP Ledger wallets.">
-    <meta property="og:image" content="https://xrpgridz.vercel.app/preview.png">
-    <meta property="og:url" content="https://xrpgridz.vercel.app">
+    <meta property="og:image" content="https://xrpgridz.com/preview.png">
+    <meta property="og:url" content="https://xrpgridz.com">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://xrpgridz.vercel.app/preview.png">
+    <meta name="twitter:image" content="https://xrpgridz.com/preview.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -234,14 +234,120 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function shareOnX() {
-            const text = encodeURIComponent("Just created my XRP NFT grid on XRPGridz! 🚀✨\n\nCheck it out: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
-            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+        async function captureGrid() {
+            const wrapper = document.getElementById('grid-preview');
+            const position = document.getElementById('banner-position').value;
+            
+            const gridCanvas = await html2canvas(wrapper, { 
+                scale: 2, 
+                backgroundColor: '#0f172a', 
+                useCORS: true, 
+                logging: false 
+            });
+
+            const logoImg = new Image();
+            logoImg.crossOrigin = 'anonymous';
+            logoImg.src = '/api/proxy?url=' + encodeURIComponent('https://storage.googleapis.com/interaction-media-bucket/a0718422-582f-468c-a0c2-44452572707f/4e981d41-b8a2-5040-b22e-bfa12613b472');
+
+            await new Promise((resolve) => {
+                logoImg.onload = resolve;
+                logoImg.onerror = () => resolve();
+            });
+
+            const bannerThickness = gridCanvas.height * 0.12;
+            let finalWidth = gridCanvas.width, finalHeight = gridCanvas.height;
+            let gridX = 0, gridY = 0, bannerX = 0, bannerY = 0, bannerW = finalWidth, bannerH = bannerThickness;
+
+            if (position === 'top') { finalHeight += bannerThickness; gridY = bannerThickness; }
+            else if (position === 'bottom') { finalHeight += bannerThickness; bannerY = gridCanvas.height; }
+            else if (position === 'left') { finalWidth += bannerThickness; gridX = bannerThickness; bannerW = bannerThickness; bannerH = gridCanvas.height; }
+            else if (position === 'right') { finalWidth += bannerThickness; bannerW = bannerThickness; bannerH = gridCanvas.height; bannerX = gridCanvas.width; }
+
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = finalWidth; finalCanvas.height = finalHeight;
+            const ctx = finalCanvas.getContext('2d');
+            ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, finalWidth, finalHeight);
+            ctx.drawImage(gridCanvas, gridX, gridY);
+            ctx.fillStyle = '#0a0f1e'; ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
+
+            ctx.save();
+            let centerX = bannerX + bannerW / 2, centerY = bannerY + bannerH / 2;
+            if (position === 'left' || position === 'right') { ctx.translate(centerX, centerY); ctx.rotate(-Math.PI/2); ctx.translate(-centerX, -centerY); }
+            ctx.font = `bold ${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif`;
+            const text = "XRPGridz";
+            const textMetrics = ctx.measureText(text);
+            const logoSize = bannerThickness * 0.6;
+            const logoAvailable = logoImg.complete && logoImg.naturalWidth > 0;
+            const contentWidth = (logoAvailable ? logoSize : 0) + (logoAvailable ? finalCanvas.width * 0.02 : 0) + textMetrics.width;
+            let startX = centerX - contentWidth / 2;
+            if (logoAvailable) { ctx.drawImage(logoImg, startX, centerY - logoSize / 2, logoSize, logoSize); startX += logoSize + (finalCanvas.width * 0.02); }
+            ctx.fillStyle = '#ffffff'; ctx.textBaseline = 'middle'; ctx.fillText(text, startX, centerY);
+            ctx.restore();
+
+            return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
         }
 
-        function shareMemeOnX() {
-            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
-            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+        async function shareOnX() {
+            if (!selectedNFTs.length) return alert('Select NFTs first!');
+            const btn = document.getElementById('share-x-btn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing...';
+            btn.disabled = true;
+
+            try {
+                const blob = await captureGrid();
+                const file = new File([blob], 'xrpgrid.png', { type: 'image/png' });
+                const text = "Just created my XRP NFT grid on XRPGridz! 🚀✨\n\nCheck it out: https://xrpgridz.com #XRPL #NFTs #XRPGridz";
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'XRPGridz',
+                        text: text
+                    });
+                } else {
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+                    window.open(twitterUrl, '_blank');
+                    alert("Image attachment is only supported via the native share menu on mobile/supported browsers. We've opened the tweet composer for you!");
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        async function shareMemeOnX() {
+            if (!activeMemeImage) return alert('Select an NFT first!');
+            const btn = document.getElementById('share-meme-x-btn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing...';
+            btn.disabled = true;
+
+            try {
+                const canvas = document.getElementById('meme-canvas');
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                const file = new File([blob], 'xrpmeme.png', { type: 'image/png' });
+                const text = "Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.com #XRPL #NFTs #Meme #XRPGridz";
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'XRPGridz Meme',
+                        text: text
+                    });
+                } else {
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+                    window.open(twitterUrl, '_blank');
+                    alert("Image attachment is only supported via the native share menu on mobile/supported browsers. We've opened the tweet composer for you!");
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
         }
 
         function memeNFT(nftId) {
