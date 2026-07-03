@@ -3,7 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 /**
  * Library Assistant Backend Proxy - Optimized for Node 24+
  * Implements Recursive Metadata Resolution and CORS Passthrough.
- * Enhanced with Multi-Provider Metadata Racing for maximum reliability.
+ * Enhanced with Multi-Provider Metadata Racing and retry logic.
  */
 
 // Specific collection mapping for XRP Ledger NFTs
@@ -11,6 +11,35 @@ const COLLECTION_MAPPING: Record<string, string> = {
   'Virtual Origins': '00080000D0937A08B019E094D68A8E8D5F661B1B5490BA9C000009D400000000',
   'Fuzzy': '00080000D0937A08B019E094D68A8E8D5F661B1B5490BA9C000009D500000000'
 };
+
+// Global Request Queue to prevent traffic jams (max 5 concurrent)
+class RequestQueue {
+  private active = 0;
+  private queue: (() => void)[] = [];
+  private readonly max: number;
+
+  constructor(max = 5) {
+    this.max = max;
+  }
+
+  async run<T>(task: () => Promise<T>): Promise<T> {
+    if (this.active >= this.max) {
+      await new Promise<void>(resolve => this.queue.push(resolve));
+    }
+    this.active++;
+    try {
+      return await task();
+    } finally {
+      this.active--;
+      if (this.queue.length > 0) {
+        const next = this.queue.shift();
+        next?.();
+      }
+    }
+  }
+}
+
+const globalQueue = new RequestQueue(5);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Force clean CORS headers to satisfy html2canvas and cross-origin pixel reads
@@ -48,8 +77,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`[Proxy] Initial Target: ${targetUrl}`);
 
-    // Initial Fetch
-    let response = await fetchWithTimeout(targetUrl, 12000);
+    // Initial Fetch with retry logic (up to 3 attempts)
+    let response: Response | null = null;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      try {
+        response = await globalQueue.run(() => fetchWithTimeout(targetUrl!, 12000));
+        
+        if (response.ok) {
+          console.log(`[Proxy] Successfully fetched ${targetUrl} on attempt ${attempts}`);
+          break;
+        }
+
+        // Log detailed error for non-OK response
+        console.warn(`[Proxy] Attempt ${attempts} failed for ${targetUrl}. Status: ${response.status}.`);
+        
+        if (attempts >= maxAttempts) {
+          return res.status(response.status).json({ error: `Target returned ${response.status} after ${maxAttempts} attempts` });
+        }
+      } catch (error: any) {
+        const isTimeout = error.name === 'AbortError';
+        console.error(`[Proxy] Attempt ${attempts} error for ${targetUrl}:`, isTimeout ? 'Timeout' : error.message);
+        
+        if (attempts >= maxAttempts) {
+          throw error; // Let the catch block handle the final failure
+        }
+      }
+      
+      // Short delay before retry
+      await new Promise(resolve => setTimeout(resolve, 500 * attempts));
+    }
+
+    if (!response || !response.ok) {
+      return res.status(response?.status || 500).json({ error: 'Failed to fetch target after retries' });
+    }
+
     let contentType = response.headers.get('content-type') || '';
 
     // Recursive Resolution: If target is JSON, extract image link and re-fetch
@@ -59,13 +124,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (mediaUrl) {
         targetUrl = normalizeUrl(mediaUrl);
         console.log(`[Proxy] Re-fetching actual media: ${targetUrl}`);
-        response = await fetchWithTimeout(targetUrl, 12000);
+        
+        // Re-fetch media with same retry logic
+        attempts = 0;
+        while (attempts < maxAttempts) {
+          attempts++;
+          try {
+            response = await globalQueue.run(() => fetchWithTimeout(targetUrl!, 12000));
+            if (response.ok) break;
+            console.warn(`[Proxy Media] Attempt ${attempts} failed for ${targetUrl}. Status: ${response.status}.`);
+          } catch (error: any) {
+            console.error(`[Proxy Media] Attempt ${attempts} error:`, error.name === 'AbortError' ? 'Timeout' : error.message);
+          }
+          if (attempts < maxAttempts) await new Promise(resolve => setTimeout(resolve, 500 * attempts));
+        }
+        
+        if (!response || !response.ok) {
+          return res.status(response?.status || 500).json({ error: 'Failed to fetch actual media after retries' });
+        }
         contentType = response.headers.get('content-type') || '';
       }
-    }
-
-    if (!response.ok) {
-      return res.status(response.status).json({ error: `Target returned ${response.status}` });
     }
 
     // Set the content type, but override/ensure CORS is preserved for the response
@@ -103,7 +181,7 @@ async function resolveMetadata(nftId: string): Promise<string | null> {
   
   // Try XRP Cafe First
   try {
-    const cafeResponse = await fetch(`https://api.xrp.cafe/api/v1/nft/${mappedNftId}`);
+    const cafeResponse = await globalQueue.run(() => fetch(`https://api.xrp.cafe/api/v1/nft/${mappedNftId}`));
     if (cafeResponse.ok) {
       const data = await cafeResponse.json();
       if (data.image && typeof data.image === 'string' && data.image.length > 5) {
@@ -118,7 +196,7 @@ async function resolveMetadata(nftId: string): Promise<string | null> {
 
   // Fallback to Bithomp
   try {
-    const bithompResponse = await fetch(`https://bithomp.com/api/v2/nft/${mappedNftId}`);
+    const bithompResponse = await globalQueue.run(() => fetch(`https://bithomp.com/api/v2/nft/${mappedNftId}`));
     if (bithompResponse.ok) {
       const data = await bithompResponse.json();
       if (data.image && typeof data.image === 'string' && data.image.length > 5) {
@@ -132,8 +210,8 @@ async function resolveMetadata(nftId: string): Promise<string | null> {
   // Final race between other providers if priority ones failed
   const controller = new AbortController();
   const others = [
-    () => fetch(`https://api.xrpscan.com/api/v1/nft/${mappedNftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
-    () => fetch(`https://xrplmeta.org/api/v1/nft/${mappedNftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+    () => globalQueue.run(() => fetch(`https://api.xrpscan.com/api/v1/nft/${mappedNftId}`, { signal: controller.signal })).then(r => r.json().then(d => d.meta?.image)),
+    () => globalQueue.run(() => fetch(`https://xrplmeta.org/api/v1/nft/${mappedNftId}`, { signal: controller.signal })).then(r => r.json().then(d => d.image))
   ];
 
   try {
