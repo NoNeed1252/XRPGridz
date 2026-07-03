@@ -146,9 +146,14 @@
                                 <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
                                 <span class="font-semibold">Live Preview</span>
                             </div>
-                            <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
-                                <i class="fa-solid fa-download"></i> Download PNG
-                            </button>
+                            <div class="flex gap-x-2">
+                                <button class="px-5 py-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2 block opacity-100 visible">
+                                    Export for X
+                                </button>
+                                <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
+                                    <i class="fa-solid fa-download"></i> Download PNG
+                                </button>
+                            </div>
                         </div>
 
                         <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center">
