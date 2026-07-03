@@ -3,5 +3,8 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  ],
+  "env": {
+    "FORCE_REDEPLOY": "2026-07-03T13:30:00Z"
+  }
 }
