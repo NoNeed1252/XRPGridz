@@ -30,9 +30,14 @@
                     <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
                 </div>
             </div>
-            <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
-                <i class="fa-solid fa-heart"></i> <span>Donate</span>
-            </button>
+            <div class="flex items-center gap-x-3">
+                <a href="https://x.com/intent/tweet?text=Check%20out%20XRPGridz%20-%20the%20best%20way%20to%20grid%20your%20XRPL%20NFTs!%20%40XRPGridz" target="_blank" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors">
+                    <i class="fa-brands fa-x-twitter"></i>
+                </a>
+                <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
+                    <i class="fa-solid fa-heart"></i> <span>Donate</span>
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -149,38 +154,35 @@
         const collectionNameCache = new Map();
         let isLoadingMore = false;
         
-        // Throttling/Queueing state
-        const fetchQueue = [];
-        let activeFetches = 0;
-        const MAX_CONCURRENT_FETCHES = 6;
+        // Advanced Request Queue Management
+        class RequestQueue {
+            constructor(maxConcurrent = 6) {
+                this.maxConcurrent = maxConcurrent;
+                this.activeCount = 0;
+                this.queue = [];
+            }
 
-        /**
-         * Queued fetch wrapper to prevent browser connection limit saturation.
-         */
-        async function throttledFetch(url, options = {}) {
-            return new Promise((resolve, reject) => {
-                const execute = async () => {
-                    activeFetches++;
-                    try {
-                        const res = await fetch(url, options);
-                        resolve(res);
-                    } catch (err) {
-                        reject(err);
-                    } finally {
-                        activeFetches--;
-                        if (fetchQueue.length > 0) {
-                            const next = fetchQueue.shift();
-                            next();
-                        }
-                    }
-                };
-
-                if (activeFetches < MAX_CONCURRENT_FETCHES) {
-                    execute();
-                } else {
-                    fetchQueue.push(execute);
+            async add(fn) {
+                if (this.activeCount >= this.maxConcurrent) {
+                    await new Promise(resolve => this.queue.push(resolve));
                 }
-            });
+                this.activeCount++;
+                try {
+                    return await fn();
+                } finally {
+                    this.activeCount--;
+                    if (this.queue.length > 0) {
+                        const next = this.queue.shift();
+                        next();
+                    }
+                }
+            }
+        }
+
+        const fetchQueue = new RequestQueue(8);
+
+        async function throttledFetch(url, options = {}) {
+            return fetchQueue.add(() => fetch(url, options));
         }
 
         async function getXRPScanMetadata(nftId) {
@@ -196,39 +198,18 @@
             return null;
         }
 
-        async function getXRPLMetaMetadata(nftId) {
-            const cacheKey = `meta-${nftId}`;
-            if (metadataCache.has(cacheKey)) return metadataCache.get(cacheKey);
-            try {
-                const res = await throttledFetch(`https://xrplmeta.org/api/v1/nft/${nftId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    metadataCache.set(cacheKey, data);
-                    return data;
-                }
-            } catch(e){}
-            return null;
-        }
-
-        async function getBithompMetadata(nftId) {
-            const cacheKey = `bithomp-${nftId}`;
-            if (metadataCache.has(cacheKey)) return metadataCache.get(cacheKey);
-            try {
-                const res = await throttledFetch(`https://bithomp.com/api/v2/nft/${nftId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    metadataCache.set(cacheKey, data);
-                    return data;
-                }
-            } catch(e){}
-            return null;
-        }
-
-        async function resolveNFTImageSources(nft) {
+        async function resolveNFTImageSources(nft, highRes = false) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
 
-            // Prioritize our new backend proxy for hex-unwrapping and IPFS resolution
+            // Prioritize high-res logic if requested (for grid downloads)
+            if (highRes) {
+                sources.push(`/api/proxy?nftId=${nft.NFTokenID}&highRes=true`);
+            }
+
+            // Standard proxy resolution
+            sources.push(`/api/proxy?nftId=${nft.NFTokenID}`);
+
             if (nft.URI) {
                 sources.push(`/api/proxy?hex=${nft.URI}`);
             }
@@ -239,18 +220,6 @@
                 if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
             }
 
-            const metaData = await getXRPLMetaMetadata(nft.NFTokenID);
-            if (metaData?.image) {
-                const url = formatImageUrl(metaData.image);
-                if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
-            }
-
-            const bData = await getBithompMetadata(nft.NFTokenID);
-            if (bData?.image) {
-                const url = formatImageUrl(bData.image);
-                if (url) sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
-            }
-
             // Fallback to extraction logic if proxy fails
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
@@ -258,12 +227,10 @@
                 const cid = extractCID(rawUri);
                 if (cid) {
                     sources.push(`/api/proxy?cid=${cid}`);
-                    // Direct fallbacks as last resort
                     sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
                     sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
                 } else if (rawUri.startsWith('http')) {
                     sources.push(`/api/proxy?url=${encodeURIComponent(rawUri)}`);
-                    sources.push(rawUri);
                 }
             }
 
@@ -299,17 +266,6 @@
                 const bytes = new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
                 return new TextDecoder().decode(bytes);
             } catch (e) { return hex; }
-        }
-
-        function getCollectionDisplayName(collection, nft = null) {
-            if (!collection && !nft) return "Unknown Collection";
-            let name = collection?.name || collection?.collection_name;
-            if (name && /^[0-9A-Fa-f]+$/.test(name)) name = decodeHexName(name);
-            if (!name && nft) {
-                const short = (nft.Issuer || '').slice(0,8) + '…' + (nft.Issuer || '').slice(-4);
-                return `Coll: ${short}`;
-            }
-            return name || "Unknown Collection";
         }
 
         function createPlaceholder(nftId) {
@@ -389,25 +345,19 @@
             const select = document.getElementById('collection-filter');
             while (select.options.length > 1) select.remove(1);
             const map = new Map();
-            // Just use the first 50 for collection filters to avoid overwhelming 
-            const sample = allNFTs.slice(0, 50);
-            await Promise.all(sample.map(async (nft) => {
-                const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
-                if (!map.has(key)) {
-                    let label = "Unknown Collection";
-                    if (collectionNameCache.has(key)) label = collectionNameCache.get(key);
-                    map.set(key, { label, count: 0 });
-                }
-            }));
-
+            const sample = allNFTs.slice(0, 100);
+            
             allNFTs.forEach(nft => {
                 const key = `${nft.Issuer || ''}-${nft.NFTokenTaxon || 0}`;
-                if (map.has(key)) map.get(key).count++;
+                if (!map.has(key)) {
+                    map.set(key, { label: "Collection", count: 0 });
+                }
+                map.get(key).count++;
             });
 
             Array.from(map.entries()).sort((a,b) => b[1].count - a[1].count).forEach(([key, data]) => {
                 const opt = document.createElement('option');
-                opt.value = key; opt.textContent = `${data.label} (${data.count})`;
+                opt.value = key; opt.textContent = `${key.slice(0,8)}... (${data.count})`;
                 select.appendChild(opt);
             });
         }
@@ -421,10 +371,6 @@
             renderNFTGallery(filtered);
         }
 
-        /**
-         * Intersection Observer for Lazy Loading.
-         * Only triggers image/metadata logic when card is visible.
-         */
         const lazyObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -436,11 +382,9 @@
                         card.dataset.loaded = "true";
                         loadImageForCard(nft, nftIndex, card);
                     }
-                    // Optional: Unobserve after loading to save resources
-                    // lazyObserver.unobserve(card);
                 }
             });
-        }, { root: document.getElementById('nft-grid'), rootMargin: '200px' });
+        }, { root: document.getElementById('nft-grid'), rootMargin: '300px' });
 
         function renderNFTGallery(filtered = null) {
             const container = document.getElementById('nft-grid');
@@ -473,7 +417,6 @@
             const sources = await resolveNFTImageSources(nft);
             skel.style.display = 'none';
             wrap.style.display = 'block';
-            wrap.className = 'w-full h-full';
             
             if (sources.length === 0) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
             
@@ -560,20 +503,47 @@
         function clearSelected() { selectedNFTs = []; renderNFTGallery(); updateSelectedCount(); document.getElementById('grid-preview').innerHTML = ''; }
         function selectAllNFTs() { selectedNFTs = [...allNFTs].slice(0, 100); renderNFTGallery(); updateSelectedCount(); updateGridPreview(); }
         function deselectAllNFTs() { selectedNFTs = []; renderNFTGallery(); updateSelectedCount(); document.getElementById('grid-preview').innerHTML = ''; }
+        
         async function downloadGridPNG() {
             const wrapper = document.getElementById('grid-preview');
             if (!wrapper.children.length) return alert('Build a preview first!');
-            const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true });
+            
+            const originalHTML = wrapper.innerHTML;
+            // Temporarily replace preview images with high-res versions for the canvas capture
+            const cells = wrapper.querySelectorAll('.grid-cell');
+            const highResPromises = Array.from(cells).map(async (cell, idx) => {
+                const nft = selectedNFTs[idx];
+                if (!nft) return;
+                const sources = await resolveNFTImageSources(nft, true);
+                const img = cell.querySelector('img');
+                if (img && sources.length > 0) {
+                    return new Promise(resolve => {
+                        const hiRes = new Image();
+                        hiRes.crossOrigin = 'anonymous';
+                        hiRes.onload = () => { img.src = hiRes.src; resolve(); };
+                        hiRes.onerror = resolve;
+                        hiRes.src = sources[0];
+                    });
+                }
+            });
+
+            await Promise.all(highResPromises);
+
+            const canvas = await html2canvas(wrapper, { scale: 4, backgroundColor: '#0f172a', useCORS: true });
             const a = document.createElement('a');
             a.download = `xrpgridz-${currentWallet.slice(0,6)}-${new Date().toISOString().slice(0,10)}.png`;
             a.href = canvas.toDataURL('image/png'); a.click();
+            
+            // Revert preview if needed, or just let it stay high-res
         }
+
         function showStatus(el, msg, type) {
             el.innerHTML = msg;
             el.className = `mt-2 text-sm px-4 py-2 rounded-2xl flex items-center ${type === 'error' ? 'bg-red-950/60 text-red-400 border border-red-900/50' : type === 'success' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-900/50' : 'bg-blue-950/60 text-blue-400 border border-blue-900/50'}`;
             el.classList.remove('hidden');
             if (type === 'success') setTimeout(() => el.classList.add('hidden'), 4000);
         }
+        
         const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
         function showDonateModal() {
             const modal = document.createElement('div');
