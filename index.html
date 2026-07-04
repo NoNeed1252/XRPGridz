@@ -68,7 +68,7 @@
     <nav class="border-b border-slate-800 bg-[#0a0f1e]/95 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
             <div class="flex items-center gap-x-4">
-                <button id="hamburger" class="text-2xl text-slate-400 hover:text-white">
+                <button id="hamburger" class="text-2xl text-slate-400 hover:text-white" onclick="toggleSidebar(true)">
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <div class="flex items-center gap-x-3 cursor-pointer" onclick="switchTab('grid')">
@@ -89,11 +89,11 @@
     </nav>
 
     <!-- Sidebar -->
-    <div id="sidebar-overlay"></div>
+    <div id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
     <div id="sidebar">
         <div class="flex justify-between items-center mb-8">
             <h3 class="text-xl font-bold">Menu</h3>
-            <button id="close-sidebar" class="text-2xl">&times;</button>
+            <button id="close-sidebar" class="text-2xl" onclick="toggleSidebar(false)">&times;</button>
         </div>
         <ul class="space-y-4">
             <li><button onclick="switchTab('grid'); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors flex items-center gap-3"><i class="fa-solid fa-th-large w-6"></i> Grid Builder</button></li>
@@ -175,17 +175,17 @@
                             <div class="grid grid-cols-2 gap-4 mb-5">
                                 <div>
                                     <div class="flex justify-between text-xs mb-1"><span>Columns</span><span id="cols-value">4</span></div>
-                                    <input type="range" id="cols-slider" min="1" max="10" value="4" class="w-full accent-blue-500">
+                                    <input type="range" id="cols-slider" min="1" max="10" value="4" class="w-full accent-blue-500" oninput="updateGridPreview()">
                                 </div>
                                 <div>
                                     <div class="flex justify-between text-xs mb-1"><span>Rows</span><span id="rows-value">4</span></div>
-                                    <input type="range" id="rows-slider" min="1" max="10" value="4" class="w-full accent-blue-500">
+                                    <input type="range" id="rows-slider" min="1" max="10" value="4" class="w-full accent-blue-500" oninput="updateGridPreview()">
                                 </div>
                             </div>
 
                             <div class="mb-5">
                                 <div class="text-xs text-slate-400 mb-2">BANNER PLACEMENT</div>
-                                <select id="banner-position" class="w-full bg-[#0a0f1e] border border-slate-600 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500">
+                                <select id="banner-position" class="w-full bg-[#0a0f1e] border border-slate-600 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500" onchange="updateGridPreview()">
                                     <option value="bottom">Bottom</option>
                                     <option value="top">Top</option>
                                     <option value="left">Left Side</option>
@@ -334,6 +334,7 @@
         function toggleSidebar(open) {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) return;
             if (open) {
                 sidebar.classList.add('open');
                 overlay.classList.add('open');
@@ -399,8 +400,10 @@
             if (!nft) return;
             
             const placeholder = document.getElementById('banner-placeholder');
-            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
-            placeholder.classList.remove('hidden');
+            if (placeholder) {
+                placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
+                placeholder.classList.remove('hidden');
+            }
             
             switchTab('banner');
             
@@ -411,7 +414,7 @@
                     let currentTry = 0;
                     img.onload = () => {
                         activeBannerImage = img;
-                        placeholder.classList.add('hidden');
+                        if (placeholder) placeholder.classList.add('hidden');
                         drawBanner();
                     };
                     img.onerror = () => {
@@ -419,12 +422,12 @@
                         if (currentTry < sources.length) {
                             img.src = sources[currentTry];
                         } else {
-                            placeholder.innerHTML = "Failed to load NFT image";
+                            if (placeholder) placeholder.innerHTML = "Failed to load NFT image";
                         }
                     };
                     img.src = sources[0];
                 } else {
-                    placeholder.innerHTML = "No image available for this NFT";
+                    if (placeholder) placeholder.innerHTML = "No image available for this NFT";
                 }
             });
         }
@@ -846,6 +849,7 @@
 
         function populateCollectionFilter() {
             const select = document.getElementById('collection-filter');
+            if (!select) return;
             select.innerHTML = '<option value="">All Collections</option>';
             const issuers = [...new Set(allNFTs.map(n => `${n.Issuer || ''}-${n.NFTokenTaxon || 0}`))];
             issuers.forEach(iss => {
@@ -938,7 +942,7 @@
             if (!currentMarker || isLoadingMore) return;
             isLoadingMore = true;
             const btn = document.getElementById('load-more-btn');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Loading...`;
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Loading...`;
 
             try {
                 const result = await loadNFTsFromXRPL(currentWallet, currentMarker);
@@ -946,14 +950,16 @@
                 allNFTs = allNFTs.concat(newOnes);
                 currentMarker = result.marker;
 
-                document.getElementById('nft-count').textContent = allNFTs.length;
+                if (document.getElementById('nft-count')) document.getElementById('nft-count').textContent = allNFTs.length;
                 renderNFTGallery();
                 populateCollectionFilter();
             } catch (e) {
                 console.error('Load more failed', e);
             } finally {
-                if (currentMarker) btn.innerHTML = `<i class="fa-solid fa-plus"></i> Load More`;
-                else btn.classList.add('hidden');
+                if (btn) {
+                    if (currentMarker) btn.innerHTML = `<i class="fa-solid fa-plus"></i> Load More`;
+                    else btn.classList.add('hidden');
+                }
                 isLoadingMore = false;
             }
         }
@@ -980,8 +986,8 @@
             const cols = parseInt(document.getElementById('cols-slider').value);
             
             // Sync labels
-            document.getElementById('cols-value').textContent = cols;
-            document.getElementById('rows-value').textContent = rows;
+            if (document.getElementById('cols-value')) document.getElementById('cols-value').textContent = cols;
+            if (document.getElementById('rows-value')) document.getElementById('rows-value').textContent = rows;
 
             if (!selectedNFTs.length) { grid.innerHTML = ''; return; }
             grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
@@ -1148,6 +1154,7 @@
         }
 
         function showStatus(el, msg, type) { 
+            if (!el) return;
             el.innerHTML = msg; 
             el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; 
             el.classList.remove('hidden'); 
@@ -1186,20 +1193,6 @@
             document.body.appendChild(modal);
         }
 
-        window.onload = () => { 
-            const rowSlider = document.getElementById('rows-slider');
-            const colSlider = document.getElementById('cols-slider');
-            if (rowSlider) rowSlider.oninput = updateGridPreview;
-            if (colSlider) colSlider.oninput = updateGridPreview;
-
-            const hamburger = document.getElementById('hamburger');
-            const closeSidebar = document.getElementById('close-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-
-            if (hamburger) hamburger.onclick = () => toggleSidebar(true);
-            if (closeSidebar) closeSidebar.onclick = () => toggleSidebar(false);
-            if (overlay) overlay.onclick = () => toggleSidebar(false);
-        };
     </script>
 </body>
 </html>
