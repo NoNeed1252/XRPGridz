@@ -72,7 +72,7 @@
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <div class="flex items-center gap-x-3 cursor-pointer" onclick="switchTab('grid')">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-none flex items-center justify-center">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center">
                         <i class="fa-solid fa-th-large text-white text-2xl"></i>
                     </div>
                     <div class="font-semibold text-3xl tracking-tighter">
@@ -81,7 +81,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-x-4">
-                <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-none flex items-center gap-x-2">
+                <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
                     <i class="fa-solid fa-heart"></i> <span>Support</span>
                 </button>
             </div>
@@ -108,20 +108,20 @@
         <div class="max-w-4xl mx-auto px-5 pt-10 pb-8 text-center">
             <h1 class="text-5xl md:text-6xl font-semibold tracking-tighter mb-4">Turn your XRP NFTs<br>into beautiful grids.</h1>
             <p class="text-xl text-slate-400 mb-6">Search wallet • Filter by collection • Build grid • Download PNG</p>
-            <button type="button" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})" class="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-none text-lg">Start Creating</button>
+            <button type="button" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})" class="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-3xl text-lg">Start Creating</button>
         </div>
 
         <div id="tool" class="max-w-7xl mx-auto px-5 pb-16">
-            <div class="bg-[#111827] border border-slate-700 rounded-none p-6 md:p-8">
+            <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
                 
                 <div class="mb-8">
                     <div class="flex items-center gap-x-3 mb-3">
-                        <div class="w-7 h-7 bg-blue-600 text-white rounded-none flex items-center justify-center text-sm font-bold">1</div>
+                        <div class="w-7 h-7 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm font-bold">1</div>
                         <h2 class="text-xl font-semibold">Enter Your XRPL Wallet</h2>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <input id="wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-none px-5 py-3.5 text-lg font-mono outline-none">
-                        <button type="button" onclick="loadNFTs()" class="px-8 py-3.5 bg-white text-[#0a0f1e] font-bold rounded-none hover:bg-slate-100">Load NFTs</button>
+                        <input id="wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-2xl px-5 py-3.5 text-lg font-mono outline-none">
+                        <button type="button" onclick="loadNFTs()" class="px-8 py-3.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100">Load NFTs</button>
                     </div>
                     <div id="wallet-status" class="mt-2 text-sm hidden"></div>
                 </div>
@@ -130,17 +130,17 @@
                     <div class="flex justify-between items-end mb-4">
                         <div>
                             <h3 class="text-xl font-semibold">Your NFTs <span id="nft-count" class="text-blue-400 font-mono">(0)</span></h3>
-                            <button id="load-more-btn" onclick="loadMoreNFTs()" class="hidden mt-1 text-xs px-3 py-1 bg-emerald-600/20 text-emerald-400 rounded-none">Load More</button>
+                            <button id="load-more-btn" onclick="loadMoreNFTs()" class="hidden mt-1 text-xs px-3 py-1 bg-emerald-600/20 text-emerald-400 rounded-xl">Load More</button>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="selectAllNFTs()" class="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-none border border-white/10">Select All</button>
-                            <button onclick="deselectAllNFTs()" class="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-none border border-white/10">Clear</button>
+                            <button onclick="selectAllNFTs()" class="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10">Select All</button>
+                            <button onclick="deselectAllNFTs()" class="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10">Clear</button>
                         </div>
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                        <input id="nft-filter" type="text" onkeyup="filterNFTs()" placeholder="Search by ID..." class="flex-1 bg-[#0a0f1e] border border-slate-700 px-4 py-2 rounded-none text-sm focus:outline-none focus:border-blue-500">
-                        <select id="collection-filter" onchange="filterNFTs()" class="bg-[#0a0f1e] border border-slate-700 px-4 py-2 rounded-none text-sm focus:outline-none focus:border-blue-500">
+                        <input id="nft-filter" type="text" onkeyup="filterNFTs()" placeholder="Search by ID..." class="flex-1 bg-[#0a0f1e] border border-slate-700 px-4 py-2 rounded-2xl text-sm focus:outline-none focus:border-blue-500">
+                        <select id="collection-filter" onchange="filterNFTs()" class="bg-[#0a0f1e] border border-slate-700 px-4 py-2 rounded-2xl text-sm focus:outline-none focus:border-blue-500">
                             <option value="">All Collections</option>
                         </select>
                     </div>
@@ -158,17 +158,17 @@
                     <div class="grid md:grid-cols-5 gap-8">
                         <div class="md:col-span-2">
                             <div class="flex items-center gap-x-3 mb-4">
-                                <div class="w-7 h-7 bg-emerald-500 text-white rounded-none flex items-center justify-center text-sm font-bold">2</div>
+                                <div class="w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
                                 <h3 class="text-xl font-semibold">Build Your Grid</h3>
                             </div>
 
                             <div class="mb-5">
                                 <div class="text-xs text-slate-400 mb-2">QUICK SIZES</div>
                                 <div class="grid grid-cols-4 gap-2 text-xs">
-                                    <button onclick="setGridPreset(2,2)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-none">2×2</button>
-                                    <button onclick="setGridPreset(3,3)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-none">3×3</button>
-                                    <button onclick="setGridPreset(4,4)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-none">4×4</button>
-                                    <button onclick="setGridPreset(5,5)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-none">5×5</button>
+                                    <button onclick="setGridPreset(2,2)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-xl">2×2</button>
+                                    <button onclick="setGridPreset(3,3)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-xl">3×3</button>
+                                    <button onclick="setGridPreset(4,4)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-xl">4×4</button>
+                                    <button onclick="setGridPreset(5,5)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-xl">5×5</button>
                                 </div>
                             </div>
 
@@ -185,7 +185,7 @@
 
                             <div class="mb-5">
                                 <div class="text-xs text-slate-400 mb-2">BANNER PLACEMENT</div>
-                                <select id="banner-position" class="w-full bg-[#0a0f1e] border border-slate-600 px-4 py-2 rounded-none text-sm focus:outline-none focus:border-blue-500">
+                                <select id="banner-position" class="w-full bg-[#0a0f1e] border border-slate-600 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500">
                                     <option value="bottom">Bottom</option>
                                     <option value="top">Top</option>
                                     <option value="left">Left Side</option>
@@ -194,25 +194,25 @@
                             </div>
 
                             <div class="flex gap-2">
-                                <button onclick="shuffleSelected()" class="flex-1 py-2 text-xs border border-slate-600 rounded-none">Shuffle</button>
-                                <button onclick="updateGridPreview()" class="flex-1 py-2 text-xs bg-emerald-600 text-white rounded-none">Refresh Preview</button>
+                                <button onclick="shuffleSelected()" class="flex-1 py-2 text-xs border border-slate-600 rounded-2xl">Shuffle</button>
+                                <button onclick="updateGridPreview()" class="flex-1 py-2 text-xs bg-emerald-600 text-white rounded-2xl">Refresh Preview</button>
                             </div>
                         </div>
 
                         <div class="md:col-span-3">
                             <div class="flex justify-between items-center mb-3">
                                 <div class="flex items-center gap-x-2">
-                                    <div class="w-7 h-7 bg-purple-500 text-white rounded-none flex items-center justify-center text-sm font-bold">3</div>
+                                    <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
                                     <span class="font-semibold">Live Preview</span>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-none flex items-center gap-x-2">
+                                    <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
                                         <i class="fa-solid fa-download"></i> Download PNG
                                     </button>
                                 </div>
                             </div>
 
-                            <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-none min-h-[320px] flex items-center justify-center">
+                            <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center">
                                 <div id="grid-preview" class="grid w-full max-w-[580px]" style="gap: 6px;"></div>
                             </div>
                         </div>
@@ -224,16 +224,16 @@
 
     <!-- Meme Tab -->
     <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
-        <div class="bg-[#111827] border border-slate-700 rounded-none p-6 md:p-8">
+        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
             <div class="flex items-center gap-x-3 mb-8">
-                <div class="w-10 h-10 bg-purple-500 text-white rounded-none flex items-center justify-center">
+                <div class="w-10 h-10 bg-purple-500 text-white rounded-2xl flex items-center justify-center">
                     <i class="fa-solid fa-face-grin-tears text-2xl"></i>
                 </div>
                 <h2 class="text-3xl font-bold tracking-tighter">Meme Maker</h2>
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
-                <div id="meme-preview-area" class="bg-[#0a0f1e] rounded-none aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                <div id="meme-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
                     <canvas id="meme-canvas"></canvas>
                     <div id="meme-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500">
                         Select an NFT from the Grid tab to start meming
@@ -243,14 +243,14 @@
                 <div class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Top Text</label>
-                        <input id="meme-top-text" type="text" placeholder="TOP TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-none px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
+                        <input id="meme-top-text" type="text" placeholder="TOP TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Bottom Text</label>
-                        <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-none px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
+                        <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
                     <div class="flex flex-col gap-3">
-                        <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-none text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
+                        <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
                     </div>
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
                 </div>
@@ -260,9 +260,9 @@
 
     <!-- Banner Maker Tab -->
     <div id="tab-banner" class="tab-content max-w-7xl mx-auto px-5 py-10">
-        <div class="bg-[#111827] border border-slate-700 rounded-none p-6 md:p-8">
+        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
             <div class="flex items-center gap-x-3 mb-8">
-                <div class="w-10 h-10 bg-blue-500 text-white rounded-none flex items-center justify-center">
+                <div class="w-10 h-10 bg-blue-500 text-white rounded-2xl flex items-center justify-center">
                     <i class="fa-solid fa-image text-2xl"></i>
                 </div>
                 <h2 class="text-3xl font-bold tracking-tighter">Banner Maker</h2>
@@ -270,12 +270,12 @@
 
             <div class="mb-8">
                 <div class="flex items-center gap-x-3 mb-3">
-                    <div class="w-7 h-7 bg-blue-600 text-white rounded-none flex items-center justify-center text-sm font-bold">1</div>
+                    <div class="w-7 h-7 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm font-bold">1</div>
                     <h2 class="text-xl font-semibold">Enter Your XRPL Wallet</h2>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <input id="banner-wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-none px-5 py-3.5 text-lg font-mono outline-none">
-                    <button type="button" onclick="loadNFTsForBanner()" class="px-8 py-3.5 bg-white text-[#0a0f1e] font-bold rounded-none hover:bg-slate-100">Load NFTs</button>
+                    <input id="banner-wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-2xl px-5 py-3.5 text-lg font-mono outline-none">
+                    <button type="button" onclick="loadNFTsForBanner()" class="px-8 py-3.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100">Load NFTs</button>
                 </div>
                 <div id="banner-wallet-status" class="mt-2 text-sm hidden"></div>
             </div>
@@ -286,8 +286,8 @@
                         <h3 class="text-xl font-semibold">Your NFTs <span id="banner-nft-count" class="text-blue-400 font-mono">(0)</span></h3>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="selectAllNFTsForBanner()" class="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-none border border-white/10">Select All</button>
-                        <button onclick="deselectAllNFTsForBanner()" class="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-none border border-white/10">Clear</button>
+                        <button onclick="selectAllNFTsForBanner()" class="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10">Select All</button>
+                        <button onclick="deselectAllNFTsForBanner()" class="text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10">Clear</button>
                     </div>
                 </div>
                 <div id="banner-nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[400px] overflow-auto p-1"></div>
@@ -300,17 +300,17 @@
                 <div class="grid md:grid-cols-1 gap-10">
                     <div class="flex flex-col gap-4">
                         <div class="flex items-center gap-x-3">
-                            <div class="w-7 h-7 bg-emerald-500 text-white rounded-none flex items-center justify-center text-sm font-bold">2</div>
+                            <div class="w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
                             <h3 class="text-xl font-semibold">Banner Preview (16:9)</h3>
                         </div>
-                        <div id="banner-preview-area" class="bg-[#0a0f1e] rounded-none aspect-[16/9] flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                        <div id="banner-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-[16/9] flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
                             <canvas id="banner-canvas"></canvas>
                         </div>
                     </div>
                     
                     <div class="space-y-6">
                         <div class="grid md:grid-cols-2 gap-4">
-                            <button onclick="saveBanner()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-none text-xl shadow-lg shadow-blue-900/20">Save & Export</button>
+                            <button onclick="saveBanner()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-blue-900/20">Save & Export</button>
                         </div>
                         <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
                     </div>
@@ -364,7 +364,7 @@
             if (!nft) return;
             
             const placeholder = document.getElementById('meme-placeholder');
-            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-none"></div>';
+            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-2xl"></div>';
             placeholder.classList.remove('hidden');
             
             switchTab('meme');
@@ -399,7 +399,7 @@
             if (!nft) return;
             
             const placeholder = document.getElementById('banner-placeholder');
-            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-none"></div>';
+            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-2xl"></div>';
             placeholder.classList.remove('hidden');
             
             switchTab('banner');
@@ -887,10 +887,10 @@
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-\${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
                         <div id="imgwrap-\${i}" class="w-full h-full hidden"></div>
                         <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-none flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
-                        <button onclick="event.stopPropagation(); bannerNFT('\${nft.NFTokenID}')" class="banner-btn px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-none flex items-center justify-center gap-1 shadow-lg">
+                        <button onclick="event.stopPropagation(); bannerNFT('\${nft.NFTokenID}')" class="banner-btn px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-2xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-image"></i> BANNER
                         </button>
-                        <button onclick="event.stopPropagation(); memeNFT('\${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-none flex items-center justify-center gap-1 shadow-lg">
+                        <button onclick="event.stopPropagation(); memeNFT('\${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-2xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-face-grin-tears"></i> MEME IT
                         </button>
                     </div>`;
@@ -1149,7 +1149,7 @@
 
         function showStatus(el, msg, type) { 
             el.innerHTML = msg; 
-            el.className = `mt-2 text-sm px-4 py-2 rounded-none \${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; 
+            el.className = `mt-2 text-sm px-4 py-2 rounded-2xl \${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; 
             el.classList.remove('hidden'); 
         }
 
@@ -1170,16 +1170,16 @@
             const modal = document.createElement('div');
             modal.className = `fixed inset-0 bg-[#0a0f1e]/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4`;
             modal.innerHTML = `
-                <div class="bg-[#111827] border border-slate-700 rounded-none max-w-md w-full p-8 relative shadow-2xl">
+                <div class="bg-[#111827] border border-slate-700 rounded-3xl max-w-md w-full p-8 relative shadow-2xl">
                     <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl text-slate-400 hover:text-white transition-colors">&times;</button>
                     <div class="text-center">
-                        <div class="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-none flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/20"><i class="fa-solid fa-heart text-white text-3xl"></i></div>
+                        <div class="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-3xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/20"><i class="fa-solid fa-heart text-white text-3xl"></i></div>
                         <h3 class="text-3xl font-bold tracking-tighter mb-2">Support XRPGridz</h3>
                         <p class="text-slate-400 mb-6">Your contributions help keep this tool free for everyone. Thank you!</p>
-                        <div class="bg-[#0a0f1e] border border-slate-800 rounded-none p-5 mb-5 text-left">
+                        <div class="bg-[#0a0f1e] border border-slate-800 rounded-3xl p-5 mb-5 text-left">
                             <div class="text-xs font-bold text-emerald-400 mb-2 uppercase tracking-widest">Treasury Address</div>
                             <div class="font-mono text-sm break-all mb-4 text-slate-300 leading-relaxed">\${DONATE_ADDRESS}</div>
-                            <button onclick="navigator.clipboard.writeText('\${DONATE_ADDRESS}'); this.innerHTML='<i class=\\'fa-solid fa-check\\'></i> Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-none font-bold transition-all shadow-lg shadow-emerald-600/10">Copy Address</button>
+                            <button onclick="navigator.clipboard.writeText('\${DONATE_ADDRESS}'); this.innerHTML='<i class=\\'fa-solid fa-check\\'></i> Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-bold transition-all shadow-lg shadow-emerald-600/10">Copy Address</button>
                         </div>
                     </div>
                 </div>`;
