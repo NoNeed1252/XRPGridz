@@ -34,7 +34,7 @@
         .meme-btn { position: absolute; bottom: 8px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
         .banner-btn { position: absolute; bottom: 44px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
         .nft-card:hover .meme-btn, .nft-card:hover .banner-btn { opacity: 1; }
-        #meme-canvas, #banner-canvas { max-width: 100%; max-height: 100%; object-fit: contain; display: block; margin: auto; }
+        #meme-canvas, #banner-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
 
         /* Sidebar Styles */
         #sidebar {
@@ -206,9 +206,6 @@
                                     <span class="font-semibold">Live Preview</span>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button id="share-x-btn" onclick="shareOnX()" class="px-5 py-2 bg-black border border-slate-700 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2 hover:bg-slate-900 transition-colors">
-                                        <i class="fa-brands fa-x-twitter"></i> Share on X
-                                    </button>
                                     <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
                                         <i class="fa-solid fa-download"></i> Download PNG
                                     </button>
@@ -253,9 +250,6 @@
                         <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
                     <div class="flex flex-col gap-3">
-                        <button id="share-meme-x-btn" onclick="shareMemeOnX()" class="w-full py-4 bg-black border border-slate-700 text-white font-bold rounded-2xl text-xl flex items-center justify-center gap-x-2 hover:bg-slate-900">
-                            <i class="fa-brands fa-x-twitter"></i> Share on X
-                        </button>
                         <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
                     </div>
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
@@ -311,7 +305,6 @@
                         </div>
                         <div id="banner-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-[16/9] flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
                             <canvas id="banner-canvas"></canvas>
-                            <div id="banner-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500">Select NFTs to build your banner</div>
                         </div>
                     </div>
                     
@@ -360,16 +353,6 @@
                 target.classList.add('active');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-        }
-
-        function shareOnX() {
-            const text = encodeURIComponent("Just created my XRP NFT grid on XRPGridz! 🚀✨\n\nCheck it out: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
-            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
-        }
-
-        function shareMemeOnX() {
-            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
-            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
         }
 
         function showCreativeStudio() {
@@ -450,10 +433,6 @@
             if (!activeMemeImage) return;
             const canvas = document.getElementById('meme-canvas');
             const ctx = canvas.getContext('2d');
-            const placeholder = document.getElementById('meme-placeholder');
-            if (placeholder) placeholder.classList.add('hidden');
-            const placeholder = document.getElementById('banner-placeholder');
-            if (placeholder) placeholder.classList.add('hidden');
             const topText = document.getElementById('meme-top-text').value.toUpperCase();
             const bottomText = document.getElementById('meme-bottom-text').value.toUpperCase();
 
@@ -568,7 +547,7 @@
                 renderBannerNFTGallery();
                 document.getElementById('banner-nft-count').textContent = bannerAllNFTs.length;
                 updateBannerSelectedCount();
-                showStatus(statusEl, `Found ${bannerAllNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
@@ -767,81 +746,41 @@
             finally { clearTimeout(timeout); }
         }
 
-        
-        async function resolveBiddsImage(nft) {
-            const rawUri = hexToString(nft.URI || "");
-            if (rawUri.includes("bidds.com")) {
-                try {
-                    const res = await fetch(rawUri);
-                    if (res.ok) {
-                        const meta = await res.json();
-                        const imgUrl = meta.image || meta.file || meta.animation_url;
-                        if (imgUrl) return "/api/proxy?url=" + encodeURIComponent(imgUrl);
-                    }
-                } catch (e) { console.error("Bidds resolution failed", e); }
-            }
-            return null;
-        }
-
-                async function resolveNFTImageSources(nft) {
-            if (!nft?.NFTokenID) return [];
-            
-            // Check cache
-            if (metadataCache.has(nft.NFTokenID)) return metadataCache.get(nft.NFTokenID);
-
+        async function resolveNFTImageSources(nft) {
             const sources = [];
-            const rawUri = hexToString(nft.URI || "");
+            if (!nft?.NFTokenID) return sources;
 
-            // 1. Direct IPFS/HTTP URI from HEX
+            // 1. Proxied gateway sources
+            if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
+
+            const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
+            if (racedImage) {
+                const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
+                sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
+            }
+
+            // 2. Direct CID mirrors
+            let rawUri = nft.URI || '';
+            if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
-                if (rawUri.startsWith('ipfs://')) {
-                    const cid = rawUri.replace('ipfs://', '');
-                    sources.push("https://ipfs.io/ipfs/" + cid);
-                    sources.push("https://cloudflare-ipfs.com/ipfs/" + cid);
-                    sources.push("https://gateway.pinata.cloud/ipfs/" + cid);
-                } else if (rawUri.startsWith('http')) {
-                    sources.push(rawUri);
+                const cid = extractCID(rawUri);
+                if (cid) {
+                    sources.push(`https://ipfs.io/ipfs/${cid}`);
+                    sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
+                    sources.push(`https://gateway.pinata.cloud/ipfs/${cid}`);
+                    sources.push(`https://nftstorage.link/ipfs/${cid}`);
+                    sources.push(`https://ipfs.runfission.com/ipfs/${cid}`);
+                    sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
+                    sources.push(`/api/proxy?cid=${cid}`);
                 }
             }
-
-            // 2. Bidds Resolution
-            if (rawUri.includes("bidds.com")) {
-                try {
-                    const res = await fetch("/api/proxy?url=" + encodeURIComponent(rawUri));
-                    if (res.ok) {
-                        const meta = await res.json();
-                        const imgUrl = meta.image || meta.file || meta.animation_url;
-                        if (imgUrl) sources.push(imgUrl);
-                    }
-                } catch (e) {}
-            }
-
-            // 3. Raced Metadata Providers
-            const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
-            if (racedImage) sources.push(racedImage);
-
-            // 4. Fallback to XLS-20 common gateways if we have a CID but no image yet
-            const cid = extractCID(rawUri);
-            if (cid && sources.length < 3) {
-                sources.push("https://ipfs.io/ipfs/" + cid);
-                sources.push("https://cloudflare-ipfs.com/ipfs/" + cid);
-            }
-
-            // Process all sources through proxy and remove duplicates
-            const processedSources = [...new Set(sources.filter(s => !!s))].map(url => {
-                if (url.startsWith('ipfs://')) url = "https://ipfs.io/ipfs/" + url.replace('ipfs://', '');
-                return "/api/proxy?url=" + encodeURIComponent(url);
-            });
-
-            metadataCache.set(nft.NFTokenID, processedSources);
-            return processedSources;
+            return [...new Set(sources.filter(s => !!s))];
         }
 
         function extractCID(uri) {
             if (!uri) return null;
             if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', '');
             if (uri.includes('ipfs/')) return uri.split('ipfs/').pop();
-            // Match common CID patterns (v0 and v1)
             const match = uri.match(/Qm[1-9A-HJ-NP-Za-km-z]{44}|ba[A-Za-z2-7]{57}/);
             return match ? match[0] : null;
         }
@@ -1249,9 +1188,9 @@
 
         window.onload = () => { 
             const rowSlider = document.getElementById('rows-slider');
-            const colsSlider = document.getElementById('cols-slider');
+            const colSlider = document.getElementById('cols-slider');
             if (rowSlider) rowSlider.oninput = updateGridPreview;
-            if (colsSlider) colsSlider.oninput = updateGridPreview;
+            if (colSlider) colSlider.oninput = updateGridPreview;
 
             const hamburger = document.getElementById('hamburger');
             const closeSidebar = document.getElementById('close-sidebar');
@@ -1262,6 +1201,5 @@
             if (overlay) overlay.onclick = () => toggleSidebar(false);
         };
     </script>
-<!-- version: 1.0.1-202607041156 -->
 </body>
 </html>
