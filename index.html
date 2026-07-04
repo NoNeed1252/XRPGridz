@@ -333,7 +333,10 @@
                     catch (e) { reject(e); }
                     finally {
                         activeRequests--;
-                        if (requestQueue.length > 0) requestQueue.shift()();
+                        if (requestQueue.length > 0) {
+                            const next = requestQueue.shift();
+                            if (next) next();
+                        }
                     }
                 };
                 if (activeRequests < MAX_PARALLEL) execute();
@@ -343,12 +346,12 @@
 
         async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 8000);
+            const timeout = setTimeout(() => controller.abort(), 3000);
             
             const providers = [
-                () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
-                () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-                () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+                () => fetch("https://api.xrpscan.com/api/v1/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+                () => fetch("https://xrplmeta.org/api/v1/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+                () => fetch("https://bithomp.com/api/v2/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.image))
             ];
 
             try {
@@ -452,6 +455,13 @@
             const wrapper = document.getElementById('grid-preview');
             const position = document.getElementById('banner-position').value;
             
+            // Wait for all images in the preview to be loaded to avoid blank downloads
+            const imgs = Array.from(wrapper.querySelectorAll('img'));
+            await Promise.all(imgs.map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+            }));
+
             const gridCanvas = await html2canvas(wrapper, { 
                 scale: 3, 
                 backgroundColor: '#0f172a', 
@@ -624,7 +634,7 @@
                         <div id="banner-imgwrap-${i}" class="w-full h-full hidden"></div>
                         <div class="absolute top-2 right-2"><div class="w-5 h-5 flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]"></i></div></div>
                     </div>`;
-                card.onclick = () => toggleSidebar(false);
+                card.onclick = () => toggleBannerSelection(nft, card);
                 container.appendChild(card);
                 
                 const observer = new IntersectionObserver((entries) => {
@@ -773,29 +783,35 @@
 
         // --- Core XRP Logic ---
         async function resolveNFTImageSources(nft) {
+            const nftId = nft?.NFTokenID;
+            if (!nftId) return [];
+            if (metadataCache.has(nftId)) return metadataCache.get(nftId);
+
             const sources = [];
-            if (!nft?.NFTokenID) return sources;
+            if (nft.URI) sources.push("/api/proxy?hex=" + nft.URI);
 
-            // 1. Proxied gateway sources
-            if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
+            const [racedImage, cidInfo] = await Promise.all([
+                queuedRequest(() => raceMetadataProviders(nftId)),
+                (async () => {
+                    let rawUri = nft.URI || '';
+                    if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
+                    return rawUri ? extractCID(rawUri) : null;
+                })()
+            ]);
 
-            const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
             if (racedImage) {
-                const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
-                sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
+                const url = racedImage.startsWith('ipfs://') ? "https://ipfs.io/ipfs/" + racedImage.replace('ipfs://', '') : racedImage;
+                sources.push("/api/proxy?url=" + encodeURIComponent(url));
             }
 
-            // 2. Direct CID mirrors
-            let rawUri = nft.URI || '';
-            if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
-            if (rawUri) {
-                const cid = extractCID(rawUri);
-                if (cid) {
-                    sources.push(`https://ipfs.io/ipfs/${cid}`);
-                    sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
-                }
+            if (cidInfo) {
+                sources.push("https://ipfs.io/ipfs/" + cidInfo);
+                sources.push("https://cloudflare-ipfs.com/ipfs/" + cidInfo);
             }
-            return [...new Set(sources.filter(s => !!s))];
+
+            const uniqueSources = [...new Set(sources.filter(s => !!s))];
+            metadataCache.set(nftId, uniqueSources);
+            return uniqueSources;
         }
 
         function extractCID(uri) {
