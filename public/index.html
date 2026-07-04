@@ -389,13 +389,19 @@
                 if (sources.length > 0) {
                     const img = new Image();
                     img.crossOrigin = "anonymous";
+                    let currentTry = 0;
                     img.onload = () => {
                         activeMemeImage = img;
                         placeholder.classList.add('hidden');
                         drawMeme();
                     };
                     img.onerror = () => {
-                        placeholder.innerHTML = "Failed to load NFT image";
+                        currentTry++;
+                        if (currentTry < sources.length) {
+                            img.src = sources[currentTry];
+                        } else {
+                            placeholder.innerHTML = "Failed to load NFT image";
+                        }
                     };
                     img.src = sources[0];
                 } else {
@@ -418,13 +424,19 @@
                 if (sources.length > 0) {
                     const img = new Image();
                     img.crossOrigin = "anonymous";
+                    let currentTry = 0;
                     img.onload = () => {
                         activeBannerImage = img;
                         placeholder.classList.add('hidden');
                         drawBanner();
                     };
                     img.onerror = () => {
-                        placeholder.innerHTML = "Failed to load NFT image";
+                        currentTry++;
+                        if (currentTry < sources.length) {
+                            img.src = sources[currentTry];
+                        } else {
+                            placeholder.innerHTML = "Failed to load NFT image";
+                        }
                     };
                     img.src = sources[0];
                 } else {
@@ -732,6 +744,8 @@
 
         async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            
             const providers = [
                 () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
                 () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
@@ -740,40 +754,51 @@
 
             try {
                 const firstResult = await Promise.any(providers.map(p => p().then(img => {
-                    if (img) { controller.abort(); return img; }
+                    if (img) { clearTimeout(timeout); controller.abort(); return img; }
                     throw new Error('no image');
                 })));
                 return firstResult;
             } catch (e) { return null; }
+            finally { clearTimeout(timeout); }
         }
 
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
+
+            // 1. Proxied gateway sources
             if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
+
             const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
             if (racedImage) {
                 const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
                 sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
             }
+
+            // 2. Direct CID mirrors
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
                 const cid = extractCID(rawUri);
                 if (cid) {
-                    sources.push(`/api/proxy?cid=${cid}`);
+                    sources.push(`https://ipfs.io/ipfs/${cid}`);
+                    sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
+                    sources.push(`https://gateway.pinata.cloud/ipfs/${cid}`);
+                    sources.push(`https://nftstorage.link/ipfs/${cid}`);
+                    sources.push(`https://ipfs.runfission.com/ipfs/${cid}`);
                     sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
+                    sources.push(`/api/proxy?cid=${cid}`);
                 }
             }
-            return [...new Set(sources)];
+            return [...new Set(sources.filter(s => !!s))];
         }
 
         function extractCID(uri) {
             if (!uri) return null;
             if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', '');
             if (uri.includes('ipfs/')) return uri.split('ipfs/').pop();
-            if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) return uri;
-            return null;
+            const match = uri.match(/Qm[1-9A-HJ-NP-Za-km-z]{44}|ba[A-Za-z2-7]{57}/);
+            return match ? match[0] : null;
         }
 
         function hexToString(hex) {
@@ -794,13 +819,19 @@
         }
 
         async function loadAllNFTs(address) {
-            let loaded = []; let marker = null; const MAX = 1200;
+            let loaded = []; let marker = null; const MAX = 2000;
             do {
-                const result = await loadNFTsFromXRPL(address, marker);
-                loaded = loaded.concat(result.nfts);
-                marker = result.marker;
-                if (document.getElementById('nft-count')) document.getElementById('nft-count').textContent = loaded.length;
-                if (loaded.length >= MAX) break;
+                try {
+                    const result = await loadNFTsFromXRPL(address, marker);
+                    loaded = loaded.concat(result.nfts);
+                    marker = result.marker;
+                    if (document.getElementById('nft-count')) document.getElementById('nft-count').textContent = loaded.length;
+                    if (loaded.length >= MAX) break;
+                } catch (e) {
+                    console.error('Fetch batch failed, retrying...', e);
+                    await new Promise(r => setTimeout(r, 1000));
+                    continue;
+                }
             } while (marker);
             currentMarker = marker;
             return loaded;
@@ -897,7 +928,14 @@
                 img.className = 'w-full h-full object-cover';
                 img.crossOrigin = "anonymous";
                 let tryIdx = 0;
-                img.onerror = () => { tryIdx++; if (tryIdx < sources.length) img.src = sources[tryIdx]; else wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
+                img.onerror = () => { 
+                    tryIdx++; 
+                    if (tryIdx < sources.length) {
+                        img.src = sources[tryIdx]; 
+                    } else {
+                        wrap.innerHTML = createPlaceholder(nft.NFTokenID); 
+                    }
+                };
                 img.src = sources[0];
                 wrap.appendChild(img);
             }
@@ -918,18 +956,22 @@
             const btn = document.getElementById('load-more-btn');
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Loading...`;
 
-            const result = await loadNFTsFromXRPL(currentWallet, currentMarker);
-            const newOnes = result.nfts.filter(n => !allNFTs.some(e => e.NFTokenID === n.NFTokenID));
-            allNFTs = allNFTs.concat(newOnes);
-            currentMarker = result.marker;
+            try {
+                const result = await loadNFTsFromXRPL(currentWallet, currentMarker);
+                const newOnes = result.nfts.filter(n => !allNFTs.some(e => e.NFTokenID === n.NFTokenID));
+                allNFTs = allNFTs.concat(newOnes);
+                currentMarker = result.marker;
 
-            document.getElementById('nft-count').textContent = allNFTs.length;
-            renderNFTGallery();
-            populateCollectionFilter();
-
-            if (currentMarker) btn.innerHTML = `<i class="fa-solid fa-plus"></i> Load More`;
-            else btn.classList.add('hidden');
-            isLoadingMore = false;
+                document.getElementById('nft-count').textContent = allNFTs.length;
+                renderNFTGallery();
+                populateCollectionFilter();
+            } catch (e) {
+                console.error('Load more failed', e);
+            } finally {
+                if (currentMarker) btn.innerHTML = `<i class="fa-solid fa-plus"></i> Load More`;
+                else btn.classList.add('hidden');
+                isLoadingMore = false;
+            }
         }
 
         function toggleSelection(nft, card) {
