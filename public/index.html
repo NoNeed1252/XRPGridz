@@ -672,10 +672,39 @@
             let gridW = width, gridH = height;
             let gridX = 0, gridY = 0;
 
-            if (placement === 'top') { gridH = height * 0.8; gridY = 0; }
-            else if (placement === 'bottom') { gridH = height * 0.8; gridY = height * 0.2; }
-            else if (placement === 'left') { gridW = width * 0.8; gridX = 0; }
-            else if (placement === 'right') { gridW = width * 0.8; gridX = width * 0.2; }
+            // Branding Strip Calculations (Synced with placement)
+            const stripH = 60;
+            let stripX = 0, stripY = 0, stripW = width;
+
+            if (placement === 'top') { 
+                gridH = height * 0.8; 
+                gridY = height * 0.2; // Shift grid down
+                stripY = 0; // Branding at top
+            }
+            else if (placement === 'bottom') { 
+                gridH = height * 0.8; 
+                gridY = 0; // Grid at top
+                stripY = height - stripH; // Branding at bottom
+            }
+            else if (placement === 'left') { 
+                gridW = width * 0.8; 
+                gridX = width * 0.2; // Shift grid right
+                stripW = width * 0.2; // Vertical branding bar
+                stripH = height;
+                stripX = 0;
+                stripY = 0;
+            }
+            else if (placement === 'right') { 
+                gridW = width * 0.8; 
+                gridX = 0; // Grid at left
+                stripW = width * 0.2; // Vertical branding bar
+                stripH = height;
+                stripX = width * 0.8;
+                stripY = 0;
+            } else {
+                // Fill mode
+                stripY = height - stripH;
+            }
 
             const cellWidth = gridW / cols;
             const cellHeight = gridH / rows;
@@ -717,15 +746,26 @@
                 }
             }
             
-            // Branding Strip (always at bottom or shifted if placement is bottom)
-            const stripH = 60;
-            const stripY = height - stripH;
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(0, stripY, width, stripH);
+            // Draw Branding Strip
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(stripX, stripY, stripW, stripH);
+            
+            ctx.save();
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 30px system-ui';
-            ctx.textAlign = 'right';
-            ctx.fillText('XRPGridz • Banner Maker', width - 40, height - 20);
+            ctx.font = 'bold 24px system-ui';
+            
+            if (placement === 'left' || placement === 'right') {
+                // Vertical text alignment
+                ctx.translate(stripX + stripW / 2, stripY + stripH / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillText('XRPGridz • Banner Maker', 0, 10);
+            } else {
+                // Horizontal text alignment
+                ctx.textAlign = 'right';
+                ctx.fillText('XRPGridz • Banner Maker', width - 40, stripY + stripH / 2 + 10);
+            }
+            ctx.restore();
         }
 
         // --- Throttling / Request Queueing ---
