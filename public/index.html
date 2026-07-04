@@ -452,6 +452,13 @@
             const wrapper = document.getElementById('grid-preview');
             const position = document.getElementById('banner-position').value;
             
+            // Wait for all images in the preview to be loaded to avoid blank downloads
+            const imgs = Array.from(wrapper.querySelectorAll('img'));
+            await Promise.all(imgs.map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+            }));
+
             const gridCanvas = await html2canvas(wrapper, { 
                 scale: 3, 
                 backgroundColor: '#0f172a', 
@@ -967,7 +974,7 @@
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
-                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
+                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[tryIdx]; };
                         img.src = sources[0];
                         wrap.appendChild(img);
                     }
