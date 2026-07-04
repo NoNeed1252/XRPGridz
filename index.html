@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XRPGridz • Grid Your XRP NFTs</title>
+    <title>XRPGridz • Creative Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -16,7 +16,6 @@
         .remove-btn { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; background: rgba(0,0,0,0.75); color: white; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 12px; z-index: 20; }
         .remove-btn:hover { background: #dc2626; }
         
-        /* Social Style overrides */
         .social-style #grid-preview { 
             padding: 24px; 
             border-radius: 48px; 
@@ -27,41 +26,21 @@
             justify-content: center;
             overflow: hidden;
         }
-        .social-style .grid-inner {
-            display: grid;
-            width: 100%;
-            height: 100%;
-        }
-        .social-style .grid-cell {
-            border-radius: 24px;
-        }
+        .social-style .grid-inner { display: grid; width: 100%; height: 100%; }
+        .social-style .grid-cell { border-radius: 24px; }
 
-        .tab-btn.active {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
+        .tab-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
 
         .loading-skeleton { background: linear-gradient(90deg, #1e2937 25%, #334155 50%, #1e2937 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* Banner Maker styles */
-        .banner-cell { 
-            height: 100%;
-            border-right: 2px solid #475569;
-            overflow: hidden;
-            position: relative;
-        }
+        .banner-cell { height: 100%; border-right: 2px solid #475569; overflow: hidden; position: relative; }
         .banner-cell:last-child { border-right: none; }
         .banner-cell img { width: 100%; height: 100%; object-fit: cover; }
         
-        #banner-preview {
-            aspect-ratio: 3 / 1;
-            background: #1e2937;
-            overflow: hidden;
-            width: 100%;
-            display: flex;
-        }
+        #banner-preview { aspect-ratio: 3 / 1; background: #1e2937; overflow: hidden; width: 100%; display: flex; }
+        #remix-preview { aspect-ratio: 1 / 1; background: #1e2937; overflow: hidden; width: 100%; display: flex; align-items: center; justify-content: center; border-radius: 1.5rem; }
+        #remix-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
     </style>
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
@@ -69,7 +48,7 @@
         <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
             <div class="flex items-center gap-x-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center">
-                    <i class="fa-solid fa-th-large text-white text-2xl"></i>
+                    <i class="fa-solid fa-wand-magic-sparkles text-white text-2xl"></i>
                 </div>
                 <div class="font-semibold text-3xl tracking-tighter">
                     <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
@@ -82,9 +61,9 @@
     </nav>
 
     <div class="max-w-4xl mx-auto px-5 pt-10 pb-8 text-center">
-        <h1 class="text-5xl md:text-6xl font-semibold tracking-tighter mb-4">Turn your XRP NFTs<br>into beautiful grids.</h1>
-        <p class="text-xl text-slate-400 mb-6">Search wallet • Filter by collection • Build grid • Download PNG</p>
-        <button type="button" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})" class="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-3xl text-lg">Start Creating</button>
+        <h1 class="text-5xl md:text-6xl font-semibold tracking-tighter mb-4">Creative Studio</h1>
+        <p class="text-xl text-slate-400 mb-6">Grids • Banners • AI Remixes</p>
+        <button type="button" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})" class="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-3xl text-lg">Enter Studio</button>
     </div>
 
     <div id="tool" class="max-w-7xl mx-auto px-5 pb-16">
@@ -105,7 +84,7 @@
             <div id="nft-gallery-section" class="hidden">
                 <div class="flex justify-between items-end mb-4">
                     <div>
-                        <h3 class="text-xl font-semibold">Your NFTs <span id="nft-count" class="text-blue-400 font-mono">(0)</span></h3>
+                        <h3 class="text-xl font-semibold">Asset Library <span id="nft-count" class="text-blue-400 font-mono">(0)</span></h3>
                         <button id="load-more-btn" onclick="loadMoreNFTs()" class="hidden mt-1 text-xs px-3 py-1 bg-emerald-600/20 text-emerald-400 rounded-xl">Load More</button>
                     </div>
                     <div class="flex gap-2">
@@ -116,12 +95,9 @@
 
                 <div class="flex flex-col sm:flex-row gap-3 mb-4">
                     <input id="nft-filter" type="text" onkeyup="filterNFTs()" placeholder="Search by ID..." class="flex-1 bg-[#0a0f1e] border border-slate-700 px-4 py-2 rounded-2xl text-sm focus:outline-none focus:border-blue-500">
-                    <select id="collection-filter" onchange="filterNFTs()" class="bg-[#0a0f1e] border border-slate-700 px-4 py-2 rounded-2xl text-sm focus:outline-none focus:border-blue-500">
-                        <option value="">All Collections</option>
-                    </select>
                 </div>
 
-                <div class="text-xs text-slate-400 mb-2">Lazy loading enabled: low-res thumbnails used for gallery preview.</div>
+                <div class="text-xs text-slate-400 mb-2">Previews are low-resolution. High-resolution assets are gated for export.</div>
                 <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[420px] overflow-auto"></div>
 
                 <div class="mt-4 flex justify-between text-sm">
@@ -131,10 +107,10 @@
             </div>
 
             <div id="grid-config-section" class="hidden mt-8 pt-8 border-t border-slate-700">
-                <!-- Navigation Tabs -->
-                <div class="flex gap-2 mb-8 p-1 bg-slate-900 rounded-2xl w-fit">
+                <div class="flex flex-wrap gap-2 mb-8 p-1 bg-slate-900 rounded-2xl w-fit">
                     <button id="tab-grid" onclick="switchTab('grid')" class="tab-btn active px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Grid Maker</button>
-                    <button id="tab-banner" onclick="switchTab('banner')" class="tab-btn px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Banner Maker</button>
+                    <button id="tab-banner" onclick="switchTab('banner')" class="tab-btn px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Banner Studio</button>
+                    <button id="tab-remix" onclick="switchTab('remix')" class="tab-btn px-6 py-2.5 rounded-xl text-sm font-bold transition-all">AI Remix (BETA)</button>
                 </div>
 
                 <!-- Grid Maker Tab -->
@@ -143,19 +119,8 @@
                         <div class="md:col-span-2">
                             <div class="flex items-center gap-x-3 mb-4">
                                 <div class="w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
-                                <h3 class="text-xl font-semibold">Build Your Grid</h3>
+                                <h3 class="text-xl font-semibold">Grid Config</h3>
                             </div>
-
-                            <div class="mb-5">
-                                <div class="text-xs text-slate-400 mb-2">QUICK SIZES</div>
-                                <div class="grid grid-cols-4 gap-2 text-xs">
-                                    <button onclick="setGridPreset(2,2)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-xl">2×2</button>
-                                    <button onclick="setGridPreset(3,3)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-xl">3×3</button>
-                                    <button onclick="setGridPreset(4,4)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-xl">4×4</button>
-                                    <button onclick="setGridPreset(5,5)" class="py-2 border border-slate-600 hover:border-blue-500 rounded-xl">5×5</button>
-                                </div>
-                            </div>
-
                             <div class="grid grid-cols-2 gap-4 mb-5">
                                 <div>
                                     <div class="flex justify-between text-xs mb-1"><span>Columns</span><span id="cols-value">4</span></div>
@@ -166,43 +131,29 @@
                                     <input type="range" id="rows-slider" min="1" max="10" value="4" class="w-full accent-blue-500" oninput="updateGridPreview()">
                                 </div>
                             </div>
-
                             <div class="mb-5 p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
                                 <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-x-2">
-                                        <i class="fa-brands fa-x-twitter text-lg"></i>
-                                        <span class="text-sm font-semibold">Social Style (X)</span>
-                                    </div>
+                                    <div class="flex items-center gap-x-2"><i class="fa-brands fa-x-twitter text-lg"></i><span class="text-sm font-semibold">Social Style (X)</span></div>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" id="social-style-toggle" class="sr-only peer" onchange="updateGridPreview()">
                                         <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                     </label>
                                 </div>
-                                <p class="text-[10px] text-slate-400 mt-2">Low-res thumbnails used for preview. High-res fetched only for download.</p>
                             </div>
-
                             <div class="flex gap-2">
                                 <button onclick="shuffleSelected()" class="flex-1 py-2 text-xs border border-slate-600 rounded-2xl">Shuffle</button>
-                                <button onclick="updateGridPreview()" class="flex-1 py-2 text-xs bg-emerald-600 text-white rounded-2xl">Refresh Preview</button>
+                                <button onclick="updateGridPreview()" class="flex-1 py-2 text-xs bg-emerald-600 text-white rounded-2xl">Refresh</button>
                             </div>
                         </div>
-
                         <div class="md:col-span-3">
                             <div class="flex justify-between items-center mb-3">
-                                <div class="flex items-center gap-x-2">
-                                    <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
-                                    <span class="font-semibold">Live Preview (Thumbnail)</span>
-                                </div>
+                                <span class="font-semibold">Live Preview</span>
                                 <div class="flex gap-2">
-                                    <button onclick="shareOnX()" class="px-5 py-2 bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
-                                        <i class="fa-brands fa-x-twitter"></i> Share on X
-                                    </button>
                                     <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
-                                        <i class="fa-solid fa-download"></i> Download PNG
+                                        <i class="fa-solid fa-download"></i> Export High-Res
                                     </button>
                                 </div>
                             </div>
-
                             <div id="preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center overflow-hidden">
                                 <div id="grid-preview" class="w-full max-w-[580px]"></div>
                             </div>
@@ -216,40 +167,64 @@
                         <div class="md:col-span-2">
                             <div class="flex items-center gap-x-3 mb-4">
                                 <div class="w-7 h-7 bg-blue-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
-                                <h3 class="text-xl font-semibold">Customize Banner</h3>
+                                <h3 class="text-xl font-semibold">Banner Studio</h3>
                             </div>
-
                             <div class="mb-5">
                                 <div class="flex justify-between text-xs mb-1"><span>Slots</span><span id="banner-slots-value">3</span></div>
                                 <input type="range" id="banner-slots-slider" min="1" max="8" value="3" class="w-full accent-blue-500" oninput="updateBannerPreview()">
                             </div>
-
                             <div class="mb-5 p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
-                                <h4 class="text-sm font-semibold mb-2">Instructions</h4>
-                                <p class="text-xs text-slate-400">Select NFTs from the gallery above to fill the banner slots. The first few selected NFTs will be used. 3:1 aspect ratio is fixed for X profiles.</p>
+                                <h4 class="text-sm font-semibold mb-2">X-Friendly Ratio</h4>
+                                <p class="text-xs text-slate-400">Fixed 16:9 aspect ratio optimized for X profiles. Multi-slot generation enabled.</p>
                             </div>
-
                             <div class="flex gap-2">
                                 <button onclick="shuffleSelected()" class="flex-1 py-2 text-xs border border-slate-600 rounded-2xl">Shuffle</button>
-                                <button onclick="updateBannerPreview()" class="flex-1 py-2 text-xs bg-blue-600 text-white rounded-2xl">Refresh Preview</button>
+                                <button onclick="updateBannerPreview()" class="flex-1 py-2 text-xs bg-blue-600 text-white rounded-2xl">Refresh</button>
                             </div>
                         </div>
-
                         <div class="md:col-span-3">
                             <div class="flex justify-between items-center mb-3">
-                                <div class="flex items-center gap-x-2">
-                                    <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">3</div>
-                                    <span class="font-semibold">Banner Preview (Thumbnail)</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button onclick="downloadBannerPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
-                                        <i class="fa-solid fa-download"></i> Download Banner
-                                    </button>
-                                </div>
+                                <span class="font-semibold">Banner Preview</span>
+                                <button onclick="downloadBannerPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
+                                    <i class="fa-solid fa-download"></i> Export High-Res
+                                </button>
                             </div>
-
                             <div id="banner-preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-8 rounded-3xl min-h-[320px] flex items-center justify-center overflow-hidden">
                                 <div id="banner-preview" class="w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Remix Tab -->
+                <div id="content-remix" class="tab-content hidden">
+                    <div class="grid md:grid-cols-5 gap-8">
+                        <div class="md:col-span-2">
+                            <div class="flex items-center gap-x-3 mb-4">
+                                <div class="w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
+                                <h3 class="text-xl font-semibold">AI Remix</h3>
+                            </div>
+                            <div class="mb-5">
+                                <label class="text-xs text-slate-400 mb-2 block uppercase">Select 1 NFT to remix</label>
+                                <div id="remix-selected-nft" class="w-full h-32 bg-slate-800 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-600 mb-4 overflow-hidden">
+                                    <span class="text-slate-500 text-sm">Select from library</span>
+                                </div>
+                                <textarea id="remix-prompt" placeholder="Describe the remix (e.g. 'Turn this into a cyberpunk 3D character')..." class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl p-4 text-sm focus:outline-none focus:border-purple-500 min-h-[100px] mb-4"></textarea>
+                                <button onclick="generateRemix()" id="remix-btn" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl hover:opacity-90 disabled:opacity-50">Generate Remix</button>
+                            </div>
+                            <p class="text-[10px] text-slate-500">Requires integration with Poke Image Generation Engine. Previews use low-res guidance.</p>
+                        </div>
+                        <div class="md:col-span-3">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-semibold">Remix Preview</span>
+                                <button onclick="downloadRemixPNG()" class="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
+                                    <i class="fa-solid fa-download"></i> Export High-Res
+                                </button>
+                            </div>
+                            <div id="remix-preview-wrapper" class="bg-[#0f172a] border border-slate-600 p-8 rounded-3xl min-h-[400px] flex items-center justify-center">
+                                <div id="remix-preview" class="w-full">
+                                    <div class="text-slate-500 text-center"><i class="fa-solid fa-wand-sparkles text-4xl mb-3 block"></i>AI Output will appear here</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -260,369 +235,144 @@
 
     <script>
     class RequestQueue {
-        constructor(maxConcurrent = 5) {
-            this.maxConcurrent = maxConcurrent;
-            this.current = 0;
-            this.queue = [];
-        }
+        constructor(maxConcurrent = 5) { this.maxConcurrent = maxConcurrent; this.current = 0; this.queue = []; }
         async add(fn) {
-            if (this.current >= this.maxConcurrent) {
-                await new Promise(resolve => this.queue.push(resolve));
-            }
+            if (this.current >= this.maxConcurrent) await new Promise(resolve => this.queue.push(resolve));
             this.current++;
-            try { return await fn(); } 
-            finally {
-                this.current--;
-                if (this.queue.length > 0) {
-                    const next = this.queue.shift();
-                    next();
-                }
-            }
+            try { return await fn(); } finally { this.current--; if (this.queue.length > 0) this.queue.shift()(); }
         }
     }
-
     const fetchQueue = new RequestQueue(5);
-    let allNFTs = [];
-    let selectedNFTs = [];
-    let currentWallet = '';
-    let currentMarker = null;
-    let activeTab = 'grid';
-    let isLoadingMore = false;
-
-    // --- Lazy Loading Intersector ---
+    let allNFTs = []; let selectedNFTs = []; let currentWallet = ''; let currentMarker = null; let activeTab = 'grid';
     const galleryObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const card = entry.target;
-                const index = card.dataset.index;
-                const nftId = card.dataset.nftid;
-                if (!card.dataset.loaded) {
-                    card.dataset.loaded = "true";
-                    const nft = allNFTs.find(n => n.NFTokenID === nftId);
-                    if (nft) loadImageForCard(nft, index, card);
-                }
+                const card = entry.target; const index = card.dataset.index; const nftId = card.dataset.nftid;
+                if (!card.dataset.loaded) { card.dataset.loaded = "true"; const nft = allNFTs.find(n => n.NFTokenID === nftId); if (nft) loadImageForCard(nft, index, card); }
             }
         });
     }, { root: null, rootMargin: '200px' });
 
-    async function resolveNFTImage(nft, highRes = false) {
-        if (!nft?.NFTokenID) return null;
-        // thumbnail=true for low-res, highRes=true for high-res
-        return \`/api/proxy?nftId=\${nft.NFTokenID}\${highRes ? '&highRes=true' : '&thumbnail=true'}\`;
-    }
-
+    async function resolveNFTImage(nft, highRes = false) { return \`/api/proxy?nftId=\${nft.NFTokenID}\${highRes ? '&highRes=true' : '&thumbnail=true'}\`; }
     function createPlaceholder(nftId) {
         const short = nftId ? nftId.slice(0,8) + '…' + nftId.slice(-4) : 'NFT';
         return \`<div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-[#0f172a] text-center p-3"><i class="fa-solid fa-image text-3xl text-slate-600 mb-2"></i><div class="text-[10px] font-mono text-slate-500">\${short}</div></div>\`;
     }
-
-    async function loadNFTsFromXRPL(address, marker = null) {
-        const params = [{ account: address, ledger_index: "validated", limit: 200 }];
-        if (marker) params[0].marker = marker;
-        const res = await fetch('https://xrplcluster.com', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ method: "account_nfts", params })
-        });
-        const data = await res.json();
-        return { nfts: data.result?.account_nfts || [], marker: data.result?.marker || null };
-    }
-
-    async function loadAllNFTs(address) {
-        let loaded = []; let marker = null; const MAX = 1200;
-        do {
-            const result = await loadNFTsFromXRPL(address, marker);
-            loaded = loaded.concat(result.nfts);
-            marker = result.marker;
-            const countEl = document.getElementById('nft-count');
-            if (countEl) countEl.textContent = loaded.length;
-            if (loaded.length >= MAX) break;
-        } while (marker);
-        currentMarker = marker;
-        return loaded;
-    }
-
     async function loadNFTs() {
-        const address = document.getElementById('wallet-input').value.trim();
-        if (!address) return alert('Please enter a wallet address');
-        const statusEl = document.getElementById('wallet-status');
-        showStatus(statusEl, 'Syncing XRPL Wallet...', 'loading');
-        
+        const address = document.getElementById('wallet-input').value.trim(); if (!address) return alert('Enter wallet');
+        const statusEl = document.getElementById('wallet-status'); showStatus(statusEl, 'Syncing XRPL Wallet...', 'loading');
         try {
-            const nfts = await loadAllNFTs(address);
-            allNFTs = nfts;
-            currentWallet = address;
-            selectedNFTs = [];
+            const res = await fetch('https://xrplcluster.com', { method: 'POST', body: JSON.stringify({ method: "account_nfts", params: [{ account: address, ledger_index: "validated", limit: 400 }] }) });
+            const data = await res.json(); allNFTs = data.result?.account_nfts || [];
+            currentWallet = address; selectedNFTs = allNFTs.slice(0, 16);
             document.getElementById('nft-gallery-section').classList.remove('hidden');
             document.getElementById('grid-config-section').classList.remove('hidden');
-            renderNFTGallery();
-            if (currentMarker) document.getElementById('load-more-btn').classList.remove('hidden');
-            selectedNFTs = allNFTs.slice(0, Math.min(16, allNFTs.length));
-            updateSelectedCount();
-            setTimeout(() => setGridPreset(4, 4), 600);
+            renderNFTGallery(); updateSelectedCount(); setTimeout(() => updateActivePreview(), 600);
             showStatus(statusEl, \\\`Loaded \\\${allNFTs.length} NFTs\\\`, 'success');
         } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
     }
-
-    function renderNFTGallery(filtered = null) {
-        const container = document.getElementById('nft-grid');
-        container.innerHTML = '';
-        const list = filtered || allNFTs;
-
-        list.forEach((nft, i) => {
+    function renderNFTGallery() {
+        const container = document.getElementById('nft-grid'); container.innerHTML = '';
+        allNFTs.forEach((nft, i) => {
             const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
             const card = document.createElement('div');
             card.className = \\\`nft-card bg-[#0a0f1e] border \\\${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer\\\`;
-            card.dataset.index = i;
-            card.dataset.nftid = nft.NFTokenID;
-            card.innerHTML = \\\`
-                <div class="relative aspect-square bg-slate-900">
-                    <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-\\\${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
-                    <div id="imgwrap-\\\${i}" class="w-full h-full hidden"></div>
-                    <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center \\\${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \\\${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
-                </div>\\\`;
-            card.onclick = () => toggleSelection(nft, card);
-            container.appendChild(card);
-            galleryObserver.observe(card);
+            card.dataset.index = i; card.dataset.nftid = nft.NFTokenID;
+            card.innerHTML = \\\`<div class="relative aspect-square bg-slate-900"><div class="absolute inset-0 loading-skeleton" id="skel-\\\${i}"></div><div id="imgwrap-\\\${i}" class="w-full h-full hidden"></div></div>\\\`;
+            card.onclick = () => toggleSelection(nft, card); container.appendChild(card); galleryObserver.observe(card);
         });
     }
-
     async function loadImageForCard(nft, index, card) {
-        const skel = document.getElementById(\\\`skel-\\\${index}\\\`);
-        const wrap = document.getElementById(\\\`imgwrap-\\\${index}\\\`);
-        const url = await resolveNFTImage(nft, false); // STRICT THUMBNAIL
-        if (skel) skel.style.display = 'none';
+        const skel = document.getElementById(\\\`skel-\\\${index}\\\`); const wrap = document.getElementById(\\\`imgwrap-\\\${index}\\\`);
+        const url = await resolveNFTImage(nft, false); if (skel) skel.style.display = 'none';
         if (wrap) {
-            wrap.style.display = 'block';
-            if (!url) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
-            const img = document.createElement('img');
-            img.className = 'w-full h-full object-cover';
-            img.crossOrigin = "anonymous";
-            img.onerror = () => { wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
-            img.src = url;
-            wrap.appendChild(img);
+            wrap.style.display = 'block'; const img = new Image(); img.className = 'w-full h-full object-cover'; img.crossOrigin = "anonymous";
+            img.onload = () => wrap.appendChild(img); img.onerror = () => wrap.innerHTML = createPlaceholder(nft.NFTokenID); img.src = url;
         }
     }
-
     function toggleSelection(nft, card) {
         const idx = selectedNFTs.findIndex(s => s.NFTokenID === nft.NFTokenID);
-        if (idx > -1) {
-            selectedNFTs.splice(idx, 1);
-            card.classList.remove('selected', 'border-blue-500');
-            card.classList.add('border-slate-700');
-        } else {
-            if (selectedNFTs.length >= 100) return alert('Max 100 NFTs');
-            selectedNFTs.push(nft);
-            card.classList.add('selected', 'border-blue-500');
-            card.classList.remove('border-slate-700');
-        }
-        updateSelectedCount();
-        updateActivePreview();
+        if (idx > -1) { selectedNFTs.splice(idx, 1); card.classList.remove('selected', 'border-blue-500'); card.classList.add('border-slate-700'); }
+        else { selectedNFTs.push(nft); card.classList.add('selected', 'border-blue-500'); card.classList.remove('border-slate-700'); }
+        updateSelectedCount(); updateActivePreview();
+        if (activeTab === 'remix') updateRemixSelection();
     }
-
     function updateActivePreview() {
         if (activeTab === 'grid') updateGridPreview();
         else if (activeTab === 'banner') updateBannerPreview();
     }
-
     function updateGridPreview() {
-        const grid = document.getElementById('grid-preview');
-        const wrapper = document.getElementById('preview-wrapper');
-        const rows = parseInt(document.getElementById('rows-slider').value);
-        const cols = parseInt(document.getElementById('cols-slider').value);
+        const grid = document.getElementById('grid-preview'); const wrapper = document.getElementById('preview-wrapper');
+        const rows = parseInt(document.getElementById('rows-slider').value); const cols = parseInt(document.getElementById('cols-slider').value);
         const socialStyle = document.getElementById('social-style-toggle').checked;
-
-        if (socialStyle) wrapper.classList.add('social-style');
-        else wrapper.classList.remove('social-style');
-
-        if (!selectedNFTs.length) { grid.innerHTML = ''; return; }
-        grid.innerHTML = '';
-        
-        const inner = document.createElement('div');
-        inner.className = 'grid-inner';
-        inner.style.display = 'grid';
-        inner.style.gridTemplateColumns = \\\`repeat(\\\${cols}, 1fr)\\\`;
-        inner.style.gap = socialStyle ? '12px' : '6px';
+        socialStyle ? wrapper.classList.add('social-style') : wrapper.classList.remove('social-style');
+        grid.innerHTML = ''; const inner = document.createElement('div'); inner.className = 'grid-inner';
+        inner.style.display = 'grid'; inner.style.gridTemplateColumns = \\\`repeat(\\\${cols}, 1fr)\\\`; inner.style.gap = socialStyle ? '12px' : '6px';
         grid.appendChild(inner);
-
         selectedNFTs.slice(0, rows * cols).forEach(nft => {
-            const cell = document.createElement('div');
-            cell.className = \\\`grid-cell border border-slate-600 overflow-hidden relative group\\\`;
+            const cell = document.createElement('div'); cell.className = 'grid-cell border border-slate-600 overflow-hidden relative';
             if (!socialStyle) cell.classList.add('rounded-2xl');
-            
-            const wrap = document.createElement('div');
-            wrap.className = 'w-full h-full bg-[#1e2937]';
-            cell.appendChild(wrap);
-
-            // Fetch THUMBNAIL for grid builder preview
-            resolveNFTImage(nft, false).then(url => {
-                if (url) {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.className = 'w-full h-full object-cover';
-                    img.crossOrigin = 'anonymous';
-                    wrap.appendChild(img);
-                } else { wrap.innerHTML = createPlaceholder(nft.NFTokenID); }
-            });
+            const wrap = document.createElement('div'); wrap.className = 'w-full h-full bg-[#1e2937]'; cell.appendChild(wrap);
+            resolveNFTImage(nft, false).then(url => { const img = new Image(); img.src = url; img.className = 'w-full h-full object-cover'; img.crossOrigin = 'anonymous'; wrap.appendChild(img); });
             inner.appendChild(cell);
         });
     }
-
     function updateBannerPreview() {
-        const preview = document.getElementById('banner-preview');
-        const slots = parseInt(document.getElementById('banner-slots-slider').value);
-        document.getElementById('banner-slots-value').textContent = slots;
-        preview.innerHTML = '';
-        const toShow = selectedNFTs.slice(0, slots);
-        for (let i = 0; i < slots; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'banner-cell flex-1';
-            const nft = toShow[i];
-            if (nft) {
-                // Fetch THUMBNAIL for banner builder preview
-                resolveNFTImage(nft, false).then(url => {
-                    if (url) {
-                        const img = document.createElement('img');
-                        img.src = url;
-                        img.className = 'w-full h-full object-cover';
-                        img.crossOrigin = 'anonymous';
-                        cell.appendChild(img);
-                    } else { cell.innerHTML = createPlaceholder(nft.NFTokenID); }
-                });
-            } else { cell.innerHTML = createPlaceholder(null); }
+        const preview = document.getElementById('banner-preview'); const slots = parseInt(document.getElementById('banner-slots-slider').value);
+        document.getElementById('banner-slots-value').textContent = slots; preview.innerHTML = '';
+        selectedNFTs.slice(0, slots).forEach(nft => {
+            const cell = document.createElement('div'); cell.className = 'banner-cell flex-1';
+            resolveNFTImage(nft, false).then(url => { const img = new Image(); img.src = url; img.className = 'w-full h-full object-cover'; img.crossOrigin = 'anonymous'; cell.appendChild(img); });
             preview.appendChild(cell);
-        }
+        });
     }
-
+    function updateRemixSelection() {
+        const slot = document.getElementById('remix-selected-nft'); if (!selectedNFTs.length) { slot.innerHTML = 'Select from library'; return; }
+        const nft = selectedNFTs[selectedNFTs.length - 1];
+        resolveNFTImage(nft, false).then(url => { slot.innerHTML = \\\`<img src="\\\${url}" class="w-full h-full object-cover">\\\`; });
+    }
+    async function generateRemix() {
+        if (!selectedNFTs.length) return alert('Select an NFT');
+        const btn = document.getElementById('remix-btn'); btn.disabled = true; btn.innerHTML = 'AI Processing...';
+        const preview = document.getElementById('remix-preview');
+        preview.innerHTML = '<div class="text-center"><i class="fa-solid fa-spinner fa-spin text-4xl mb-3"></i><br>Remixing NFT...</div>';
+        // In a real app, this sends to Poke backend. For demo, we simulate with a delay.
+        setTimeout(() => {
+            preview.innerHTML = '<div class="text-emerald-400">Remix logic would trigger poke__generate_media here via backend action.</div>';
+            btn.disabled = false; btn.innerHTML = 'Generate Remix';
+        }, 3000);
+    }
     function switchTab(tabId) {
-        activeTab = tabId;
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        activeTab = tabId; document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
         document.getElementById(\\\`tab-\\\${tabId}\\\`).classList.add('active');
         document.getElementById(\\\`content-\\\${tabId}\\\`).classList.remove('hidden');
-        updateActivePreview();
+        if (tabId === 'remix') updateRemixSelection(); else updateActivePreview();
     }
-
-    function updateSelectedCount() {
-        const el = document.getElementById('selected-count');
-        if (el) el.textContent = selectedNFTs.length;
+    async function downloadGridPNG() {
+        const wrapper = document.getElementById('grid-preview'); await loadHighResAssetsForExport(wrapper);
+        const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true });
+        const a = document.createElement('a'); a.download = 'xrpgrid.png'; a.href = canvas.toDataURL(); a.click(); updateGridPreview();
     }
-
-    function setGridPreset(r, c) {
-        document.getElementById('rows-slider').value = r;
-        document.getElementById('cols-slider').value = c;
-        document.getElementById('rows-value').textContent = r;
-        document.getElementById('cols-value').textContent = c;
-        updateGridPreview();
+    async function downloadBannerPNG() {
+        const wrapper = document.getElementById('banner-preview'); await loadHighResAssetsForExport(wrapper);
+        const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true });
+        const a = document.createElement('a'); a.download = 'xrpbanner.png'; a.href = canvas.toDataURL(); a.click(); updateBannerPreview();
     }
-
-    function shuffleSelected() {
-        for (let i = selectedNFTs.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [selectedNFTs[i], selectedNFTs[j]] = [selectedNFTs[j], selectedNFTs[i]];
-        }
-        updateActivePreview();
-    }
-
-    function clearSelected() {
-        selectedNFTs = [];
-        renderNFTGallery();
-        updateSelectedCount();
-        updateActivePreview();
-    }
-
-    function selectAllNFTs() {
-        selectedNFTs = [...allNFTs].slice(0, 100);
-        renderNFTGallery();
-        updateSelectedCount();
-        updateActivePreview();
-    }
-
-    function deselectAllNFTs() {
-        selectedNFTs = [];
-        renderNFTGallery();
-        updateSelectedCount();
-        updateActivePreview();
-    }
-
-    // Helper function to swap thumbnails for high-res images on demand
     async function loadHighResAssetsForExport(container) {
         const images = container.querySelectorAll('img');
-        const promises = Array.from(images).map(async (img) => {
-            const src = img.src;
-            if (src.includes('thumbnail=true')) {
-                const highResSrc = src.replace('thumbnail=true', 'highRes=true');
-                return new Promise((resolve) => {
-                    const tempImg = new Image();
-                    tempImg.crossOrigin = "anonymous";
-                    tempImg.onload = () => { img.src = highResSrc; resolve(); };
-                    tempImg.onerror = () => resolve(); // Fallback to thumbnail if high-res fails
-                    tempImg.src = highResSrc;
-                });
-            }
-        });
-        await Promise.all(promises);
+        await Promise.all(Array.from(images).map(img => {
+            const highResSrc = img.src.replace('thumbnail=true', 'highRes=true');
+            return new Promise(r => { const i = new Image(); i.crossOrigin="anonymous"; i.onload=()=>{img.src=highResSrc;r()}; i.onerror=r; i.src=highResSrc; });
+        }));
     }
-
-    async function downloadGridPNG() {
-        const wrapper = document.getElementById('grid-preview');
-        if (!wrapper.children.length) return alert('Build a preview first!');
-        
-        // SWAP TO HIGH RES FOR DOWNLOAD
-        await loadHighResAssetsForExport(wrapper);
-        
-        const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true });
-        const a = document.createElement('a');
-        a.download = \\\`xrpgridz-\\\${new Date().getTime()}.png\\\`;
-        a.href = canvas.toDataURL('image/png');
-        a.click();
-        
-        // SWAP BACK TO THUMBNAILS to save memory/data
-        updateGridPreview();
-    }
-
-    async function downloadBannerPNG() {
-        const wrapper = document.getElementById('banner-preview');
-        if (!wrapper.innerHTML) return alert('Build a banner first!');
-        
-        // SWAP TO HIGH RES FOR DOWNLOAD
-        await loadHighResAssetsForExport(wrapper);
-
-        const canvas = await html2canvas(wrapper, { scale: 3, backgroundColor: '#0f172a', useCORS: true });
-        const a = document.createElement('a');
-        a.download = \\\`xrpbanner-\\\${new Date().getTime()}.png\\\`;
-        a.href = canvas.toDataURL('image/png');
-        a.click();
-
-        // SWAP BACK TO THUMBNAILS
-        updateBannerPreview();
-    }
-
-    function showStatus(el, msg, type) {
-        el.innerHTML = msg;
-        el.className = \\\`mt-2 text-sm px-4 py-2 rounded-2xl \\\${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}\\\`;
-        el.classList.remove('hidden');
-    }
-
-    const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
-    function showDonateModal() {
-        const modal = document.createElement('div');
-        modal.className = \\\`fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4\\\`;
-        modal.innerHTML = \\\`
-            <div class="glass border border-white/10 rounded-3xl max-w-md w-full p-8 relative" onclick="event.target === this && this.remove()">
-                <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl">×</button>
-                <div class="text-center">
-                    <div class="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mb-5"><i class="fa-solid fa-heart text-white text-4xl"></i></div>
-                    <h3 class="text-3xl font-semibold mb-2">Support XRPGridz</h3>
-                    <p class="text-slate-400 mb-6">Thank you for keeping this tool free.</p>
-                    <div class="bg-[#0a0f1e] border border-white/10 rounded-2xl p-5 mb-5">
-                        <div class="text-xs text-emerald-400 mb-1">TREASURY WALLET</div>
-                        <div class="font-mono text-lg break-all mb-3">\\\${DONATE_ADDRESS}</div>
-                        <button onclick="navigator.clipboard.writeText('\\\${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
-                    </div>
-                </div>
-            </div>\\\`;
-        document.body.appendChild(modal);
-    }
+    function updateSelectedCount() { document.getElementById('selected-count').textContent = selectedNFTs.length; }
+    function shuffleSelected() { selectedNFTs.sort(() => Math.random() - 0.5); updateActivePreview(); }
+    function clearSelected() { selectedNFTs = []; renderNFTGallery(); updateSelectedCount(); updateActivePreview(); }
+    function selectAllNFTs() { selectedNFTs = allNFTs.slice(0, 100); renderNFTGallery(); updateSelectedCount(); updateActivePreview(); }
+    function deselectAllNFTs() { clearSelected(); }
+    function showStatus(el, msg, type) { el.innerHTML = msg; el.className = \\\`mt-2 text-sm px-4 py-2 rounded-2xl \\\${type==='error'?'bg-red-950/60 text-red-400':'bg-blue-950/60 text-blue-400'}\\\`; el.classList.remove('hidden'); }
+    function showDonateModal() { alert('Address: rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY'); }
     </script>
 </body>
 </html>
