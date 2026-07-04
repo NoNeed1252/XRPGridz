@@ -1,7 +1,9 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/share/:id", "destination": "/api/share-render?id=:id" },
+    { "source": "/api/share-upload", "destination": "/api/share-upload" },
+    { "source": "/api/proxy", "destination": "/proxy.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
