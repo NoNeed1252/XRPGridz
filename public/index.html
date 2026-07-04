@@ -63,7 +63,12 @@
     <!-- Sidebar -->
     <div id="sidebar" class="fixed top-0 left-0 w-64 h-full bg-[#111827] border-r border-slate-800 z-[70] flex flex-col">
         <div class="p-6 border-b border-slate-800 flex justify-between items-center">
-            <span class="font-bold text-xl tracking-tighter">Menu</span>
+            <div class="flex items-center gap-x-2">
+                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-th-large text-white text-lg"></i>
+                </div>
+                <span class="font-bold text-xl tracking-tighter text-white">XRPGridz</span>
+            </div>
             <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
         </div>
         <nav class="flex-1 py-4">
@@ -72,6 +77,9 @@
             </button>
             <button onclick="switchTab('studio'); toggleSidebar()" id="side-studio" class="sidebar-link w-full flex items-center gap-x-4 px-6 py-4 text-lg font-medium transition-all hover:bg-white/5">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> Creative Studio
+            </button>
+            <button onclick="switchTab('meme'); toggleSidebar()" id="side-meme" class="sidebar-link w-full flex items-center gap-x-4 px-6 py-4 text-lg font-medium transition-all hover:bg-white/5">
+                <i class="fa-solid fa-face-smile"></i> Meme Maker
             </button>
         </nav>
         <div class="p-6 text-xs text-slate-500 border-t border-slate-800">
@@ -232,6 +240,25 @@
                 <i class="fa-solid fa-person-digging text-5xl text-slate-700 mb-4"></i>
                 <h3 class="text-xl font-semibold mb-2">Studio Tools Under Construction</h3>
                 <p class="text-slate-500">We're building advanced image editing and AI enhancement tools for your XRP NFTs.</p>
+                <button onclick="switchTab('grid')" class="mt-6 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-sm font-semibold transition-colors">Back to Grid Builder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meme Maker Tab -->
+    <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
+        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
+            <div class="flex items-center gap-x-3 mb-8">
+                <div class="w-10 h-10 bg-orange-500 text-white rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-face-smile text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold tracking-tighter">Meme Maker</h2>
+            </div>
+            
+            <div class="p-12 text-center border-2 border-dashed border-slate-800 rounded-3xl">
+                <i class="fa-solid fa-person-digging text-5xl text-slate-700 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Meme Maker Under Construction</h3>
+                <p class="text-slate-500">Soon you'll be able to turn your NFTs into viral memes with custom text and overlays.</p>
                 <button onclick="switchTab('grid')" class="mt-6 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-sm font-semibold transition-colors">Back to Grid Builder</button>
             </div>
         </div>
