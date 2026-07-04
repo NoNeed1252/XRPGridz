@@ -32,7 +32,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .meme-btn { position: absolute; bottom: 8px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
-        .nft-card:hover .meme-btn, .nft-card:hover .creative-btn { opacity: 1; }
+        .nft-card:hover .meme-btn { opacity: 1; }
         #meme-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
     </style>
 </head>
@@ -48,7 +48,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-x-4">
-                <button onclick="switchTab('creative')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Creative Studio</button>
+                <button onclick="switchTab('meme')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Meme Maker</button>
                 <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
                     <i class="fa-solid fa-heart"></i> <span>Donate</span>
                 </button>
@@ -177,13 +177,13 @@
     </div>
 
     <!-- Meme Tab -->
-    <div id="tab-creative" class="tab-content max-w-7xl mx-auto px-5 py-10">
+    <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
         <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
             <div class="flex items-center gap-x-3 mb-8">
                 <div class="w-10 h-10 bg-purple-500 text-white rounded-2xl flex items-center justify-center">
-                    <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                    <i class="fa-solid fa-face-grin-tears text-2xl"></i>
                 </div>
-                <h2 class="text-3xl font-bold tracking-tighter">Creative Studio</h2>
+                <h2 class="text-3xl font-bold tracking-tighter">Meme Maker</h2>
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
@@ -214,11 +214,11 @@
     <script>
         
         // --- Throttling / Request Queueing ---
-        const requestQueue: (() => Promise<void>)[] = [];
+        const requestQueue = [];
         let activeRequests = 0;
         const MAX_PARALLEL = 5;
 
-        async function queuedRequest<T>(task: () => Promise<T>): Promise<T> {
+        async function queuedRequest(task) {
             return new Promise((resolve, reject) => {
                 const execute = async () => {
                     activeRequests++;
@@ -235,7 +235,7 @@
             });
         }
 
-        async function raceMetadataProviders(nftId: string) {
+        async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 8000);
             
@@ -267,7 +267,7 @@
         // --- Tab Management ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -324,32 +324,25 @@
             return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
         }
 
-        );
-                } else {
-                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-                    window.open(twitterUrl, '_blank');
-                    alert("Image attachment is only supported via the native share menu on mobile/supported browsers. We've opened the tweet composer for you!");
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
+        function memeNFT(nftId) {
+            switchTab('meme');
+            // Re-init meme canvas with this NFT
+            const nft = allNFTs.find(n => n.NFTokenID === nftId);
+            if (nft) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.src = '/api/proxy?url=' + encodeURIComponent(metadataCache.get(nftId) || '');
+                img.onload = () => {
+                    activeMemeImage = img;
+                    const canvas = document.getElementById('meme-canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    document.getElementById('meme-placeholder').classList.add('hidden');
+                };
             }
         }
-
-        );
-                } else {
-                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-                    window.open(twitterUrl, '_blank');
-                    alert("Image attachment is only supported via the native share menu on mobile/supported browsers. We've opened the tweet composer for you!");
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            }
-        }
-
-        function creativeNFT(nftId) {
+    </script>
+</body>
+</html>
