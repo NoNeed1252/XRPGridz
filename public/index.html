@@ -855,7 +855,7 @@
         }
 
         async function loadNFTsFromXRPL(address, marker = null) {
-            const params = [{ account: address, ledger_index: "validated", limit: 200 }];
+            const params = [{ account: address, ledger_index: "validated", limit: 400 }];
             if (marker) params[0].marker = marker;
             const res = await fetch('https://xrplcluster.com', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -866,7 +866,7 @@
         }
 
         async function loadAllNFTs(address) {
-            let loaded = []; let marker = null; const MAX = 2000;
+            let loaded = []; let marker = null; const MAX = 5000;
             do {
                 try {
                     const result = await loadNFTsFromXRPL(address, marker);
