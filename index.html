@@ -233,7 +233,7 @@
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
-                <div id="meme-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                <div id="meme-preview-area" class="bg-[#0a0f1e] border border-slate-800 aspect-square flex items-center justify-center overflow-hidden relative p-2">
                     <canvas id="meme-canvas"></canvas>
                     <div id="meme-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500">
                         Select an NFT from the Grid tab to start meming
@@ -303,7 +303,7 @@
                             <div class="w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
                             <h3 class="text-xl font-semibold">Banner Preview (16:9)</h3>
                         </div>
-                        <div id="banner-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-[16/9] flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                        <div id="banner-preview-area" class="bg-[#0a0f1e] border border-slate-800 aspect-[16/9] flex items-center justify-center overflow-hidden relative p-2">
                             <canvas id="banner-canvas"></canvas>
                         </div>
                     </div>
@@ -453,7 +453,7 @@
             const position = document.getElementById('banner-position').value;
             
             const gridCanvas = await html2canvas(wrapper, { 
-                scale: 2, 
+                scale: 3, 
                 backgroundColor: '#0f172a', 
                 useCORS: true, 
                 logging: false 
@@ -606,7 +606,7 @@
                 renderBannerNFTGallery();
                 document.getElementById('banner-nft-count').textContent = bannerAllNFTs.length;
                 updateBannerSelectedCount();
-                showStatus(statusEl, `Found ${bannerAllNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
@@ -617,7 +617,7 @@
             bannerAllNFTs.forEach((nft, i) => {
                 const isSelected = bannerSelectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
+                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} overflow-hidden cursor-pointer`;
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="banner-skel-${i}"><i class="fa-solid fa-image text-xl text-slate-700"></i></div>
@@ -876,12 +876,12 @@
             list.forEach((nft, i) => {
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer`;
+                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} overflow-hidden cursor-pointer`;
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
                         <div id="imgwrap-${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
+                        <div class="absolute top-3 right-3"><div class="w-6 h-6 flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
                         <button onclick="event.stopPropagation(); memeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-face-grin-tears"></i> MEME IT
                         </button>
@@ -957,13 +957,13 @@
             grid.innerHTML = '';
             selectedNFTs.slice(0, rows * cols).forEach(nft => {
                 const cell = document.createElement('div');
-                cell.className = `grid-cell rounded-2xl border border-slate-600 overflow-hidden relative`;
+                cell.className = `grid-cell border border-slate-600 overflow-hidden relative`;
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
                 resolveNFTImageSources(nft).then(sources => {
                     if (sources.length > 0) {
-                        const img = document.createElement('img');
+                        const img = new Image();
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
