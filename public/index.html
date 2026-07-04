@@ -60,16 +60,10 @@
         </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto px-5 pt-10 pb-8 text-center">
-        <h1 class="text-5xl md:text-6xl font-semibold tracking-tighter mb-4">Creative Studio</h1>
-        <p class="text-xl text-slate-400 mb-6">Grids • Banners • AI Remixes</p>
-        <button type="button" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})" class="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-3xl text-lg">Enter Studio</button>
-    </div>
-
-    <div id="tool" class="max-w-7xl mx-auto px-5 pb-16">
+    <div id="tool" class="max-w-7xl mx-auto px-5 py-12">
         <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
-            
             <div class="mb-8">
+                <h1 class="text-3xl font-bold mb-6">Creative Studio</h1>
                 <div class="flex items-center gap-x-3 mb-3">
                     <div class="w-7 h-7 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm font-bold">1</div>
                     <h2 class="text-xl font-semibold">Enter Your XRPL Wallet</h2>
@@ -319,7 +313,9 @@
     }
     function updateBannerPreview() {
         const preview = document.getElementById('banner-preview'); const slots = parseInt(document.getElementById('banner-slots-slider').value);
-        document.getElementById('banner-slots-value').textContent = slots; preview.innerHTML = '';
+        const slotsValueLabel = document.getElementById('banner-slots-value');
+        if (slotsValueLabel) slotsValueLabel.textContent = slots; 
+        preview.innerHTML = '';
         selectedNFTs.slice(0, slots).forEach(nft => {
             const cell = document.createElement('div'); cell.className = 'banner-cell flex-1';
             resolveNFTImage(nft, false).then(url => { const img = new Image(); img.src = url; img.className = 'w-full h-full object-cover'; img.crossOrigin = 'anonymous'; cell.appendChild(img); });
@@ -366,7 +362,10 @@
             return new Promise(r => { const i = new Image(); i.crossOrigin="anonymous"; i.onload=()=>{img.src=highResSrc;r()}; i.onerror=r; i.src=highResSrc; });
         }));
     }
-    function updateSelectedCount() { document.getElementById('selected-count').textContent = selectedNFTs.length; }
+    function updateSelectedCount() { 
+        const countEl = document.getElementById('selected-count');
+        if (countEl) countEl.textContent = selectedNFTs.length; 
+    }
     function shuffleSelected() { selectedNFTs.sort(() => Math.random() - 0.5); updateActivePreview(); }
     function clearSelected() { selectedNFTs = []; renderNFTGallery(); updateSelectedCount(); updateActivePreview(); }
     function selectAllNFTs() { selectedNFTs = allNFTs.slice(0, 100); renderNFTGallery(); updateSelectedCount(); updateActivePreview(); }
