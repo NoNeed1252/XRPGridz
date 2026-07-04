@@ -28,12 +28,16 @@
         .loading-skeleton { background: linear-gradient(90deg, #1e2937 25%, #334155 50%, #1e2937 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         
-        /* Meme Tab Styles */
+        /* Tab Styles */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .meme-btn { position: absolute; bottom: 8px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
         .nft-card:hover .meme-btn { opacity: 1; }
         #meme-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        /* Navigation Styles */
+        .nav-link { position: relative; }
+        .nav-link.active::after { content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px; background: #3b82f6; border-radius: 2px; }
     </style>
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
@@ -47,12 +51,22 @@
                     <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
                 </div>
             </div>
-            <div class="flex items-center gap-x-4">
-                <button onclick="switchTab('meme')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Meme Maker</button>
+            <div class="flex items-center gap-x-6">
+                <div class="hidden md:flex items-center gap-x-6">
+                    <button onclick="switchTab('grid')" class="nav-link text-sm font-semibold text-slate-400 hover:text-white transition-colors active" id="nav-grid">Grid Maker</button>
+                    <button onclick="switchTab('meme')" class="nav-link text-sm font-semibold text-slate-400 hover:text-white transition-colors" id="nav-meme">Meme Maker</button>
+                    <button onclick="switchTab('studio')" class="nav-link text-sm font-semibold text-slate-400 hover:text-white transition-colors" id="nav-studio">Creative Studio</button>
+                </div>
                 <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
                     <i class="fa-solid fa-heart"></i> <span>Donate</span>
                 </button>
             </div>
+        </div>
+        <!-- Mobile Nav -->
+        <div class="md:hidden flex items-center justify-around py-2 border-t border-slate-800 bg-[#0a0f1e]">
+            <button onclick="switchTab('grid')" class="text-[10px] uppercase font-bold text-slate-500" id="m-nav-grid">Grid</button>
+            <button onclick="switchTab('meme')" class="text-[10px] uppercase font-bold text-slate-500" id="m-nav-meme">Meme</button>
+            <button onclick="switchTab('studio')" class="text-[10px] uppercase font-bold text-slate-500" id="m-nav-studio">Studio</button>
         </div>
     </nav>
 
@@ -207,6 +221,56 @@
         </div>
     </div>
 
+    <!-- Creative Studio Tab -->
+    <div id="tab-studio" class="tab-content max-w-7xl mx-auto px-5 py-10">
+        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
+            <div class="flex items-center gap-x-3 mb-8">
+                <div class="w-10 h-10 bg-blue-600 text-white rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold tracking-tighter">Creative Studio</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Grid Maker Lite -->
+                <div class="bg-[#0a0f1e] border border-slate-800 rounded-2xl p-6 hover:border-blue-500 transition-all group">
+                    <div class="w-12 h-12 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-border-all text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Grid Maker</h3>
+                    <p class="text-slate-400 text-sm mb-4">Quickly arrange your assets into structured 2x2, 3x3, or 4x4 grids for social sharing.</p>
+                    <button onclick="switchTab('grid')" class="text-blue-400 text-xs font-bold uppercase tracking-widest flex items-center gap-2">Launch <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+
+                <!-- Banner Studio -->
+                <div class="bg-[#0a0f1e] border border-slate-800 rounded-2xl p-6 hover:border-emerald-500 transition-all group">
+                    <div class="w-12 h-12 bg-emerald-600/20 text-emerald-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-panorama text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Banner Studio</h3>
+                    <p class="text-slate-400 text-sm mb-4">Design custom X (Twitter) banners featuring your NFT collections with automatic sizing.</p>
+                    <div class="inline-block px-2 py-1 bg-emerald-950/50 text-emerald-400 text-[10px] font-bold rounded">COMING SOON</div>
+                </div>
+
+                <!-- AI Remix -->
+                <div class="bg-[#0a0f1e] border border-slate-800 rounded-2xl p-6 hover:border-purple-500 transition-all group">
+                    <div class="w-12 h-12 bg-purple-600/20 text-purple-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-robot text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">AI Remix</h3>
+                    <p class="text-slate-400 text-sm mb-4">Transform your NFTs into new artistic styles using integrated generative AI tools.</p>
+                    <div class="inline-block px-2 py-1 bg-purple-950/50 text-purple-400 text-[10px] font-bold rounded">COMING SOON</div>
+                </div>
+            </div>
+
+            <div class="mt-12 p-8 border border-dashed border-slate-700 rounded-3xl text-center">
+                <i class="fa-solid fa-flask-vial text-4xl text-slate-600 mb-4"></i>
+                <h4 class="text-xl font-semibold mb-2">More Tools in Development</h4>
+                <p class="text-slate-400 max-w-md mx-auto">Creative Studio is where we're testing new ways to showcase your XRPL assets. Stay tuned for Banner Studio and AI Remix!</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allNFTs = [];
         let selectedNFTs = [];
@@ -219,8 +283,25 @@
         
         // --- Tab Management ---
         function switchTab(tabId) {
+            // Update Content
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tabId}`).classList.add('active');
+            
+            // Update Nav Links
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active', 'text-white'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.add('text-slate-400'));
+            
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('active', 'text-white');
+                activeNav.classList.remove('text-slate-400');
+            }
+
+            // Update Mobile Nav
+            document.querySelectorAll('[id^="m-nav-"]').forEach(el => el.classList.replace('text-blue-400', 'text-slate-500'));
+            const activeMobileNav = document.getElementById(`m-nav-${tabId}`);
+            if (activeMobileNav) activeMobileNav.classList.replace('text-slate-500', 'text-blue-400');
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
