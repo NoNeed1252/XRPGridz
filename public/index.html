@@ -366,7 +366,7 @@
         }
 
         function showCreativeStudio() {
-            alert("Creative Studio is coming soon! Stay tuned for more tools.");
+            alert(\"Creative Studio is coming soon! Stay tuned for more tools.\");
         }
 
         function memeNFT(nftId) {
@@ -374,7 +374,7 @@
             if (!nft) return;
             
             const placeholder = document.getElementById('meme-placeholder');
-            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
+            placeholder.innerHTML = '<div class=\"loading-skeleton w-32 h-32 rounded-xl\"></div>';
             placeholder.classList.remove('hidden');
             
             switchTab('meme');
@@ -382,7 +382,7 @@
             resolveNFTImageSources(nft).then(sources => {
                 if (sources.length > 0) {
                     const img = new Image();
-                    img.crossOrigin = "anonymous";
+                    img.crossOrigin = \"anonymous\";
                     let currentTry = 0;
                     img.onload = () => {
                         activeMemeImage = img;
@@ -394,12 +394,12 @@
                         if (currentTry < sources.length) {
                             img.src = sources[currentTry];
                         } else {
-                            placeholder.innerHTML = "Failed to load NFT image";
+                            placeholder.innerHTML = \"Failed to load NFT image\";
                         }
                     };
                     img.src = sources[0];
                 } else {
-                    placeholder.innerHTML = "No image available for this NFT";
+                    placeholder.innerHTML = \"No image available for this NFT\";
                 }
             });
         }
@@ -409,7 +409,7 @@
             if (!nft) return;
             
             const placeholder = document.getElementById('banner-placeholder');
-            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
+            placeholder.innerHTML = '<div class=\"loading-skeleton w-32 h-32 rounded-xl\"></div>';
             placeholder.classList.remove('hidden');
             
             switchTab('banner');
@@ -417,7 +417,7 @@
             resolveNFTImageSources(nft).then(sources => {
                 if (sources.length > 0) {
                     const img = new Image();
-                    img.crossOrigin = "anonymous";
+                    img.crossOrigin = \"anonymous\";
                     let currentTry = 0;
                     img.onload = () => {
                         activeBannerImage = img;
@@ -429,12 +429,12 @@
                         if (currentTry < sources.length) {
                             img.src = sources[currentTry];
                         } else {
-                            placeholder.innerHTML = "Failed to load NFT image";
+                            placeholder.innerHTML = \"Failed to load NFT image\";
                         }
                     };
                     img.src = sources[0];
                 } else {
-                    placeholder.innerHTML = "No image available for this NFT";
+                    placeholder.innerHTML = \"No image available for this NFT\";
                 }
             });
         }
@@ -465,7 +465,7 @@
 
             // Font Settings
             const fontSize = Math.floor(width * 0.1);
-            ctx.font = `bold ${fontSize}px Impact, system-ui, sans-serif`;
+            ctx.font = `bold \${fontSize}px Impact, system-ui, sans-serif`;
             ctx.fillStyle = 'white';
             ctx.strokeStyle = 'black';
             ctx.lineWidth = fontSize / 12;
@@ -524,7 +524,7 @@
             const canvas = document.getElementById('meme-canvas');
             if (!activeMemeImage) return alert('Select an NFT first!');
             const link = document.createElement('a');
-            link.download = `xrpmeme-${Date.now()}.png`;
+            link.download = `xrpmeme-\${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -533,7 +533,7 @@
             const canvas = document.getElementById('banner-canvas');
             if (!activeBannerImage && bannerSelectedNFTs.length === 0) return alert('Select an NFT first!');
             const link = document.createElement('a');
-            link.download = `xrp-banner-${Date.now()}.png`;
+            link.download = `xrp-banner-\${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -557,7 +557,7 @@
                 renderBannerNFTGallery();
                 document.getElementById('banner-nft-count').textContent = bannerAllNFTs.length;
                 updateBannerSelectedCount();
-                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, `Found \${allNFTs.length} NFTs`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
@@ -568,12 +568,12 @@
             bannerAllNFTs.forEach((nft, i) => {
                 const isSelected = bannerSelectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
+                card.className = `nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
                 card.innerHTML = `
-                    <div class="relative aspect-square bg-slate-900">
-                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="banner-skel-${i}"><i class="fa-solid fa-image text-xl text-slate-700"></i></div>
-                        <div id="banner-imgwrap-${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-2 right-2"><div class="w-5 h-5 rounded-full flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]"></i></div></div>
+                    <div class=\"relative aspect-square bg-slate-900\">
+                        <div class=\"absolute inset-0 loading-skeleton flex items-center justify-center\" id=\"banner-skel-\${i}\"><i class=\"fa-solid fa-image text-xl text-slate-700\"></i></div>
+                        <div id=\"banner-imgwrap-\${i}\" class=\"w-full h-full hidden\"></div>
+                        <div class=\"absolute top-2 right-2\"><div class=\"w-5 h-5 rounded-full flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}\"><i class=\"fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]\"></i></div></div>
                     </div>`;
                 card.onclick = () => toggleBannerSelection(nft, card);
                 container.appendChild(card);
@@ -591,8 +591,8 @@
         }
 
         async function loadImageForBannerCard(nft, index) {
-            const skel = document.getElementById(`banner-skel-${index}`);
-            const wrap = document.getElementById(`imgwrap-${index}`);
+            const skel = document.getElementById(`banner-skel-\${index}`);
+            const wrap = document.getElementById(`banner-imgwrap-\${index}`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -600,7 +600,7 @@
                 if (!sources.length) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
                 const img = document.createElement('img');
                 img.className = 'w-full h-full object-cover';
-                img.crossOrigin = "anonymous";
+                img.crossOrigin = \"anonymous\";
                 let tryIdx = 0;
                 img.onerror = () => { tryIdx++; if (tryIdx < sources.length) img.src = sources[tryIdx]; else wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
                 img.src = sources[0];
@@ -719,12 +719,12 @@
                 const sources = await resolveNFTImageSources(nft);
                 if (sources.length > 0) {
                     const img = new Image();
-                    img.crossOrigin = "anonymous";
+                    img.crossOrigin = \"anonymous\";
                     await new Promise((resolve) => {
                         img.onload = () => {
                             const imgRatio = img.naturalWidth / img.naturalHeight;
                             const cellRatio = cellWidth / cellHeight;
-                            let drawW, drawH, sx, sy, sW, sH;
+                            let sx, sy, sW, sH;
 
                             if (imgRatio > cellRatio) {
                                 sH = img.naturalHeight;
@@ -794,9 +794,9 @@
             const timeout = setTimeout(() => controller.abort(), 8000);
             
             const providers = [
-                () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
-                () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-                () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+                () => fetch(\`https://api.xrpscan.com/api/v1/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+                () => fetch(\`https://xrplmeta.org/api/v1/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+                () => fetch(\`https://bithomp.com/api/v2/nft/\${nftId}\`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
             ];
 
             try {
@@ -814,12 +814,12 @@
             if (!nft?.NFTokenID) return sources;
 
             // 1. Proxied gateway sources
-            if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
+            if (nft.URI) sources.push(\`/api/proxy?hex=\${nft.URI}\`);
 
             const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
             if (racedImage) {
-                const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
-                sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
+                const url = racedImage.startsWith('ipfs://') ? \`https://ipfs.io/ipfs/\${racedImage.replace('ipfs://', '')}\` : racedImage;
+                sources.push(\`/api/proxy?url=\${encodeURIComponent(url)}\`);
             }
 
             // 2. Direct CID mirrors
@@ -828,13 +828,13 @@
             if (rawUri) {
                 const cid = extractCID(rawUri);
                 if (cid) {
-                    sources.push(`https://ipfs.io/ipfs/${cid}`);
-                    sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
-                    sources.push(`https://gateway.pinata.cloud/ipfs/${cid}`);
-                    sources.push(`https://nftstorage.link/ipfs/${cid}`);
-                    sources.push(`https://ipfs.runfission.com/ipfs/${cid}`);
-                    sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
-                    sources.push(`/api/proxy?cid=${cid}`);
+                    sources.push(\`https://ipfs.io/ipfs/\${cid}\`);
+                    sources.push(\`https://cloudflare-ipfs.com/ipfs/\${cid}\`);
+                    sources.push(\`https://gateway.pinata.cloud/ipfs/\${cid}\`);
+                    sources.push(\`https://nftstorage.link/ipfs/\${cid}\`);
+                    sources.push(\`https://ipfs.runfission.com/ipfs/\${cid}\`);
+                    sources.push(\`https://ipfs-proxy.xrp.cafe/ipfs/\${cid}\`);
+                    sources.push(\`/api/proxy?cid=\${cid}\`);
                 }
             }
             return [...new Set(sources.filter(s => !!s))];
@@ -855,28 +855,42 @@
         }
 
         async function loadNFTsFromXRPL(address, marker = null) {
-            const params = [{ account: address, ledger_index: "validated", limit: 400 }];
+            const params = [{ account: address, ledger_index: \"validated\", limit: 400 }];
             if (marker) params[0].marker = marker;
             const res = await fetch('https://xrplcluster.com', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ method: "account_nfts", params })
+                body: JSON.stringify({ method: \"account_nfts\", params })
             });
             const data = await res.json();
+            
+            // Fix: Identify if the node returned an error result and handle it gracefully
+            if (data.error || !data.result) {
+                console.error(\"XRPL Error:\", data.error_message || data.error);
+                return { nfts: [], marker: null, error: true };
+            }
+            
             return { nfts: data.result?.account_nfts || [], marker: data.result?.marker || null };
         }
 
         async function loadAllNFTs(address) {
             let loaded = []; let marker = null; const MAX = 5000;
+            let retries = 0;
             do {
                 try {
                     const result = await loadNFTsFromXRPL(address, marker);
+                    if (result.error && retries < 3) {
+                        retries++;
+                        await new Promise(r => setTimeout(r, 2000));
+                        continue; 
+                    }
                     loaded = loaded.concat(result.nfts);
                     marker = result.marker;
                     if (document.getElementById('nft-count')) document.getElementById('nft-count').textContent = loaded.length;
                     if (loaded.length >= MAX) break;
+                    retries = 0; // Reset retries on success
                 } catch (e) {
                     console.error('Fetch batch failed, retrying...', e);
-                    await new Promise(r => setTimeout(r, 1000));
+                    await new Promise(r => setTimeout(r, 2000));
                     continue;
                 }
             } while (marker);
@@ -903,14 +917,14 @@
                 selectedNFTs = allNFTs.slice(0, 16);
                 updateSelectedCount();
                 setTimeout(() => setGridPreset(4, 4), 600);
-                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, \`Found \${allNFTs.length} NFTs\`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
         function populateCollectionFilter() {
             const select = document.getElementById('collection-filter');
-            select.innerHTML = '<option value="">All Collections</option>';
-            const issuers = [...new Set(allNFTs.map(n => `${n.Issuer || ''}-${n.NFTokenTaxon || 0}`))];
+            select.innerHTML = '<option value=\"\">All Collections</option>';
+            const issuers = [...new Set(allNFTs.map(n => \`\${n.Issuer || ''}-\${n.NFTokenTaxon || 0}\`))];
             issuers.forEach(iss => {
                 const opt = document.createElement('option');
                 opt.value = iss;
@@ -926,7 +940,7 @@
                     const nftId = card.dataset.nftid;
                     const index = card.dataset.index;
                     if (!card.dataset.loaded) {
-                        card.dataset.loaded = "true";
+                        card.dataset.loaded = \"true\";
                         const nft = allNFTs.find(n => n.NFTokenID === nftId);
                         if (nft) loadImageForCard(nft, index, card);
                     }
@@ -942,21 +956,21 @@
             list.forEach((nft, i) => {
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer`;
+                card.className = \`nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer\`;
                 card.dataset.index = i;
                 card.dataset.nftid = nft.NFTokenID;
-                card.innerHTML = `
-                    <div class="relative aspect-square bg-slate-900">
-                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
-                        <div id="imgwrap-${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
-                        <button onclick="event.stopPropagation(); bannerNFT('${nft.NFTokenID}')" class="banner-btn px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
-                            <i class="fa-solid fa-image"></i> BANNER
+                card.innerHTML = \`
+                    <div class=\"relative aspect-square bg-slate-900\">
+                        <div class=\"absolute inset-0 loading-skeleton flex items-center justify-center\" id=\"skel-\${i}\"><i class=\"fa-solid fa-image text-3xl text-slate-700\"></i></div>
+                        <div id=\"imgwrap-\${i}\" class=\"w-full h-full hidden\"></div>
+                        <div class=\"absolute top-3 right-3\"><div class=\"w-6 h-6 rounded-2xl flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}\"><i class=\"fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs\"></i></div></div>
+                        <button onclick=\"event.stopPropagation(); bannerNFT('\${nft.NFTokenID}')\" class=\"banner-btn px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg\">
+                            <i class=\"fa-solid fa-image\"></i> BANNER
                         </button>
-                        <button onclick="event.stopPropagation(); memeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
-                            <i class="fa-solid fa-face-grin-tears"></i> MEME IT
+                        <button onclick=\"event.stopPropagation(); memeNFT('\${nft.NFTokenID}')\" class=\"meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg\">
+                            <i class=\"fa-solid fa-face-grin-tears\"></i> MEME IT
                         </button>
-                    </div>`;
+                    </div>\`;
                 card.onclick = () => toggleSelection(nft, card);
                 container.appendChild(card);
                 galleryObserver.observe(card);
@@ -964,8 +978,8 @@
         }
 
         async function loadImageForCard(nft, index, card) {
-            const skel = document.getElementById(`skel-${index}`);
-            const wrap = document.getElementById(`imgwrap-${index}`);
+            const skel = document.getElementById(`skel-\${index}`);
+            const wrap = document.getElementById(`imgwrap-\${index}`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -973,7 +987,7 @@
                 if (!sources.length) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
                 const img = document.createElement('img');
                 img.className = 'w-full h-full object-cover';
-                img.crossOrigin = "anonymous";
+                img.crossOrigin = \"anonymous\";
                 let tryIdx = 0;
                 img.onerror = () => { 
                     tryIdx++; 
@@ -992,7 +1006,7 @@
             const text = document.getElementById('nft-filter').value.toLowerCase().trim();
             const coll = document.getElementById('collection-filter').value;
             let filtered = allNFTs;
-            if (coll) filtered = filtered.filter(n => `${n.Issuer || ''}-${n.NFTokenTaxon || 0}` === coll);
+            if (coll) filtered = filtered.filter(n => \`\${n.Issuer || ''}-\${n.NFTokenTaxon || 0}\` === coll);
             if (text) filtered = filtered.filter(n => (n.NFTokenID?.toLowerCase().includes(text)) || (n.Issuer?.toLowerCase().includes(text)));
             renderNFTGallery(filtered);
         }
@@ -1001,7 +1015,7 @@
             if (!currentMarker || isLoadingMore) return;
             isLoadingMore = true;
             const btn = document.getElementById('load-more-btn');
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Loading...`;
+            btn.innerHTML = \`<i class=\"fa-solid fa-spinner fa-spin\"></i> Loading...\`;
 
             try {
                 const result = await loadNFTsFromXRPL(currentWallet, currentMarker);
@@ -1015,7 +1029,7 @@
             } catch (e) {
                 console.error('Load more failed', e);
             } finally {
-                if (currentMarker) btn.innerHTML = `<i class="fa-solid fa-plus"></i> Load More`;
+                if (currentMarker) btn.innerHTML = \`<i class=\"fa-solid fa-plus\"></i> Load More\`;
                 else btn.classList.add('hidden');
                 isLoadingMore = false;
             }
@@ -1047,11 +1061,11 @@
             document.getElementById('rows-value').textContent = rows;
 
             if (!selectedNFTs.length) { grid.innerHTML = ''; return; }
-            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateColumns = \`repeat(\${cols}, 1fr)\`;
             grid.innerHTML = '';
             selectedNFTs.slice(0, rows * cols).forEach(nft => {
                 const cell = document.createElement('div');
-                cell.className = `grid-cell rounded-2xl border border-slate-600 overflow-hidden relative group`;
+                cell.className = \`grid-cell rounded-2xl border border-slate-600 overflow-hidden relative group\`;
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
@@ -1149,8 +1163,8 @@
                     ctx.translate(-centerX, -centerY);
                 }
 
-                ctx.font = `bold ${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif`;
-                const text = "XRPGridz";
+                ctx.font = \`bold \${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif\`;
+                const text = \"XRPGridz\";
                 const textMetrics = ctx.measureText(text);
                 const logoSize = bannerThickness * 0.6;
                 const logoAvailable = logoImg.complete && logoImg.naturalWidth > 0;
@@ -1170,7 +1184,7 @@
 
                 // 7. Trigger download
                 const a = document.createElement('a');
-                a.download = `xrpgridz-${new Date().getTime()}.png`;
+                a.download = \`xrpgridz-\${new Date().getTime()}.png\`;
                 a.href = finalCanvas.toDataURL('image/png'); 
                 a.click();
             } catch (e) { 
@@ -1212,12 +1226,12 @@
 
         function showStatus(el, msg, type) { 
             el.innerHTML = msg; 
-            el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; 
+            el.className = \`mt-2 text-sm px-4 py-2 rounded-2xl \${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}\`; 
             el.classList.remove('hidden'); 
         }
 
         function createPlaceholder(id) { 
-            return `<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 font-mono p-2 text-center">No Image Found<br>${id.slice(0,6)}</div>`; 
+            return \`<div class=\"flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 font-mono p-2 text-center\">No Image Found<br>\${id.slice(0,6)}</div>\`; 
         }
 
         function shuffleSelected() {
@@ -1231,21 +1245,21 @@
         const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
         function showDonateModal() {
             const modal = document.createElement('div');
-            modal.className = `fixed inset-0 bg-[#0a0f1e]/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4`;
-            modal.innerHTML = `
-                <div class="bg-[#111827] border border-slate-700 rounded-3xl max-w-md w-full p-8 relative shadow-2xl">
-                    <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl text-slate-400 hover:text-white transition-colors">&times;</button>
-                    <div class="text-center">
-                        <div class="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/20"><i class="fa-solid fa-heart text-white text-3xl"></i></div>
-                        <h3 class="text-3xl font-bold tracking-tighter mb-2">Support XRPGridz</h3>
-                        <p class="text-slate-400 mb-6">Your contributions help keep this tool free for everyone. Thank you!</p>
-                        <div class="bg-[#0a0f1e] border border-slate-800 rounded-2xl p-5 mb-5 text-left">
-                            <div class="text-xs font-bold text-emerald-400 mb-2 uppercase tracking-widest">Treasury Address</div>
-                            <div class="font-mono text-sm break-all mb-4 text-slate-300 leading-relaxed">${DONATE_ADDRESS}</div>
-                            <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='<i class=\'fa-solid fa-check\'></i> Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/10">Copy Address</button>
+            modal.className = \`fixed inset-0 bg-[#0a0f1e]/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4\`;
+            modal.innerHTML = \`
+                <div class=\"bg-[#111827] border border-slate-700 rounded-3xl max-w-md w-full p-8 relative shadow-2xl\">
+                    <button onclick=\"this.closest('.fixed').remove()\" class=\"absolute top-5 right-5 text-2xl text-slate-400 hover:text-white transition-colors\">&times;</button>
+                    <div class=\"text-center\">
+                        <div class=\"mx-auto w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/20\"><i class=\"fa-solid fa-heart text-white text-3xl\"></i></div>
+                        <h3 class=\"text-3xl font-bold tracking-tighter mb-2\">Support XRPGridz</h3>
+                        <p class=\"text-slate-400 mb-6\">Your contributions help keep this tool free for everyone. Thank you!</p>
+                        <div class=\"bg-[#0a0f1e] border border-slate-800 rounded-2xl p-5 mb-5 text-left\">
+                            <div class=\"text-xs font-bold text-emerald-400 mb-2 uppercase tracking-widest\">Treasury Address</div>
+                            <div class=\"font-mono text-sm break-all mb-4 text-slate-300 leading-relaxed\">\${DONATE_ADDRESS}</div>
+                            <button onclick=\"navigator.clipboard.writeText('\${DONATE_ADDRESS}'); this.innerHTML='<i class\\\'fa-solid fa-check\\\'></i> Copied! Thank you ❤️'\" class=\"w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/10\">Copy Address</button>
                         </div>
                     </div>
-                </div>`;
+                </div>\`;
             document.body.appendChild(modal);
         }
 
