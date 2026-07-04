@@ -400,7 +400,7 @@
                 const result = await response.json();
                 if (result.url) {
                     const shareUrl = window.location.origin + '/share/' + encodeURIComponent(result.url);
-                    const text = encodeURIComponent("Check out my XRP NFT grid on #XRPGridz! 🚀✨\\n\\n");
+                    const text = encodeURIComponent("Check out my XRP NFT grid on #XRPGridz! 🚀✨\n\n");
                     window.open(`https://twitter.com/intent/tweet?text=\${text}&url=\${encodeURIComponent(shareUrl)}`, '_blank');
                 } else {
                     throw new Error('Upload failed');
@@ -415,12 +415,12 @@
         }
 
         function shareMemeOnX() {
-            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\\n\\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
+            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
             window.open(`https://twitter.com/intent/tweet?text=\${text}`, '_blank');
         }
 
         function shareBannerOnX() {
-            const text = encodeURIComponent("Just created a 16:9 banner for my XRP NFT on XRPGridz! 🎨🔥\\n\\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
+            const text = encodeURIComponent("Just created a 16:9 banner for my XRP NFT on XRPGridz! 🎨🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
             window.open(`https://twitter.com/intent/tweet?text=\${text}`, '_blank');
         }
 
@@ -433,7 +433,7 @@
             if (!nft) return;
             
             const placeholder = document.getElementById('meme-placeholder');
-            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
+            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-none"></div>';
             placeholder.classList.remove('hidden');
             
             switchTab('meme');
@@ -462,7 +462,7 @@
             if (!nft) return;
             
             const placeholder = document.getElementById('banner-placeholder');
-            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
+            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-none"></div>';
             placeholder.classList.remove('hidden');
             
             switchTab('banner');
@@ -615,12 +615,12 @@
             bannerAllNFTs.forEach((nft, i) => {
                 const isSelected = bannerSelectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
+                card.className = `nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-none overflow-hidden cursor-pointer`;
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="banner-skel-\${i}"><i class="fa-solid fa-image text-xl text-slate-700"></i></div>
                         <div id="banner-imgwrap-\${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-2 right-2"><div class="w-5 h-5 rounded-full flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]"></i></div></div>
+                        <div class="absolute top-2 right-2"><div class="w-5 h-5 rounded-none flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]"></i></div></div>
                     </div>`;
                 card.onclick = () => toggleBannerSelection(nft, card);
                 container.appendChild(card);
@@ -917,14 +917,14 @@
             list.forEach((nft, i) => {
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-3xl overflow-hidden cursor-pointer`;
+                card.className = `nft-card bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-none overflow-hidden cursor-pointer`;
                 card.dataset.index = i;
                 card.dataset.nftid = nft.NFTokenID;
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-\${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
                         <div id="imgwrap-\${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
+                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-none flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
                         <button onclick="event.stopPropagation(); bannerNFT('\${nft.NFTokenID}')" class="banner-btn px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-image"></i> BANNER
                         </button>
@@ -1015,7 +1015,7 @@
             grid.innerHTML = '';
             selectedNFTs.slice(0, rows * cols).forEach(nft => {
                 const cell = document.createElement('div');
-                cell.className = `grid-cell rounded-2xl border border-slate-600 overflow-hidden relative group`;
+                cell.className = `grid-cell rounded-none border border-slate-600 overflow-hidden relative group`;
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
