@@ -316,9 +316,6 @@
                     
                     <div class="space-y-6">
                         <div class="grid md:grid-cols-2 gap-4">
-                            <button id="share-banner-x-btn" onclick="shareBannerOnX()" class="w-full py-4 bg-black border border-slate-700 text-white font-bold rounded-2xl text-xl flex items-center justify-center gap-x-2 hover:bg-slate-900">
-                                <i class="fa-brands fa-x-twitter"></i> Share on X
-                            </button>
                             <button onclick="saveBanner()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-blue-900/20">Save & Export</button>
                         </div>
                         <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
@@ -371,11 +368,6 @@
 
         function shareMemeOnX() {
             const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
-            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
-        }
-
-        function shareBannerOnX() {
-            const text = encodeURIComponent("Just created a 16:9 banner for my XRP NFT on XRPGridz! 🎨🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
             window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
         }
 
