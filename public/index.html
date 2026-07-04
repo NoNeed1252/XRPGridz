@@ -67,7 +67,7 @@
     <nav class="border-b border-slate-800 bg-[#0a0f1e]/95 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
             <div class="flex items-center gap-x-4">
-                <button id="hamburger" class="text-2xl text-slate-400 hover:text-white lg:hidden">
+                <button id="hamburger" class="text-2xl text-slate-400 hover:text-white">
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <div class="flex items-center gap-x-3 cursor-pointer" onclick="switchTab('grid')">
@@ -80,9 +80,8 @@
                 </div>
             </div>
             <div class="flex items-center gap-x-4">
-                <button onclick="switchTab('meme')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Meme Maker</button>
                 <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
-                    <i class="fa-solid fa-heart"></i> <span>Donate</span>
+                    <i class="fa-solid fa-heart"></i> <span>Support</span>
                 </button>
             </div>
         </div>
@@ -96,9 +95,9 @@
             <button id="close-sidebar" class="text-2xl">&times;</button>
         </div>
         <ul class="space-y-4">
-            <li><button onclick="switchTab('grid'); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors">Grid Builder</button></li>
-            <li><button onclick="switchTab('meme'); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors">Meme Maker</button></li>
-            <li><button onclick="showDonateModal(); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors">Donate</button></li>
+            <li><button onclick="switchTab('grid'); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors flex items-center gap-3"><i class="fa-solid fa-th-large w-6"></i> Grid Builder</button></li>
+            <li><button onclick="switchTab('meme'); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors flex items-center gap-3"><i class="fa-solid fa-face-grin-tears w-6"></i> Meme Maker</button></li>
+            <li><button onclick="showCreativeStudio(); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles w-6"></i> Creative Studio</button></li>
         </ul>
     </div>
 
@@ -291,8 +290,11 @@
         // --- Tab Management ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const target = document.getElementById(`tab-${tabId}`);
+            if (target) {
+                target.classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
 
         function shareOnX() {
@@ -301,8 +303,12 @@
         }
 
         function shareMemeOnX() {
-            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.app #XRPL #NFTs #Meme #XRPGridz");
+            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
             window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+        }
+
+        function showCreativeStudio() {
+            alert("Creative Studio is coming soon! Stay tuned for more tools.");
         }
 
         function memeNFT(nftId) {
@@ -820,18 +826,18 @@
         const DONATE_ADDRESS = 'rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY';
         function showDonateModal() {
             const modal = document.createElement('div');
-            modal.className = `fixed inset-0 bg-[#0a0f1e] flex items-center justify-center z-[100] p-4`;
+            modal.className = `fixed inset-0 bg-[#0a0f1e]/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4`;
             modal.innerHTML = `
-                <div class="glass border border-white/10 rounded-3xl max-w-md w-full p-8 relative" onclick="event.target === this && this.remove()">
-                    <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl">×</button>
+                <div class="bg-[#111827] border border-slate-700 rounded-3xl max-w-md w-full p-8 relative shadow-2xl">
+                    <button onclick="this.closest('.fixed').remove()" class="absolute top-5 right-5 text-2xl text-slate-400 hover:text-white transition-colors">&times;</button>
                     <div class="text-center">
-                        <div class="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mb-5"><i class="fa-solid fa-heart text-white text-4xl"></i></div>
-                        <h3 class="text-3xl font-semibold mb-2">Support XRPGridz</h3>
-                        <p class="text-slate-400 mb-6">Thank you for keeping this tool free.</p>
-                        <div class="bg-[#0a0f1e] border border-white/10 rounded-2xl p-5 mb-5">
-                            <div class="text-xs text-emerald-400 mb-1">TREASURY WALLET</div>
-                            <div class="font-mono text-lg break-all mb-3">${DONATE_ADDRESS}</div>
-                            <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-semibold">Copy Address</button>
+                        <div class="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/20"><i class="fa-solid fa-heart text-white text-3xl"></i></div>
+                        <h3 class="text-3xl font-bold tracking-tighter mb-2">Support XRPGridz</h3>
+                        <p class="text-slate-400 mb-6">Your contributions help keep this tool free for everyone. Thank you!</p>
+                        <div class="bg-[#0a0f1e] border border-slate-800 rounded-2xl p-5 mb-5 text-left">
+                            <div class="text-xs font-bold text-emerald-400 mb-2 uppercase tracking-widest">Treasury Address</div>
+                            <div class="font-mono text-sm break-all mb-4 text-slate-300 leading-relaxed">${DONATE_ADDRESS}</div>
+                            <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='<i class=\'fa-solid fa-check\'></i> Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/10">Copy Address</button>
                         </div>
                     </div>
                 </div>`;
