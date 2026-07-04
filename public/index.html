@@ -206,6 +206,9 @@
                                     <span class="font-semibold">Live Preview</span>
                                 </div>
                                 <div class="flex gap-2">
+                                    <button id="share-x-btn" onclick="shareOnX()" class="px-5 py-2 bg-black border border-slate-700 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2 hover:bg-slate-900 transition-colors">
+                                        <i class="fa-brands fa-x-twitter"></i> Share on X
+                                    </button>
                                     <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
                                         <i class="fa-solid fa-download"></i> Download PNG
                                     </button>
@@ -250,6 +253,9 @@
                         <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
                     <div class="flex flex-col gap-3">
+                        <button id="share-meme-x-btn" onclick="shareMemeOnX()" class="w-full py-4 bg-black border border-slate-700 text-white font-bold rounded-2xl text-xl flex items-center justify-center gap-x-2 hover:bg-slate-900">
+                            <i class="fa-brands fa-x-twitter"></i> Share on X
+                        </button>
                         <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
                     </div>
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
@@ -353,6 +359,16 @@
                 target.classList.add('active');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
+        }
+
+        function shareOnX() {
+            const text = encodeURIComponent("Just created my XRP NFT grid on XRPGridz! \uD83D\uDE80\u2728\n\nCheck it out: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
+            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+        }
+
+        function shareMemeOnX() {
+            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! \uD83D\uDE02\uD83D\uDD25\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
+            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
         }
 
         function showCreativeStudio() {
@@ -547,7 +563,7 @@
                 renderBannerNFTGallery();
                 document.getElementById('banner-nft-count').textContent = bannerAllNFTs.length;
                 updateBannerSelectedCount();
-                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, `Found ${bannerAllNFTs.length} NFTs`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
@@ -746,33 +762,34 @@
             finally { clearTimeout(timeout); }
         }
 
+        async function resolveBiddsImage(nft) {
+            const rawUri = hexToString(nft.URI || "");
+            if (rawUri.includes("bidds.com")) {
+                try {
+                    const res = await fetch(rawUri);
+                    if (res.ok) {
+                        const meta = await res.json();
+                        const imgUrl = meta.image || meta.file || meta.animation_url;
+                        if (imgUrl) return "/api/proxy?url=" + encodeURIComponent(imgUrl);
+                    }
+                } catch (e) { console.error("Bidds resolution failed", e); }
+            }
+            return null;
+        }
+
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
 
-            // 1. Proxied gateway sources
-            if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
+            const biddsImage = await resolveBiddsImage(nft);
+            if (biddsImage) sources.push(biddsImage);
+
+            if (nft.URI) sources.push("/api/proxy?hex=" + nft.URI);
 
             const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
             if (racedImage) {
-                const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
-                sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
-            }
-
-            // 2. Direct CID mirrors
-            let rawUri = nft.URI || '';
-            if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
-            if (rawUri) {
-                const cid = extractCID(rawUri);
-                if (cid) {
-                    sources.push(`https://ipfs.io/ipfs/${cid}`);
-                    sources.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
-                    sources.push(`https://gateway.pinata.cloud/ipfs/${cid}`);
-                    sources.push(`https://nftstorage.link/ipfs/${cid}`);
-                    sources.push(`https://ipfs.runfission.com/ipfs/${cid}`);
-                    sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/${cid}`);
-                    sources.push(`/api/proxy?cid=${cid}`);
-                }
+                const url = racedImage.startsWith('ipfs://') ? "https://ipfs.io/ipfs/" + racedImage.replace('ipfs://', '') : racedImage;
+                sources.push("/api/proxy?url=" + encodeURIComponent(url));
             }
             return [...new Set(sources.filter(s => !!s))];
         }
@@ -817,7 +834,6 @@
                     continue;
                 }
             } while (marker);
-            currentMarker = marker;
             return loaded;
         }
 
@@ -1179,7 +1195,7 @@
                         <div class="bg-[#0a0f1e] border border-slate-800 rounded-2xl p-5 mb-5 text-left">
                             <div class="text-xs font-bold text-emerald-400 mb-2 uppercase tracking-widest">Treasury Address</div>
                             <div class="font-mono text-sm break-all mb-4 text-slate-300 leading-relaxed">${DONATE_ADDRESS}</div>
-                            <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='<i class=\'fa-solid fa-check\'></i> Copied! Thank you ❤️'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/10">Copy Address</button>
+                            <button onclick="navigator.clipboard.writeText('${DONATE_ADDRESS}'); this.innerHTML='<i class=\'fa-solid fa-check\'></i> Copied! Thank you \u2764\uFE0F'" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-600/10">Copy Address</button>
                         </div>
                     </div>
                 </div>`;
