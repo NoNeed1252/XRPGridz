@@ -75,11 +75,11 @@
             <button onclick="switchTab('grid'); toggleSidebar()" id="side-grid" class="sidebar-link active w-full flex items-center gap-x-4 px-6 py-4 text-lg font-medium transition-all hover:bg-white/5">
                 <i class="fa-solid fa-th-large"></i> Grid Builder
             </button>
-            <button onclick="switchTab('studio'); toggleSidebar()" id="side-studio" class="sidebar-link w-full flex items-center gap-x-4 px-6 py-4 text-lg font-medium transition-all hover:bg-white/5">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Creative Studio
-            </button>
             <button onclick="switchTab('meme'); toggleSidebar()" id="side-meme" class="sidebar-link w-full flex items-center gap-x-4 px-6 py-4 text-lg font-medium transition-all hover:bg-white/5">
                 <i class="fa-solid fa-face-smile"></i> Meme Maker
+            </button>
+            <button onclick="switchTab('studio'); toggleSidebar()" id="side-studio" class="sidebar-link w-full flex items-center gap-x-4 px-6 py-4 text-lg font-medium transition-all hover:bg-white/5">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Creative Studio
             </button>
         </nav>
         <div class="p-6 text-xs text-slate-500 border-t border-slate-800">
@@ -226,25 +226,6 @@
         </div>
     </div>
 
-    <!-- Creative Studio Tab -->
-    <div id="tab-studio" class="tab-content max-w-7xl mx-auto px-5 py-10">
-        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
-            <div class="flex items-center gap-x-3 mb-8">
-                <div class="w-10 h-10 bg-indigo-500 text-white rounded-2xl flex items-center justify-center">
-                    <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
-                </div>
-                <h2 class="text-3xl font-bold tracking-tighter">Creative Studio</h2>
-            </div>
-            
-            <div class="p-12 text-center border-2 border-dashed border-slate-800 rounded-3xl">
-                <i class="fa-solid fa-person-digging text-5xl text-slate-700 mb-4"></i>
-                <h3 class="text-xl font-semibold mb-2">Studio Tools Under Construction</h3>
-                <p class="text-slate-500">We're building advanced image editing and AI enhancement tools for your XRP NFTs.</p>
-                <button onclick="switchTab('grid')" class="mt-6 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-sm font-semibold transition-colors">Back to Grid Builder</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Meme Maker Tab -->
     <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
         <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
@@ -259,6 +240,25 @@
                 <i class="fa-solid fa-person-digging text-5xl text-slate-700 mb-4"></i>
                 <h3 class="text-xl font-semibold mb-2">Meme Maker Under Construction</h3>
                 <p class="text-slate-500">Soon you'll be able to turn your NFTs into viral memes with custom text and overlays.</p>
+                <button onclick="switchTab('grid')" class="mt-6 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-sm font-semibold transition-colors">Back to Grid Builder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Creative Studio Tab -->
+    <div id="tab-studio" class="tab-content max-w-7xl mx-auto px-5 py-10">
+        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
+            <div class="flex items-center gap-x-3 mb-8">
+                <div class="w-10 h-10 bg-indigo-500 text-white rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold tracking-tighter">Creative Studio</h2>
+            </div>
+            
+            <div class="p-12 text-center border-2 border-dashed border-slate-800 rounded-3xl">
+                <i class="fa-solid fa-person-digging text-5xl text-slate-700 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Studio Tools Under Construction</h3>
+                <p class="text-slate-500">We're building advanced image editing and AI enhancement tools for your XRP NFTs.</p>
                 <button onclick="switchTab('grid')" class="mt-6 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-sm font-semibold transition-colors">Back to Grid Builder</button>
             </div>
         </div>
