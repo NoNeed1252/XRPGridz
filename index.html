@@ -206,9 +206,6 @@
                                     <span class="font-semibold">Live Preview</span>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button id="share-x-btn" onclick="shareOnX()" class="px-5 py-2 bg-black border border-slate-700 text-white text-sm font-bold rounded-none flex items-center gap-x-2 hover:bg-slate-900 transition-colors">
-                                        <i class="fa-brands fa-x-twitter"></i> Share on X
-                                    </button>
                                     <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-none flex items-center gap-x-2">
                                         <i class="fa-solid fa-download"></i> Download PNG
                                     </button>
@@ -253,9 +250,6 @@
                         <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-none px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
                     <div class="flex flex-col gap-3">
-                        <button id="share-meme-x-btn" onclick="shareMemeOnX()" class="w-full py-4 bg-black border border-slate-700 text-white font-bold rounded-none text-xl flex items-center justify-center gap-x-2 hover:bg-slate-900">
-                            <i class="fa-brands fa-x-twitter"></i> Share on X
-                        </button>
                         <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-none text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
                     </div>
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
@@ -316,9 +310,6 @@
                     
                     <div class="space-y-6">
                         <div class="grid md:grid-cols-2 gap-4">
-                            <button id="share-banner-x-btn" onclick="shareBannerOnX()" class="w-full py-4 bg-black border border-slate-700 text-white font-bold rounded-none text-xl flex items-center justify-center gap-x-2 hover:bg-slate-900">
-                                <i class="fa-brands fa-x-twitter"></i> Share on X
-                            </button>
                             <button onclick="saveBanner()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-none text-xl shadow-lg shadow-blue-900/20">Save & Export</button>
                         </div>
                         <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
@@ -364,66 +355,6 @@
             }
         }
 
-        async function shareOnX() {
-            const btn = document.getElementById('share-x-btn');
-            const originalInner = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
-
-            try {
-                const wrapper = document.getElementById('grid-preview');
-                if (!wrapper || !wrapper.children.length) {
-                    alert('Build a grid first!');
-                    btn.disabled = false;
-                    btn.innerHTML = originalInner;
-                    return;
-                }
-
-                // Reuse the canvas generation logic from downloadGridPNG but for upload
-                const gridCanvas = await html2canvas(wrapper, { scale: 2, backgroundColor: '#0f172a', useCORS: true });
-                const finalCanvas = document.createElement('canvas');
-                finalCanvas.width = gridCanvas.width;
-                finalCanvas.height = gridCanvas.height;
-                const ctx = finalCanvas.getContext('2d');
-                ctx.drawImage(gridCanvas, 0, 0);
-                
-                const imageData = finalCanvas.toDataURL('image/png');
-                
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
-                
-                const response = await fetch('/api/share-upload', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: imageData })
-                });
-                
-                const result = await response.json();
-                if (result.url) {
-                    const shareUrl = window.location.origin + '/share/' + encodeURIComponent(result.url);
-                    const text = encodeURIComponent("Check out my XRP NFT grid on #XRPGridz! 🚀✨\n\n");
-                    window.open(`https://twitter.com/intent/tweet?text=\${text}&url=\${encodeURIComponent(shareUrl)}`, '_blank');
-                } else {
-                    throw new Error('Upload failed');
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Sharing failed. Please try again.');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalInner;
-            }
-        }
-
-        function shareMemeOnX() {
-            const text = encodeURIComponent("Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #Meme #XRPGridz");
-            window.open(`https://twitter.com/intent/tweet?text=\${text}`, '_blank');
-        }
-
-        function shareBannerOnX() {
-            const text = encodeURIComponent("Just created a 16:9 banner for my XRP NFT on XRPGridz! 🎨🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
-            window.open(`https://twitter.com/intent/tweet?text=\${text}`, '_blank');
-        }
-
         function showCreativeStudio() {
             alert("Creative Studio is coming soon! Stay tuned for more tools.");
         }
@@ -442,13 +373,19 @@
                 if (sources.length > 0) {
                     const img = new Image();
                     img.crossOrigin = "anonymous";
+                    let currentTry = 0;
                     img.onload = () => {
                         activeMemeImage = img;
                         placeholder.classList.add('hidden');
                         drawMeme();
                     };
                     img.onerror = () => {
-                        placeholder.innerHTML = "Failed to load NFT image";
+                        currentTry++;
+                        if (currentTry < sources.length) {
+                            img.src = sources[currentTry];
+                        } else {
+                            placeholder.innerHTML = "Failed to load NFT image";
+                        }
                     };
                     img.src = sources[0];
                 } else {
@@ -471,13 +408,19 @@
                 if (sources.length > 0) {
                     const img = new Image();
                     img.crossOrigin = "anonymous";
+                    let currentTry = 0;
                     img.onload = () => {
                         activeBannerImage = img;
                         placeholder.classList.add('hidden');
                         drawBanner();
                     };
                     img.onerror = () => {
-                        placeholder.innerHTML = "Failed to load NFT image";
+                        currentTry++;
+                        if (currentTry < sources.length) {
+                            img.src = sources[currentTry];
+                        } else {
+                            placeholder.innerHTML = "Failed to load NFT image";
+                        }
                     };
                     img.src = sources[0];
                 } else {
@@ -604,7 +547,7 @@
                 renderBannerNFTGallery();
                 document.getElementById('banner-nft-count').textContent = bannerAllNFTs.length;
                 updateBannerSelectedCount();
-                showStatus(statusEl, `Found \${bannerAllNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, `Found \${allNFTs.length} NFTs`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
@@ -785,6 +728,8 @@
 
         async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            
             const providers = [
                 () => fetch(`https://api.xrpscan.com/api/v1/nft/\${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
                 () => fetch(`https://xrplmeta.org/api/v1/nft/\${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
@@ -793,40 +738,51 @@
 
             try {
                 const firstResult = await Promise.any(providers.map(p => p().then(img => {
-                    if (img) { controller.abort(); return img; }
+                    if (img) { clearTimeout(timeout); controller.abort(); return img; }
                     throw new Error('no image');
                 })));
                 return firstResult;
             } catch (e) { return null; }
+            finally { clearTimeout(timeout); }
         }
 
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
+
+            // 1. Proxied gateway sources
             if (nft.URI) sources.push(`/api/proxy?hex=\${nft.URI}`);
+
             const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
             if (racedImage) {
                 const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/\${racedImage.replace('ipfs://', '')}` : racedImage;
                 sources.push(`/api/proxy?url=\${encodeURIComponent(url)}`);
             }
+
+            // 2. Direct CID mirrors
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
                 const cid = extractCID(rawUri);
                 if (cid) {
-                    sources.push(`/api/proxy?cid=\${cid}`);
+                    sources.push(`https://ipfs.io/ipfs/\${cid}`);
+                    sources.push(`https://cloudflare-ipfs.com/ipfs/\${cid}`);
+                    sources.push(`https://gateway.pinata.cloud/ipfs/\${cid}`);
+                    sources.push(`https://nftstorage.link/ipfs/\${cid}`);
+                    sources.push(`https://ipfs.runfission.com/ipfs/\${cid}`);
                     sources.push(`https://ipfs-proxy.xrp.cafe/ipfs/\${cid}`);
+                    sources.push(`/api/proxy?cid=\${cid}`);
                 }
             }
-            return [...new Set(sources)];
+            return [...new Set(sources.filter(s => !!s))];
         }
 
         function extractCID(uri) {
             if (!uri) return null;
             if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', '');
             if (uri.includes('ipfs/')) return uri.split('ipfs/').pop();
-            if (uri.match(/^[a-zA-Z0-9]{46,59}$/)) return uri;
-            return null;
+            const match = uri.match(/Qm[1-9A-HJ-NP-Za-km-z]{44}|ba[A-Za-z2-7]{57}/);
+            return match ? match[0] : null;
         }
 
         function hexToString(hex) {
@@ -847,13 +803,19 @@
         }
 
         async function loadAllNFTs(address) {
-            let loaded = []; let marker = null; const MAX = 1200;
+            let loaded = []; let marker = null; const MAX = 2000;
             do {
-                const result = await loadNFTsFromXRPL(address, marker);
-                loaded = loaded.concat(result.nfts);
-                marker = result.marker;
-                if (document.getElementById('nft-count')) document.getElementById('nft-count').textContent = loaded.length;
-                if (loaded.length >= MAX) break;
+                try {
+                    const result = await loadNFTsFromXRPL(address, marker);
+                    loaded = loaded.concat(result.nfts);
+                    marker = result.marker;
+                    if (document.getElementById('nft-count')) document.getElementById('nft-count').textContent = loaded.length;
+                    if (loaded.length >= MAX) break;
+                } catch (e) {
+                    console.error('Fetch batch failed, retrying...', e);
+                    await new Promise(r => setTimeout(r, 1000));
+                    continue;
+                }
             } while (marker);
             currentMarker = marker;
             return loaded;
@@ -950,7 +912,14 @@
                 img.className = 'w-full h-full object-cover';
                 img.crossOrigin = "anonymous";
                 let tryIdx = 0;
-                img.onerror = () => { tryIdx++; if (tryIdx < sources.length) img.src = sources[tryIdx]; else wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
+                img.onerror = () => { 
+                    tryIdx++; 
+                    if (tryIdx < sources.length) {
+                        img.src = sources[tryIdx]; 
+                    } else {
+                        wrap.innerHTML = createPlaceholder(nft.NFTokenID); 
+                    }
+                };
                 img.src = sources[0];
                 wrap.appendChild(img);
             }
@@ -971,18 +940,22 @@
             const btn = document.getElementById('load-more-btn');
             btn.innerHTML = \`<i class="fa-solid fa-spinner fa-spin"></i> Loading...\`;
 
-            const result = await loadNFTsFromXRPL(currentWallet, currentMarker);
-            const newOnes = result.nfts.filter(n => !allNFTs.some(e => e.NFTokenID === n.NFTokenID));
-            allNFTs = allNFTs.concat(newOnes);
-            currentMarker = result.marker;
+            try {
+                const result = await loadNFTsFromXRPL(currentWallet, currentMarker);
+                const newOnes = result.nfts.filter(n => !allNFTs.some(e => e.NFTokenID === n.NFTokenID));
+                allNFTs = allNFTs.concat(newOnes);
+                currentMarker = result.marker;
 
-            document.getElementById('nft-count').textContent = allNFTs.length;
-            renderNFTGallery();
-            populateCollectionFilter();
-
-            if (currentMarker) btn.innerHTML = \`<i class="fa-solid fa-plus"></i> Load More\`;
-            else btn.classList.add('hidden');
-            isLoadingMore = false;
+                document.getElementById('nft-count').textContent = allNFTs.length;
+                renderNFTGallery();
+                populateCollectionFilter();
+            } catch (e) {
+                console.error('Load more failed', e);
+            } finally {
+                if (currentMarker) btn.innerHTML = \`<i class="fa-solid fa-plus"></i> Load More\`;
+                else btn.classList.add('hidden');
+                isLoadingMore = false;
+            }
         }
 
         function toggleSelection(nft, card) {
