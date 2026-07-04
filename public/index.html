@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
-        body { font-family: system-ui, sans-serif; }
+        body { font-family: system-ui, sans-serif; overflow-x: hidden; }
         .nft-card { transition: all 0.2s ease; position: relative; }
         .nft-card.selected { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); }
         .grid-cell { background: #1e2937; border: 2px solid #475569; overflow: hidden; position: relative; aspect-ratio: 1 / 1; border-radius: 0; }
@@ -28,32 +28,76 @@
         .loading-skeleton { background: linear-gradient(90deg, #1e2937 25%, #334155 50%, #1e2937 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         
-        /* Meme Tab Styles */
+        /* Tab Management */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .meme-btn { position: absolute; bottom: 8px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
-        .nft-card:hover .meme-btn { opacity: 1; }
-        #meme-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        /* Sidebar styles */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(-100%);
+        }
+        #sidebar.open {
+            transform: translateX(0);
+        }
+        #sidebar-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #sidebar-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .sidebar-link.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border-right: 4px solid #3b82f6;
+        }
     </style>
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-[60]"></div>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="fixed top-0 left-0 w-64 h-full bg-[#111827] border-r border-slate-800 z-[70] flex flex-col">
+        <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+            <span class="font-bold text-xl tracking-tighter">Menu</span>
+            <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        </div>
+        <nav class="flex-1 py-4">
+            <button onclick="switchTab('grid'); toggleSidebar()" id="side-grid" class="sidebar-link active w-full flex items-center gap-x-4 px-6 py-4 text-lg font-medium transition-all hover:bg-white/5">
+                <i class="fa-solid fa-th-large"></i> Grid Builder
+            </button>
+            <button onclick="switchTab('studio'); toggleSidebar()" id="side-studio" class="sidebar-link w-full flex items-center gap-x-4 px-6 py-4 text-lg font-medium transition-all hover:bg-white/5">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Creative Studio
+            </button>
+        </nav>
+        <div class="p-6 text-xs text-slate-500 border-t border-slate-800">
+            XRPGridz v2.1
+        </div>
+    </div>
+
+    <!-- Top Navbar -->
     <nav class="border-b border-slate-800 bg-[#0a0f1e]/95 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-x-3 cursor-pointer" onclick="switchTab('grid')">
-                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center">
-                    <i class="fa-solid fa-th-large text-white text-2xl"></i>
-                </div>
-                <div class="font-semibold text-3xl tracking-tighter">
-                    <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
-                </div>
-            </div>
-            <div class="flex items-center gap-x-6">
-                <button onclick="switchTab('grid')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Grid Builder</button>
-                <button onclick="switchTab('studio')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Creative Studio</button>
-                <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
-                    <i class="fa-solid fa-heart"></i> <span>Donate</span>
+            <div class="flex items-center gap-x-4">
+                <button onclick="toggleSidebar()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-bars text-2xl"></i>
                 </button>
+                <div onclick="switchTab('grid')" class="flex items-center gap-x-3 cursor-pointer">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-th-large text-white text-2xl"></i>
+                    </div>
+                    <div class="font-semibold text-3xl tracking-tighter hidden sm:block">
+                        <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
+                    </div>
+                </div>
             </div>
+            <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
+                <i class="fa-solid fa-heart"></i> <span>Donate</span>
+            </button>
         </div>
     </nav>
 
@@ -198,101 +242,36 @@
         let selectedNFTs = [];
         let currentWallet = '';
         let currentMarker = null;
-        let activeMemeImage = null;
+        let activeTab = 'grid';
         const metadataCache = new Map();
         const collectionNameCache = new Map();
         let isLoadingMore = false;
         
+        // --- Sidebar Management ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+            if (sidebar.classList.contains('open')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = 'auto';
+            }
+        }
+
         // --- Tab Management ---
         function switchTab(tabId) {
+            activeTab = tabId;
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Update sidebar links
+            document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+            const activeLink = document.getElementById(`side-${tabId}`);
+            if (activeLink) activeLink.classList.add('active');
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function memeNFT(nftId) {
-            const nft = allNFTs.find(n => n.NFTokenID === nftId);
-            if (!nft) return;
-            
-            const placeholder = document.getElementById('meme-placeholder');
-            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
-            placeholder.classList.remove('hidden');
-            
-            switchTab('meme');
-            
-            resolveNFTImageSources(nft).then(sources => {
-                if (sources.length > 0) {
-                    const img = new Image();
-                    img.crossOrigin = "anonymous";
-                    img.onload = () => {
-                        activeMemeImage = img;
-                        placeholder.classList.add('hidden');
-                        drawMeme();
-                    };
-                    img.onerror = () => {
-                        placeholder.innerHTML = "Failed to load NFT image";
-                    };
-                    img.src = sources[0];
-                } else {
-                    placeholder.innerHTML = "No image available for this NFT";
-                }
-            });
-        }
-
-        function drawMeme() {
-            if (!activeMemeImage) return;
-            const canvas = document.getElementById('meme-canvas');
-            const ctx = canvas.getContext('2d');
-            const topText = document.getElementById('meme-top-text').value.toUpperCase();
-            const bottomText = document.getElementById('meme-bottom-text').value.toUpperCase();
-
-            // Match canvas size to image aspect ratio, but keep resolution decent
-            const maxSize = 1024;
-            let width = activeMemeImage.naturalWidth;
-            let height = activeMemeImage.naturalHeight;
-
-            if (width > maxSize || height > maxSize) {
-                const ratio = Math.min(maxSize / width, maxSize / height);
-                width *= ratio;
-                height *= ratio;
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-
-            // Draw image
-            ctx.drawImage(activeMemeImage, 0, 0, width, height);
-
-            // Font Settings
-            const fontSize = Math.floor(width * 0.1);
-            ctx.font = `bold ${fontSize}px Impact, system-ui, sans-serif`;
-            ctx.fillStyle = 'white';
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = fontSize / 12;
-            ctx.textAlign = 'center';
-
-            // Top Text
-            if (topText) {
-                ctx.textBaseline = 'top';
-                ctx.strokeText(topText, width / 2, height * 0.05, width * 0.9);
-                ctx.fillText(topText, width / 2, height * 0.05, width * 0.9);
-            }
-
-            // Bottom Text
-            if (bottomText) {
-                ctx.textBaseline = 'bottom';
-                ctx.strokeText(bottomText, width / 2, height * 0.95, width * 0.9);
-                ctx.fillText(bottomText, width / 2, height * 0.95, width * 0.9);
-            }
-        }
-
-        function saveMeme() {
-            const canvas = document.getElementById('meme-canvas');
-            if (!activeMemeImage) return alert('Select an NFT first!');
-            const link = document.createElement('a');
-            link.download = `xrpmeme-${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
         }
 
         // --- Throttling / Request Queueing ---
@@ -314,27 +293,6 @@
                 if (activeRequests < MAX_PARALLEL) execute();
                 else requestQueue.push(execute);
             });
-        }
-
-        async function raceMetadataProviders(nftId) {
-            const controller = new AbortController();
-            const providers = [
-                () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-                () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
-                () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-                () => fetch(`https://api.xrp.cafe/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
-            ];
-
-            try {
-                const firstResult = await Promise.any(providers.map(p => p().then(img => {
-                    if (img && typeof img === 'string' && img.length > 5) { 
-                        controller.abort(); 
-                        return img; 
-                    }
-                    throw new Error('no image');
-                })));
-                return firstResult;
-            } catch (e) { return null; }
         }
 
         async function resolveNFTImageSources(nft) {
