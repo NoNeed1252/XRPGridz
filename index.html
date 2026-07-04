@@ -206,9 +206,6 @@
                                     <span class="font-semibold">Live Preview</span>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button id="share-x-btn" onclick="shareOnX()" class="px-5 py-2 bg-black border border-slate-700 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2 hover:bg-slate-900 transition-colors">
-                                        <i class="fa-brands fa-x-twitter"></i> Share on X
-                                    </button>
                                     <button onclick="downloadGridPNG()" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2">
                                         <i class="fa-solid fa-download"></i> Download PNG
                                     </button>
@@ -253,9 +250,6 @@
                         <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
                     </div>
                     <div class="flex flex-col gap-3">
-                        <button id="share-meme-x-btn" onclick="shareMemeOnX()" class="w-full py-4 bg-black border border-slate-700 text-white font-bold rounded-2xl text-xl flex items-center justify-center gap-x-2 hover:bg-slate-900">
-                            <i class="fa-brands fa-x-twitter"></i> Share on X
-                        </button>
                         <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
                     </div>
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
@@ -326,12 +320,52 @@
     </div>
 
     <script>
+        // --- Throttling / Request Queueing ---
+        const requestQueue = [];
+        let activeRequests = 0;
+        const MAX_PARALLEL = 5;
+
+        async function queuedRequest(task) {
+            return new Promise((resolve, reject) => {
+                const execute = async () => {
+                    activeRequests++;
+                    try { resolve(await task()); }
+                    catch (e) { reject(e); }
+                    finally {
+                        activeRequests--;
+                        if (requestQueue.length > 0) requestQueue.shift()();
+                    }
+                };
+                if (activeRequests < MAX_PARALLEL) execute();
+                else requestQueue.push(execute);
+            });
+        }
+
+        async function raceMetadataProviders(nftId) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000);
+            
+            const providers = [
+                () => fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
+                () => fetch(`https://xrplmeta.org/api/v1/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
+                () => fetch(`https://bithomp.com/api/v2/nft/${nftId}`, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+            ];
+
+            try {
+                const firstResult = await Promise.any(providers.map(p => p().then(img => {
+                    if (img) { clearTimeout(timeout); controller.abort(); return img; }
+                    throw new Error('no image');
+                })));
+                return firstResult;
+            } catch (e) { return null; }
+            finally { clearTimeout(timeout); }
+        }
+
         let allNFTs = [];
         let selectedNFTs = [];
         let currentWallet = '';
         let currentMarker = null;
         let activeMemeImage = null;
-        let activeBannerImage = null;
         const metadataCache = new Map();
         const collectionNameCache = new Map();
         let isLoadingMore = false;
@@ -414,7 +448,6 @@
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
 
-        // --- X Sharing Logic ---
         async function captureGrid() {
             const wrapper = document.getElementById('grid-preview');
             const position = document.getElementById('banner-position').value;
@@ -466,69 +499,6 @@
             ctx.restore();
 
             return new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
-        }
-
-        async function shareOnX() {
-            if (!selectedNFTs.length) return alert('Select NFTs first!');
-            const btn = document.getElementById('share-x-btn');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing...';
-            btn.disabled = true;
-
-            try {
-                const blob = await captureGrid();
-                const file = new File([blob], 'xrpgrid.png', { type: 'image/png' });
-                const text = "Just created my XRP NFT grid on XRPGridz! 🚀✨\n\nCheck it out: https://xrpgridz.com #XRPL #NFTs #XRPGridz";
-
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'XRPGridz',
-                        text: text
-                    });
-                } else {
-                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-                    window.open(twitterUrl, '_blank');
-                    alert("Image attachment is only supported via the native share menu on mobile/supported browsers. We've opened the tweet composer for you!");
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            }
-        }
-
-        async function shareMemeOnX() {
-            if (!activeMemeImage) return alert('Select an NFT first!');
-            const btn = document.getElementById('share-meme-x-btn');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing...';
-            btn.disabled = true;
-
-            try {
-                const canvas = document.getElementById('meme-canvas');
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-                const file = new File([blob], 'xrpmeme.png', { type: 'image/png' });
-                const text = "Made a fresh XRP NFT meme with XRPGridz! 😂🔥\n\nBuild yours: https://xrpgridz.com #XRPL #NFTs #Meme #XRPGridz";
-
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'XRPGridz Meme',
-                        text: text
-                    });
-                } else {
-                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-                    window.open(twitterUrl, '_blank');
-                    alert("Image attachment is only supported via the native share menu on mobile/supported browsers. We've opened the tweet composer for you!");
-                }
-            } catch (e) {
-                console.error(e);
-            } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            }
         }
 
         function memeNFT(nftId) {
@@ -718,7 +688,7 @@
         function deselectAllNFTsForBanner() {
             bannerSelectedNFTs = [];
             renderBannerNFTGallery();
-            updateBannerSelectedCount();
+            updateSelectedCount();
             drawMultiBanner();
         }
 
@@ -805,8 +775,17 @@
         async function resolveNFTImageSources(nft) {
             const sources = [];
             if (!nft?.NFTokenID) return sources;
+
+            // 1. Proxied gateway sources
             if (nft.URI) sources.push(`/api/proxy?hex=${nft.URI}`);
-            
+
+            const racedImage = await queuedRequest(() => raceMetadataProviders(nft.NFTokenID));
+            if (racedImage) {
+                const url = racedImage.startsWith('ipfs://') ? `https://ipfs.io/ipfs/${racedImage.replace('ipfs://', '')}` : racedImage;
+                sources.push(`/api/proxy?url=${encodeURIComponent(url)}`);
+            }
+
+            // 2. Direct CID mirrors
             let rawUri = nft.URI || '';
             if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
             if (rawUri) {
