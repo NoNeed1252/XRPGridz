@@ -233,7 +233,7 @@
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
-                <div id="meme-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                <div id="meme-preview-area" class="bg-[#0a0f1e] border border-slate-800 aspect-square flex items-center justify-center overflow-hidden relative p-2">
                     <canvas id="meme-canvas"></canvas>
                     <div id="meme-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500">
                         Select an NFT from the Grid tab to start meming
@@ -303,7 +303,7 @@
                             <div class="w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
                             <h3 class="text-xl font-semibold">Banner Preview (16:9)</h3>
                         </div>
-                        <div id="banner-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-[16/9] flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                        <div id="banner-preview-area" class="bg-[#0a0f1e] border border-slate-800 aspect-[16/9] flex items-center justify-center overflow-hidden relative p-2">
                             <canvas id="banner-canvas"></canvas>
                         </div>
                     </div>
@@ -453,7 +453,7 @@
             const position = document.getElementById('banner-position').value;
             
             const gridCanvas = await html2canvas(wrapper, { 
-                scale: 2, 
+                scale: 3, 
                 backgroundColor: '#0f172a', 
                 useCORS: true, 
                 logging: false 
@@ -622,7 +622,7 @@
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="banner-skel-${i}"><i class="fa-solid fa-image text-xl text-slate-700"></i></div>
                         <div id="banner-imgwrap-${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-2 right-2"><div class="w-5 h-5 rounded-full flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]"></i></div></div>
+                        <div class="absolute top-2 right-2"><div class="w-5 h-5 flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]"></i></div></div>
                     </div>`;
                 card.onclick = () => toggleBannerSelection(nft, card);
                 container.appendChild(card);
@@ -881,7 +881,7 @@
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
                         <div id="imgwrap-${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
+                        <div class="absolute top-3 right-3"><div class="w-6 h-6 flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
                         <button onclick="event.stopPropagation(); memeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-face-grin-tears"></i> MEME IT
                         </button>
@@ -957,7 +957,7 @@
             grid.innerHTML = '';
             selectedNFTs.slice(0, rows * cols).forEach(nft => {
                 const cell = document.createElement('div');
-                cell.className = `grid-cell rounded-2xl border border-slate-600 overflow-hidden relative`;
+                cell.className = `grid-cell border border-slate-600 overflow-hidden relative`;
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
