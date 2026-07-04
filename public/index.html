@@ -47,8 +47,10 @@
                     <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
                 </div>
             </div>
-            <div class="flex items-center gap-x-4">
+            <div class="flex items-center gap-x-6">
+                <button onclick="switchTab('grid')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Grid Builder</button>
                 <button onclick="switchTab('meme')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Meme Maker</button>
+                <button onclick="switchTab('studio')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Creative Studio</button>
                 <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
                     <i class="fa-solid fa-heart"></i> <span>Donate</span>
                 </button>
@@ -203,6 +205,25 @@
                     <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Creative Studio Tab -->
+    <div id="tab-studio" class="tab-content max-w-7xl mx-auto px-5 py-10">
+        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
+            <div class="flex items-center gap-x-3 mb-8">
+                <div class="w-10 h-10 bg-indigo-500 text-white rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold tracking-tighter">Creative Studio</h2>
+            </div>
+            
+            <div class="p-12 text-center border-2 border-dashed border-slate-800 rounded-3xl">
+                <i class="fa-solid fa-person-digging text-5xl text-slate-700 mb-4"></i>
+                <h3 class="text-xl font-semibold mb-2">Studio Tools Under Construction</h3>
+                <p class="text-slate-500">We're building advanced image editing and AI enhancement tools for your XRP NFTs.</p>
+                <button onclick="switchTab('grid')" class="mt-6 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-sm font-semibold transition-colors">Back to Grid Builder</button>
             </div>
         </div>
     </div>
