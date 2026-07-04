@@ -309,6 +309,16 @@
                     </div>
                     
                     <div class="space-y-6">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Placement</label>
+                            <select id="banner-maker-placement" onchange="drawMultiBanner()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none">
+                                <option value="fill">Fill (Default)</option>
+                                <option value="top">Top</option>
+                                <option value="bottom">Bottom</option>
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
                         <div class="grid md:grid-cols-2 gap-4">
                             <button onclick="saveBanner()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-blue-900/20">Save & Export</button>
                         </div>
@@ -582,7 +592,7 @@
 
         async function loadImageForBannerCard(nft, index) {
             const skel = document.getElementById(`banner-skel-${index}`);
-            const wrap = document.getElementById(`banner-imgwrap-${index}`);
+            const wrap = document.getElementById(`imgwrap-${index}`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -638,6 +648,7 @@
             const ctx = canvas.getContext('2d');
             const width = 1600;
             const height = 900;
+            const placement = document.getElementById('banner-maker-placement').value;
             canvas.width = width;
             canvas.height = height;
 
@@ -657,15 +668,24 @@
                 else if (bannerSelectedNFTs.length <= 15) { cols = Math.ceil(bannerSelectedNFTs.length / 3); rows = 3; }
             }
 
-            const cellWidth = width / cols;
-            const cellHeight = height / rows;
+            // Grid Layout Calculations
+            let gridW = width, gridH = height;
+            let gridX = 0, gridY = 0;
+
+            if (placement === 'top') { gridH = height * 0.8; gridY = 0; }
+            else if (placement === 'bottom') { gridH = height * 0.8; gridY = height * 0.2; }
+            else if (placement === 'left') { gridW = width * 0.8; gridX = 0; }
+            else if (placement === 'right') { gridW = width * 0.8; gridX = width * 0.2; }
+
+            const cellWidth = gridW / cols;
+            const cellHeight = gridH / rows;
 
             for (let i = 0; i < bannerSelectedNFTs.length; i++) {
                 const nft = bannerSelectedNFTs[i];
                 const row = Math.floor(i / cols);
                 const col = i % cols;
-                const x = col * cellWidth;
-                const y = row * cellHeight;
+                const x = gridX + (col * cellWidth);
+                const y = gridY + (row * cellHeight);
 
                 const sources = await resolveNFTImageSources(nft);
                 if (sources.length > 0) {
@@ -697,8 +717,11 @@
                 }
             }
             
+            // Branding Strip (always at bottom or shifted if placement is bottom)
+            const stripH = 60;
+            const stripY = height - stripH;
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(0, height - 60, width, 60);
+            ctx.fillRect(0, stripY, width, stripH);
             ctx.fillStyle = 'white';
             ctx.font = 'bold 30px system-ui';
             ctx.textAlign = 'right';
