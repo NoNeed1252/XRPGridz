@@ -49,7 +49,6 @@
             </div>
             <div class="flex items-center gap-x-6">
                 <button onclick="switchTab('grid')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Grid Builder</button>
-                <button onclick="switchTab('meme')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Meme Maker</button>
                 <button onclick="switchTab('studio')" class="text-sm font-semibold text-slate-400 hover:text-white transition-colors">Creative Studio</button>
                 <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
                     <i class="fa-solid fa-heart"></i> <span>Donate</span>
@@ -170,40 +169,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Meme Tab -->
-    <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
-        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
-            <div class="flex items-center gap-x-3 mb-8">
-                <div class="w-10 h-10 bg-purple-500 text-white rounded-2xl flex items-center justify-center">
-                    <i class="fa-solid fa-face-grin-tears text-2xl"></i>
-                </div>
-                <h2 class="text-3xl font-bold tracking-tighter">Meme Maker</h2>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-10">
-                <div id="meme-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
-                    <canvas id="meme-canvas"></canvas>
-                    <div id="meme-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500">
-                        Select an NFT from the Grid tab to start meming
-                    </div>
-                </div>
-                
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Top Text</label>
-                        <input id="meme-top-text" type="text" placeholder="TOP TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Bottom Text</label>
-                        <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold">
-                    </div>
-                    <button onclick="saveMeme()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20">Save & Export</button>
-                    <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
                 </div>
             </div>
         </div>
@@ -484,9 +449,6 @@
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
                         <div id="imgwrap-${i}" class="w-full h-full hidden"></div>
                         <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
-                        <button onclick="event.stopPropagation(); memeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
-                            <i class="fa-solid fa-face-grin-tears"></i> MEME IT
-                        </button>
                     </div>`;
                 card.onclick = () => toggleSelection(nft, card);
                 container.appendChild(card);
