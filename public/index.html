@@ -32,8 +32,9 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .meme-btn { position: absolute; bottom: 8px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
-        .nft-card:hover .meme-btn { opacity: 1; }
-        #meme-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .banner-btn { position: absolute; bottom: 44px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
+        .nft-card:hover .meme-btn, .nft-card:hover .banner-btn { opacity: 1; }
+        #meme-canvas, #banner-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
 
         /* Sidebar Styles */
         #sidebar {
@@ -97,6 +98,7 @@
         <ul class="space-y-4">
             <li><button onclick="switchTab('grid'); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors flex items-center gap-3"><i class="fa-solid fa-th-large w-6"></i> Grid Builder</button></li>
             <li><button onclick="switchTab('meme'); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors flex items-center gap-3"><i class="fa-solid fa-face-grin-tears w-6"></i> Meme Maker</button></li>
+            <li><button onclick="switchTab('banner'); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors flex items-center gap-3"><i class="fa-solid fa-image w-6"></i> Banner Maker</button></li>
             <li><button onclick="showCreativeStudio(); toggleSidebar(false)" class="w-full text-left py-2 hover:text-blue-400 transition-colors flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles w-6"></i> Creative Studio</button></li>
         </ul>
     </div>
@@ -262,12 +264,44 @@
         </div>
     </div>
 
+    <!-- Banner Maker Tab -->
+    <div id="tab-banner" class="tab-content max-w-7xl mx-auto px-5 py-10">
+        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
+            <div class="flex items-center gap-x-3 mb-8">
+                <div class="w-10 h-10 bg-blue-500 text-white rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-image text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-bold tracking-tighter">Banner Maker</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-1 gap-10">
+                <div id="banner-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-[16/9] flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                    <canvas id="banner-canvas"></canvas>
+                    <div id="banner-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500">
+                        Select an NFT from the Grid tab to start creating a banner
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <button id="share-banner-x-btn" onclick="shareBannerOnX()" class="w-full py-4 bg-black border border-slate-700 text-white font-bold rounded-2xl text-xl flex items-center justify-center gap-x-2 hover:bg-slate-900">
+                            <i class="fa-brands fa-x-twitter"></i> Share on X
+                        </button>
+                        <button onclick="saveBanner()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-blue-900/20">Save & Export</button>
+                    </div>
+                    <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let allNFTs = [];
         let selectedNFTs = [];
         let currentWallet = '';
         let currentMarker = null;
         let activeMemeImage = null;
+        let activeBannerImage = null;
         const metadataCache = new Map();
         const collectionNameCache = new Map();
         let isLoadingMore = false;
@@ -307,6 +341,11 @@
             window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
         }
 
+        function shareBannerOnX() {
+            const text = encodeURIComponent("Just created a 16:9 banner for my XRP NFT on XRPGridz! 🎨🔥\n\nBuild yours: https://xrpgridz.vercel.app #XRPL #NFTs #XRPGridz");
+            window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+        }
+
         function showCreativeStudio() {
             alert("Creative Studio is coming soon! Stay tuned for more tools.");
         }
@@ -329,6 +368,35 @@
                         activeMemeImage = img;
                         placeholder.classList.add('hidden');
                         drawMeme();
+                    };
+                    img.onerror = () => {
+                        placeholder.innerHTML = "Failed to load NFT image";
+                    };
+                    img.src = sources[0];
+                } else {
+                    placeholder.innerHTML = "No image available for this NFT";
+                }
+            });
+        }
+
+        function bannerNFT(nftId) {
+            const nft = allNFTs.find(n => n.NFTokenID === nftId);
+            if (!nft) return;
+            
+            const placeholder = document.getElementById('banner-placeholder');
+            placeholder.innerHTML = '<div class="loading-skeleton w-32 h-32 rounded-xl"></div>';
+            placeholder.classList.remove('hidden');
+            
+            switchTab('banner');
+            
+            resolveNFTImageSources(nft).then(sources => {
+                if (sources.length > 0) {
+                    const img = new Image();
+                    img.crossOrigin = "anonymous";
+                    img.onload = () => {
+                        activeBannerImage = img;
+                        placeholder.classList.add('hidden');
+                        drawBanner();
                     };
                     img.onerror = () => {
                         placeholder.innerHTML = "Failed to load NFT image";
@@ -387,11 +455,54 @@
             }
         }
 
+        function drawBanner() {
+            if (!activeBannerImage) return;
+            const canvas = document.getElementById('banner-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // 16:9 Banner
+            const width = 1600;
+            const height = 900;
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw background (dark)
+            ctx.fillStyle = '#0a0f1e';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw image centered and scaled to fit 16:9
+            const imgRatio = activeBannerImage.naturalWidth / activeBannerImage.naturalHeight;
+            const canvasRatio = width / height;
+
+            let drawWidth, drawHeight;
+            if (imgRatio > canvasRatio) {
+                drawWidth = width;
+                drawHeight = width / imgRatio;
+            } else {
+                drawHeight = height;
+                drawWidth = height * imgRatio;
+            }
+
+            const x = (width - drawWidth) / 2;
+            const y = (height - drawHeight) / 2;
+
+            ctx.drawImage(activeBannerImage, x, y, drawWidth, drawHeight);
+        }
+
         function saveMeme() {
             const canvas = document.getElementById('meme-canvas');
             if (!activeMemeImage) return alert('Select an NFT first!');
             const link = document.createElement('a');
             link.download = `xrpmeme-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function saveBanner() {
+            const canvas = document.getElementById('banner-canvas');
+            if (!activeBannerImage) return alert('Select an NFT first!');
+            const link = document.createElement('a');
+            link.download = `xrp-banner-${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -559,6 +670,9 @@
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
                         <div id="imgwrap-${i}" class="w-full h-full hidden"></div>
                         <div class="absolute top-3 right-3"><div class="w-6 h-6 rounded-2xl flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
+                        <button onclick="event.stopPropagation(); bannerNFT('${nft.NFTokenID}')" class="banner-btn px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
+                            <i class="fa-solid fa-image"></i> BANNER
+                        </button>
                         <button onclick="event.stopPropagation(); memeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-face-grin-tears"></i> MEME IT
                         </button>
