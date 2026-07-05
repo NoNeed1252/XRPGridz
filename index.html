@@ -232,7 +232,7 @@
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
-                <div id="meme-preview-area" class="bg-[#0a0f1e] border border-slate-800 aspect-square flex items-center justify-center overflow-hidden relative p-2">
+                <div id="meme-preview-area" class="w-full aspect-square bg-[#0a0f1e] border border-slate-800 flex items-center justify-center overflow-hidden relative p-2">
                     <canvas id="meme-canvas"></canvas>
                     <div id="meme-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500">
                         Select an NFT from the Grid tab to start meming
@@ -314,7 +314,7 @@
                             <div class="w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
                             <h3 class="text-xl font-semibold">Banner Preview (16:9)</h3>
                         </div>
-                        <div id="banner-preview-area" class="bg-[#0a0f1e] border border-slate-800 aspect-[16/9] flex items-center justify-center overflow-hidden relative p-2">
+                        <div id="banner-preview-area" class="w-full bg-[#0a0f1e] border border-slate-800 aspect-[16/9] flex items-center justify-center overflow-hidden relative p-2">
                             <canvas id="banner-canvas"></canvas>
                         </div>
                     </div>
@@ -342,7 +342,7 @@
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
-                <div id="creative-preview-area" class="bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
+                <div id="creative-preview-area" class="w-full bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
                     <canvas id="creative-canvas"></canvas>
                     <div id="creative-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500 text-center px-6">
                         Select an NFT from the Grid tab to start generating or load your wallet below
@@ -956,7 +956,7 @@
 
         async function loadImageForBannerCard(nft, index) {
             const skel = document.getElementById(`banner-skel-${index}`);
-            const wrap = document.getElementById(`banner-imgwrap-${index}`);
+            const wrap = document.getElementById(`imgwrap-${index}`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -1290,7 +1290,7 @@
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
-                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
+                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[tryIdx]; };
                         img.src = sources[0];
                         wrap.appendChild(img);
                     }
