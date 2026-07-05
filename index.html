@@ -333,52 +333,15 @@
 
     <!-- Creative Studio Tab -->
     <div id="tab-creative" class="tab-content max-w-7xl mx-auto px-5 py-10">
-        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
-            <div class="flex items-center gap-x-3 mb-8">
-                <div class="w-10 h-10 bg-purple-500 text-white rounded-2xl flex items-center justify-center">
-                    <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
-                </div>
-                <h2 class="text-3xl font-bold tracking-tighter">Creative Studio</h2>
+        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+            <div class="w-20 h-20 bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mb-6">
+                <i class="fa-solid fa-lock text-4xl"></i>
             </div>
-            
-            <div class="grid md:grid-cols-2 gap-10">
-                <div id="creative-preview-area" class="w-full bg-[#0a0f1e] rounded-3xl aspect-square flex items-center justify-center overflow-hidden relative border border-slate-800 p-2">
-                    <canvas id="creative-canvas"></canvas>
-                    <div id="creative-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500 text-center px-6">
-                        Select an NFT from the Grid tab to start generating or load your wallet below
-                    </div>
-                </div>
-                
-                <div class="space-y-6">
-                    <div class="p-6 bg-[#0a0f1e] border border-slate-800 rounded-2xl">
-                        <label class="block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider">Artistic Prompt</label>
-                        <textarea id="creative-prompt" rows="4" placeholder="Describe how you want to transform this NFT... (e.g. 'Cyberpunk style with neon lights')" class="w-full bg-[#111827] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none resize-none mb-4"></textarea>
-                        
-                        <div class="flex flex-col gap-3">
-                            <button id="creative-generate-btn" onclick="generateCreativeArtwork()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-sparkles"></i> Generate Artwork
-                            </button>
-                            <button onclick="downloadCreativeResult()" class="w-full py-2 border border-slate-700 text-slate-400 hover:text-white rounded-xl text-sm transition-colors">Download Result</button>
-                        </div>
-                    </div>
-
-                    <div class="p-6 border border-slate-800 rounded-2xl">
-                        <div class="text-xs text-slate-500 mb-4 uppercase tracking-widest font-bold">Quick Wallet Load</div>
-                        <div class="flex flex-col gap-3">
-                            <input id="creative-wallet-input" type="text" placeholder="r... address" class="w-full bg-[#0a0f1e] border border-slate-700 focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm font-mono outline-none">
-                            <button onclick="loadNFTsForCreative()" class="w-full py-2.5 bg-white text-[#0a0f1e] font-bold rounded-xl hover:bg-slate-100 transition-colors text-sm">Load My Gallery</button>
-                        </div>
-                        <div id="creative-wallet-status" class="mt-2 text-[10px] hidden"></div>
-                    </div>
-
-                    <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors text-sm">Back to Grid Builder</button>
-                </div>
-            </div>
-
-            <div id="creative-gallery-section" class="hidden mt-12 pt-8 border-t border-slate-800">
-                <h3 class="text-xl font-semibold mb-6">Select an NFT to Transform</h3>
-                <div id="creative-nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[400px] overflow-auto p-1"></div>
-            </div>
+            <h2 class="text-4xl font-bold tracking-tighter mb-4 text-white">Under Maintenance</h2>
+            <p class="text-xl text-slate-400 mb-10">Coming soon!</p>
+            <button onclick="switchTab('grid')" class="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-3xl text-lg transition-all shadow-lg shadow-blue-900/20">
+                Back to Grid Builder
+            </button>
         </div>
     </div>
     
