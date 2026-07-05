@@ -119,7 +119,7 @@
                         <h2 class="text-xl font-semibold">Enter Your XRPL Wallet</h2>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <input id="wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-2xl px-5 py-3.5 text-lg font-mono outline-none">
+                        <input id="wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-700 focus:border-blue-500 rounded-2xl px-5 py-3.5 text-lg font-mono outline-none">
                         <button type="button" onclick="loadNFTs()" class="px-8 py-3.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100">Load NFTs</button>
                     </div>
                     <div id="wallet-status" class="mt-2 text-sm hidden"></div>
@@ -228,7 +228,21 @@
                 <div class="w-10 h-10 bg-purple-500 text-white rounded-2xl flex items-center justify-center">
                     <i class="fa-solid fa-face-grin-tears text-2xl"></i>
                 </div>
-                <h2 class="text-3xl font-bold tracking-tighter">Meme Maker</h2>
+                <h2 class="text-3xl font-bold tracking-tighter">Meme Maker</h2>            </div>
+            <div class="mb-8 p-6 border border-slate-800 rounded-2xl">
+                <div class="text-xs text-slate-500 mb-4 uppercase tracking-widest font-bold">Quick Wallet Load</div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input id="meme-wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-700 focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm font-mono outline-none">
+                    <button onclick="loadNFTsForMeme()" class="px-6 py-2.5 bg-white text-[#0a0f1e] font-bold rounded-xl hover:bg-slate-100 transition-colors text-sm">Load My Gallery</button>
+                </div>
+                <div id="meme-wallet-status" class="mt-2 text-[10px] hidden"></div>
+            </div>
+
+            <div id="meme-gallery-section" class="hidden mb-12 pt-8 border-t border-slate-800">
+                <h3 class="text-xl font-semibold mb-6">Select an NFT to Meme</h3>
+                <div id="meme-nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[400px] overflow-auto p-1"></div>
+
+
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
@@ -639,7 +653,7 @@
             const modalHtml = `
                 <div id="donate-modal-root" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="this.parentElement.remove()"></div>
-                    <div class="relative bg-[#111827] border border-slate-700 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+                    <div class="relative bg-[#111827] border border-slate-700 w-full max-md rounded-3xl p-8 shadow-2xl">
                         <div class="flex flex-col items-center text-center">
                             <div class="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mb-4">
                                 <i class="fa-solid fa-heart text-white text-3xl"></i>
