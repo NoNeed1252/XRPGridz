@@ -119,7 +119,7 @@
                         <h2 class="text-xl font-semibold">Enter Your XRPL Wallet</h2>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3">
-                        <input id="wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-700 focus:border-blue-500 rounded-2xl px-5 py-3.5 text-lg font-mono outline-none">
+                        <input id="wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-2xl px-5 py-3.5 text-lg font-mono outline-none">
                         <button type="button" onclick="loadNFTs()" class="px-8 py-3.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100">Load NFTs</button>
                     </div>
                     <div id="wallet-status" class="mt-2 text-sm hidden"></div>
@@ -222,27 +222,13 @@
     </div>
 
     <!-- Meme Tab -->
-    <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
+        <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
         <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
             <div class="flex items-center gap-x-3 mb-8">
                 <div class="w-10 h-10 bg-purple-500 text-white rounded-2xl flex items-center justify-center">
                     <i class="fa-solid fa-face-grin-tears text-2xl"></i>
                 </div>
-                <h2 class="text-3xl font-bold tracking-tighter">Meme Maker</h2>            </div>
-            <div class="mb-8 p-6 border border-slate-800 rounded-2xl">
-                <div class="text-xs text-slate-500 mb-4 uppercase tracking-widest font-bold">Quick Wallet Load</div>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <input id="meme-wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-700 focus:border-blue-500 rounded-xl px-4 py-2.5 text-sm font-mono outline-none">
-                    <button onclick="loadNFTsForMeme()" class="px-6 py-2.5 bg-white text-[#0a0f1e] font-bold rounded-xl hover:bg-slate-100 transition-colors text-sm">Load My Gallery</button>
-                </div>
-                <div id="meme-wallet-status" class="mt-2 text-[10px] hidden"></div>
-            </div>
-
-            <div id="meme-gallery-section" class="hidden mb-12 pt-8 border-t border-slate-800">
-                <h3 class="text-xl font-semibold mb-6">Select an NFT to Meme</h3>
-                <div id="meme-nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[400px] overflow-auto p-1"></div>
-
-
+                <h2 class="text-3xl font-bold tracking-tighter">Meme Maker</h2>
             </div>
             
             <div class="grid md:grid-cols-2 gap-10">
@@ -268,11 +254,23 @@
                     <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors">Back to Grid Builder</button>
                 </div>
             </div>
+
+            <div class="mb-8 p-6 mt-12 bg-[#0a0f1e] border border-slate-800 rounded-3xl">
+                <div class="text-xs text-slate-500 mb-4 uppercase tracking-widest font-bold">Quick Wallet Load</div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input id="meme-wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#111827] border border-slate-700 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm font-mono outline-none">
+                    <button onclick="loadNFTsForMeme()" class="px-6 py-2.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 transition-colors text-sm">Load NFTs</button>
+                </div>
+                <div id="meme-wallet-status" class="mt-2 text-[10px] hidden"></div>
+                
+                <div id="meme-gallery-section" class="hidden mt-6 pt-6 border-t border-slate-800">
+                    <div id="meme-nft-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 max-h-[300px] overflow-auto p-1"></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Banner Maker Tab -->
-    <div id="tab-banner" class="tab-content max-w-7xl mx-auto px-5 py-10">
+<div id="tab-banner" class="tab-content max-w-7xl mx-auto px-5 py-10">
         <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8">
             <div class="flex items-center gap-x-3 mb-8">
                 <div class="w-10 h-10 bg-blue-500 text-white rounded-2xl flex items-center justify-center">
@@ -523,40 +521,117 @@
             ctx.drawImage(activeCreativeImage, 0, 0, width, height);
         }
 
+        
         async function generateCreativeArtwork() {
-            const prompt = document.getElementById('creative-prompt').value;
+            const promptInput = document.getElementById('creative-prompt').value.toLowerCase();
             const btn = document.getElementById('creative-generate-btn');
             const canvas = document.getElementById('creative-canvas');
+            const ctx = canvas.getContext('2d');
             
             if (!activeCreativeImage) return alert("Please select an NFT first.");
-            if (!prompt) return alert("Please enter an artistic prompt.");
+            if (!promptInput) return alert("Please enter an artistic prompt.");
 
             const originalContent = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-sparkles fa-spin"></i> Generating...';
 
             try {
-                await new Promise(r => setTimeout(r, 1500));
-                const ctx = canvas.getContext('2d');
+                await new Promise(r => setTimeout(r, 1200));
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(activeCreativeImage, 0, 0, canvas.width, canvas.height);
+
+                if (promptInput.includes('green') || promptInput.includes('matrix')) {
+                    applyOverlay(ctx, canvas, 'rgba(0, 255, 70, 0.25)');
+                } else if (promptInput.includes('red') || promptInput.includes('fire')) {
+                    applyOverlay(ctx, canvas, 'rgba(255, 0, 0, 0.25)');
+                } else if (promptInput.includes('blue') || promptInput.includes('ice')) {
+                    applyOverlay(ctx, canvas, 'rgba(0, 100, 255, 0.25)');
+                } else if (promptInput.includes('gold') || promptInput.includes('yellow')) {
+                    applyOverlay(ctx, canvas, 'rgba(255, 215, 0, 0.25)');
+                } else if (promptInput.includes('cyberpunk') || promptInput.includes('neon')) {
+                    applyOverlay(ctx, canvas, 'rgba(255, 0, 255, 0.25)');
+                } else {
+                    applyOverlay(ctx, canvas, 'rgba(139, 92, 246, 0.2)');
+                }
+
+                if (promptInput.includes('glitch')) drawGlitchEffect(ctx, canvas);
+                if (promptInput.includes('sparkle') || promptInput.includes('magic')) drawSparkles(ctx, canvas);
+
                 ctx.save();
-                ctx.globalAlpha = 0.3;
-                ctx.fillStyle = "#8b5cf6";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.restore();
-                
-                ctx.font = "bold " + Math.floor(canvas.width * 0.08) + "px system-ui";
+                let fontSize = Math.floor(canvas.width * 0.07);
+                if (promptInput.includes('bigger')) fontSize = Math.floor(canvas.width * 0.12);
+                ctx.font = "bold " + fontSize + "px system-ui, sans-serif";
                 ctx.fillStyle = "white";
                 ctx.textAlign = "center";
-                ctx.shadowColor = "black";
-                ctx.shadowBlur = 10;
-                ctx.fillText("AI ENHANCED", canvas.width / 2, canvas.height / 2);
-                
-                alert("Simulation complete! The Creative Studio logic is now wired.");
-            } catch (e) {
-                console.error(e);
-            } finally {
+                ctx.shadowColor = "rgba(0,0,0,0.8)";
+                ctx.shadowBlur = 15;
+                const displayLabel = promptInput.length > 20 ? promptInput.substring(0, 17) + "..." : promptInput;
+                ctx.fillText(displayLabel.toUpperCase(), canvas.width / 2, canvas.height / 2 + (fontSize / 3));
+                ctx.restore();
+            } catch (e) { console.error(e); } finally {
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
+            }
+        }
+
+        function applyOverlay(ctx, canvas, color) {
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
+        function drawGlitchEffect(ctx, canvas) {
+            for (let i = 0; i < 10; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const w = Math.random() * (canvas.width / 3);
+                const h = 5 + Math.random() * 15;
+                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,0,255,0.5)' : 'rgba(0,255,255,0.5)';
+                ctx.fillRect(x, y, w, h);
+            }
+        }
+
+        function drawSparkles(ctx, canvas) {
+            ctx.fillStyle = "white";
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = 1 + Math.random() * 3;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+
+        function applyOverlay(ctx, canvas, color) {
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
+        function drawGlitchEffect(ctx, canvas) {
+            for (let i = 0; i < 10; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const w = Math.random() * (canvas.width / 3);
+                const h = 5 + Math.random() * 15;
+                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,0,255,0.5)' : 'rgba(0,255,255,0.5)';
+                ctx.fillRect(x, y, w, h);
+            }
+        }
+
+        function drawSparkles(ctx, canvas) {
+            ctx.fillStyle = "white";
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = 1 + Math.random() * 3;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
@@ -1215,7 +1290,7 @@
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
-                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[tryIdx]; };
+                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
                         img.src = sources[0];
                         wrap.appendChild(img);
                     }
@@ -1247,6 +1322,14 @@
         function showStatus(el, msg, type) { el.innerHTML = msg; el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; el.classList.remove('hidden'); }
         function createPlaceholder(id) { return `<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 p-2 text-center">No Image<br>${id.slice(0,6)}</div>`; }
 
+        window.onload = () => { 
+            document.getElementById('rows-slider').oninput = updateGridPreview;
+            document.getElementById('cols-slider').oninput = updateGridPreview;
+            document.getElementById('hamburger').onclick = () => toggleSidebar(true);
+            document.getElementById('close-sidebar').onclick = () => toggleSidebar(false);
+            document.getElementById('sidebar-overlay').onclick = () => toggleSidebar(false);
+        };
+        
         async function loadNFTsForMeme() {
             const address = document.getElementById('meme-wallet-input').value.trim();
             if (!address) return alert('Please enter a wallet address');
@@ -1259,7 +1342,7 @@
                 currentWallet = address;
                 document.getElementById('meme-gallery-section').classList.remove('hidden');
                 renderMemeGallery();
-                showStatus(statusEl, "Loaded " + allNFTs.length + " NFTs", "success");
+                showStatus(statusEl, "Loaded " + allNFTs.length + " NFTs", 'success');
             } catch (e) { showStatus(statusEl, 'Error.', 'error'); }
         }
 
@@ -1269,14 +1352,8 @@
             container.innerHTML = '';
             allNFTs.forEach((nft, i) => {
                 const card = document.createElement('div');
-                card.className = "nft-card bg-[#0a0f1e] border border-slate-700 rounded-xl overflow-hidden cursor-pointer";
-                card.innerHTML = '<div class="relative aspect-square bg-slate-900">' +
-                    '<div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="meme-skel-' + i + '"><i class="fa-solid fa-image text-2xl text-slate-700"></i></div>' +
-                    '<div id="meme-imgwrap-' + i + '" class="w-full h-full hidden"></div>' +
-                    '<div class="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">' +
-                        '<span class="text-[10px] font-bold text-white bg-purple-600 px-2 py-1 rounded-lg">SELECT</span>' +
-                    '</div>' +
-                '</div>';
+                card.className = "nft-card bg-[#0a0f1e] border border-slate-700 rounded-lg overflow-hidden cursor-pointer aspect-square relative";
+                card.innerHTML = '<div class="absolute inset-0 loading-skeleton" id="meme-skel-' + i + '"></div>';
                 card.onclick = () => memeNFT(nft.NFTokenID);
                 container.appendChild(card);
                 
@@ -1293,30 +1370,120 @@
         }
 
         async function loadMemeImageForCard(nft, index) {
-            const skel = document.getElementById("meme-skel-" + index);
-            const wrap = document.getElementById("meme-imgwrap-" + index);
             const sources = await resolveNFTImageSources(nft);
-            if (skel) skel.style.display = 'none';
-            if (wrap) {
-                wrap.style.display = 'block';
-                if (!sources.length) { wrap.innerHTML = createPlaceholder(nft.NFTokenID); return; }
-                const img = document.createElement('img');
-                img.className = 'w-full h-full object-cover';
-                img.crossOrigin = "anonymous";
-                let tryIdx = 0;
-                img.onerror = () => { tryIdx++; if (tryIdx < sources.length) img.src = sources[tryIdx]; else wrap.innerHTML = createPlaceholder(nft.NFTokenID); };
-                img.src = sources[0];
-                wrap.appendChild(img);
+            const skel = document.getElementById('meme-skel-' + index);
+            const parent = skel?.parentElement;
+            
+            if (!sources || sources.length === 0) {
+                if (skel) skel.innerHTML = '<div class="text-[8px] text-slate-600 p-1 text-center">No Image</div>';
+                return;
+            }
+
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            let tryIdx = 0;
+            img.onload = () => {
+                if (skel && skel.parentNode) skel.remove();
+                img.className = "w-full h-full object-cover";
+                parent?.appendChild(img);
+            };
+            img.onerror = () => {
+                tryIdx++;
+                if (tryIdx < sources.length) {
+                    let nextSrc = sources[tryIdx];
+                    // Prevent doubling /api/proxy?url=
+                    if (nextSrc.includes('/api/proxy?url=') && nextSrc.split('/api/proxy?url=').length > 2) {
+                         nextSrc = '/api/proxy?url=' + encodeURIComponent(nextSrc.split('/api/proxy?url=').pop());
+                    }
+                    img.src = nextSrc;
+                } else {
+                    if (skel) skel.innerHTML = '<div class="text-[8px] text-red-900 p-1 text-center">Error</div>';
+                }
+            };
+            img.src = sources[0];
+        }
+
+        async function generateCreativeArtwork() {
+            const promptInput = document.getElementById('creative-prompt').value.toLowerCase();
+            const btn = document.getElementById('creative-generate-btn');
+            const canvas = document.getElementById('creative-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            if (!activeCreativeImage) return alert("Please select an NFT first.");
+            if (!promptInput) return alert("Please enter an artistic prompt.");
+
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-sparkles fa-spin"></i> Generating...';
+
+            try {
+                await new Promise(r => setTimeout(r, 1200));
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(activeCreativeImage, 0, 0, canvas.width, canvas.height);
+
+                if (promptInput.includes('green') || promptInput.includes('matrix')) {
+                    applyOverlay(ctx, canvas, 'rgba(0, 255, 70, 0.25)');
+                } else if (promptInput.includes('red') || promptInput.includes('fire')) {
+                    applyOverlay(ctx, canvas, 'rgba(255, 0, 0, 0.25)');
+                } else if (promptInput.includes('blue') || promptInput.includes('ice')) {
+                    applyOverlay(ctx, canvas, 'rgba(0, 100, 255, 0.25)');
+                } else if (promptInput.includes('gold') || promptInput.includes('yellow')) {
+                    applyOverlay(ctx, canvas, 'rgba(255, 215, 0, 0.25)');
+                } else if (promptInput.includes('cyberpunk') || promptInput.includes('neon')) {
+                    applyOverlay(ctx, canvas, 'rgba(255, 0, 255, 0.25)');
+                } else {
+                    applyOverlay(ctx, canvas, 'rgba(139, 92, 246, 0.2)');
+                }
+
+                if (promptInput.includes('glitch')) drawGlitchEffect(ctx, canvas);
+                if (promptInput.includes('sparkle') || promptInput.includes('magic')) drawSparkles(ctx, canvas);
+
+                ctx.save();
+                let fontSize = Math.floor(canvas.width * 0.07);
+                if (promptInput.includes('bigger')) fontSize = Math.floor(canvas.width * 0.12);
+                ctx.font = "bold " + fontSize + "px system-ui, sans-serif";
+                ctx.fillStyle = "white";
+                ctx.textAlign = "center";
+                ctx.shadowColor = "rgba(0,0,0,0.8)";
+                ctx.shadowBlur = 15;
+                const displayLabel = promptInput.length > 20 ? promptInput.substring(0, 17) + "..." : promptInput;
+                ctx.fillText(displayLabel.toUpperCase(), canvas.width / 2, canvas.height / 2 + (fontSize / 3));
+                ctx.restore();
+            } catch (e) { console.error(e); } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
             }
         }
 
-        window.onload = () => { 
-            document.getElementById('rows-slider').oninput = updateGridPreview;
-            document.getElementById('cols-slider').oninput = updateGridPreview;
-            document.getElementById('hamburger').onclick = () => toggleSidebar(true);
-            document.getElementById('close-sidebar').onclick = () => toggleSidebar(false);
-            document.getElementById('sidebar-overlay').onclick = () => toggleSidebar(false);
-        };
+        function applyOverlay(ctx, canvas, color) {
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
+        function drawGlitchEffect(ctx, canvas) {
+            for (let i = 0; i < 10; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const w = Math.random() * (canvas.width / 3);
+                const h = 5 + Math.random() * 15;
+                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,0,255,0.5)' : 'rgba(0,255,255,0.5)';
+                ctx.fillRect(x, y, w, h);
+            }
+        }
+
+        function drawSparkles(ctx, canvas) {
+            ctx.fillStyle = "white";
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = 1 + Math.random() * 3;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
     </script>
 </body>
 </html>
