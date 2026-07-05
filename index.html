@@ -425,6 +425,17 @@
             });
         }
 
+                async function fetchFullNFTMetadata(nftId) {
+            try {
+                const res = await fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`);
+                const data = await res.json();
+                return data.meta || {};
+            } catch (e) {
+                console.error("Metadata fetch error:", e);
+                return {};
+            }
+        }
+
         async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 3000);
@@ -484,6 +495,7 @@
         }
 
         let activeCreativeImage = null;
+        let activeCreativeMetadata = null;
 
         function creativeNFT(nftId) {
             const nft = allNFTs.find(n => n.NFTokenID === nftId);
@@ -494,6 +506,11 @@
             placeholder.classList.remove('hidden');
             
             showCreativeStudio();
+            
+            activeCreativeMetadata = null;
+            fetchFullNFTMetadata(nftId).then(meta => {
+                activeCreativeMetadata = meta;
+            });
             
             resolveNFTImageSources(nft).then(sources => {
                 if (sources.length > 0) {
@@ -556,7 +573,12 @@
 
             try {
                 const seed = Math.floor(Math.random() * 1000000);
-                const enhancedPrompt = encodeURIComponent(`${promptInput}, cinematic lighting, highly detailed, masterpiece, related to the style of the original NFT image`);
+                let extraContext = "";
+                if (activeCreativeMetadata) {
+                    if (activeCreativeMetadata.name) extraContext += `, character name: ${activeCreativeMetadata.name}`;
+                    if (activeCreativeMetadata.description) extraContext += `, description: ${activeCreativeMetadata.description}`;
+                }
+                const enhancedPrompt = encodeURIComponent(`${promptInput}${extraContext}, cinematic lighting, highly detailed, masterpiece, related to the style of the original NFT image`);
                 const imageUrl = `https://image.pollinations.ai/prompt/${enhancedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
 
                 const img = new Image();
