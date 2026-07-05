@@ -34,7 +34,7 @@
         .meme-btn { position: absolute; bottom: 8px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
         .banner-btn { position: absolute; bottom: 44px; left: 8px; right: 8px; opacity: 0; transition: opacity 0.2s; }
         .nft-card:hover .meme-btn, .nft-card:hover .banner-btn { opacity: 1; }
-        #meme-canvas, #banner-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
+        #meme-canvas, #banner-canvas, #creative-canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
 
         /* Sidebar Styles */
         #sidebar {
@@ -1290,7 +1290,7 @@
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
-                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[tryIdx]; };
+                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
                         img.src = sources[0];
                         wrap.appendChild(img);
                     }
@@ -1401,88 +1401,6 @@
                 }
             };
             img.src = sources[0];
-        }
-
-        async function generateCreativeArtwork() {
-            const promptInput = document.getElementById('creative-prompt').value.toLowerCase();
-            const btn = document.getElementById('creative-generate-btn');
-            const canvas = document.getElementById('creative-canvas');
-            const ctx = canvas.getContext('2d');
-            
-            if (!activeCreativeImage) return alert("Please select an NFT first.");
-            if (!promptInput) return alert("Please enter an artistic prompt.");
-
-            const originalContent = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-sparkles fa-spin"></i> Generating...';
-
-            try {
-                await new Promise(r => setTimeout(r, 1200));
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(activeCreativeImage, 0, 0, canvas.width, canvas.height);
-
-                if (promptInput.includes('green') || promptInput.includes('matrix')) {
-                    applyOverlay(ctx, canvas, 'rgba(0, 255, 70, 0.25)');
-                } else if (promptInput.includes('red') || promptInput.includes('fire')) {
-                    applyOverlay(ctx, canvas, 'rgba(255, 0, 0, 0.25)');
-                } else if (promptInput.includes('blue') || promptInput.includes('ice')) {
-                    applyOverlay(ctx, canvas, 'rgba(0, 100, 255, 0.25)');
-                } else if (promptInput.includes('gold') || promptInput.includes('yellow')) {
-                    applyOverlay(ctx, canvas, 'rgba(255, 215, 0, 0.25)');
-                } else if (promptInput.includes('cyberpunk') || promptInput.includes('neon')) {
-                    applyOverlay(ctx, canvas, 'rgba(255, 0, 255, 0.25)');
-                } else {
-                    applyOverlay(ctx, canvas, 'rgba(139, 92, 246, 0.2)');
-                }
-
-                if (promptInput.includes('glitch')) drawGlitchEffect(ctx, canvas);
-                if (promptInput.includes('sparkle') || promptInput.includes('magic')) drawSparkles(ctx, canvas);
-
-                ctx.save();
-                let fontSize = Math.floor(canvas.width * 0.07);
-                if (promptInput.includes('bigger')) fontSize = Math.floor(canvas.width * 0.12);
-                ctx.font = "bold " + fontSize + "px system-ui, sans-serif";
-                ctx.fillStyle = "white";
-                ctx.textAlign = "center";
-                ctx.shadowColor = "rgba(0,0,0,0.8)";
-                ctx.shadowBlur = 15;
-                const displayLabel = promptInput.length > 20 ? promptInput.substring(0, 17) + "..." : promptInput;
-                ctx.fillText(displayLabel.toUpperCase(), canvas.width / 2, canvas.height / 2 + (fontSize / 3));
-                ctx.restore();
-            } catch (e) { console.error(e); } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            }
-        }
-
-        function applyOverlay(ctx, canvas, color) {
-            ctx.save();
-            ctx.fillStyle = color;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.restore();
-        }
-
-        function drawGlitchEffect(ctx, canvas) {
-            for (let i = 0; i < 10; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const w = Math.random() * (canvas.width / 3);
-                const h = 5 + Math.random() * 15;
-                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,0,255,0.5)' : 'rgba(0,255,255,0.5)';
-                ctx.fillRect(x, y, w, h);
-            }
-        }
-
-        function drawSparkles(ctx, canvas) {
-            ctx.fillStyle = "white";
-            for (let i = 0; i < 50; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const size = 1 + Math.random() * 3;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
-            }
         }
     </script>
 </body>
