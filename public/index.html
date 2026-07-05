@@ -666,7 +666,7 @@
             container.innerHTML = '';
             allNFTs.forEach((nft, i) => {
                 const card = document.createElement('div');
-                card.className = "nft-card bg-[#0a0f1e] border border-slate-700 rounded-xl overflow-hidden cursor-pointer";
+                card.className = "nft-card w-full bg-[#0a0f1e] border border-slate-700 rounded-xl overflow-hidden cursor-pointer";
                 card.innerHTML = '<div class="relative aspect-square bg-slate-900">' +
                     '<div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="cre-skel-' + i + '"><i class="fa-solid fa-image text-2xl text-slate-700"></i></div>' +
                     '<div id="cre-imgwrap-' + i + '" class="w-full h-full hidden"></div>' +
@@ -932,7 +932,7 @@
             bannerAllNFTs.forEach((nft, i) => {
                 const isSelected = bannerSelectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
+                card.className = `nft-card w-full bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="banner-skel-${i}"><i class="fa-solid fa-image text-xl text-slate-700"></i></div>
@@ -956,7 +956,7 @@
 
         async function loadImageForBannerCard(nft, index) {
             const skel = document.getElementById(`banner-skel-${index}`);
-            const wrap = document.getElementById(`imgwrap-${index}`);
+            const wrap = document.getElementById(`banner-imgwrap-${index}`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -1197,7 +1197,7 @@
             list.forEach((nft, i) => {
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
+                card.className = `nft-card w-full bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
                 card.innerHTML = `
                     <div class="relative aspect-square bg-slate-900">
                         <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
@@ -1290,7 +1290,7 @@
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
-                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
+                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[tryIdx]; };
                         img.src = sources[0];
                         wrap.appendChild(img);
                     }
@@ -1352,7 +1352,7 @@
             container.innerHTML = '';
             allNFTs.forEach((nft, i) => {
                 const card = document.createElement('div');
-                card.className = "nft-card bg-[#0a0f1e] border border-slate-700 rounded-lg overflow-hidden cursor-pointer aspect-square relative";
+                card.className = "nft-card w-full bg-[#0a0f1e] border border-slate-700 rounded-lg overflow-hidden cursor-pointer aspect-square relative";
                 card.innerHTML = '<div class="absolute inset-0 loading-skeleton" id="meme-skel-' + i + '"></div>';
                 card.onclick = () => memeNFT(nft.NFTokenID);
                 container.appendChild(card);
