@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 <body style="background: #0a0f1e; color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh;">
     <p>Redirecting to XRPGridz...</p>
 </body>
-</html>\`;
+</html>`;
 
   res.setHeader('Content-Type', 'text/html');
   return res.status(200).send(html);

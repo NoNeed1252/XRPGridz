@@ -569,67 +569,6 @@
             }
         }
 
-        function applyOverlay(ctx, canvas, color) {
-            ctx.save();
-            ctx.fillStyle = color;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.restore();
-        }
-
-        function drawGlitchEffect(ctx, canvas) {
-            for (let i = 0; i < 10; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const w = Math.random() * (canvas.width / 3);
-                const h = 5 + Math.random() * 15;
-                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,0,255,0.5)' : 'rgba(0,255,255,0.5)';
-                ctx.fillRect(x, y, w, h);
-            }
-        }
-
-        function drawSparkles(ctx, canvas) {
-            ctx.fillStyle = "white";
-            for (let i = 0; i < 50; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const size = 1 + Math.random() * 3;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-
-        function applyOverlay(ctx, canvas, color) {
-            ctx.save();
-            ctx.fillStyle = color;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.restore();
-        }
-
-        function drawGlitchEffect(ctx, canvas) {
-            for (let i = 0; i < 10; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const w = Math.random() * (canvas.width / 3);
-                const h = 5 + Math.random() * 15;
-                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,0,255,0.5)' : 'rgba(0,255,255,0.5)';
-                ctx.fillRect(x, y, w, h);
-            }
-        }
-
-        function drawSparkles(ctx, canvas) {
-            ctx.fillStyle = "white";
-            for (let i = 0; i < 50; i++) {
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
-                const size = 1 + Math.random() * 3;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
         function downloadCreativeResult() {
             const canvas = document.getElementById('creative-canvas');
             if (!activeCreativeImage) return alert('Select and transform an NFT first!');
@@ -1285,7 +1224,7 @@
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
-                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[tryIdx]; };
+                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
                         img.src = sources[0];
                         wrap.appendChild(img);
                     }
