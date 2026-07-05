@@ -427,6 +427,7 @@
 
                 async function fetchFullNFTMetadata(nftId) {
             try {
+                // Using a proxy or direct fetch. XRPScan usually has CORS headers for metadata.
                 const res = await fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`);
                 const data = await res.json();
                 return data.meta || {};
@@ -575,17 +576,22 @@
                 const seed = Math.floor(Math.random() * 1000000);
                 let extraContext = "";
                 if (activeCreativeMetadata) {
-                    if (activeCreativeMetadata.name) extraContext += `, character name: ${activeCreativeMetadata.name}`;
-                    if (activeCreativeMetadata.description) extraContext += `, description: ${activeCreativeMetadata.description}`;
+                    if (activeCreativeMetadata.name) extraContext += `, focusing on ${activeCreativeMetadata.name}`;
+                    if (activeCreativeMetadata.description) extraContext += `, inspired by ${activeCreativeMetadata.description.slice(0, 150)}`;
                 }
-                const enhancedPrompt = encodeURIComponent(`${promptInput}${extraContext}, cinematic lighting, highly detailed, masterpiece, related to the style of the original NFT image`);
+                
+                // Sanitation: Pollinations API works best with simple alphanumeric + punctuation
+                const cleanPrompt = (promptInput + extraContext).replace(/[^a-zA-Z0-9 ,.!?]/g, '').slice(0, 600);
+                const enhancedPrompt = encodeURIComponent(`${cleanPrompt}, digital art style, cinematic lighting, masterpiece, high resolution`);
                 const imageUrl = `https://image.pollinations.ai/prompt/${enhancedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
 
                 const img = new Image();
                 img.crossOrigin = "anonymous";
                 
                 await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error("Request timed out")), 30000);
                     img.onload = () => {
+                        clearTimeout(timeout);
                         canvas.width = 1024;
                         canvas.height = 1024;
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -593,7 +599,8 @@
                         resolve();
                     };
                     img.onerror = () => {
-                        reject(new Error("Failed to load generated image from Pollinations.ai"));
+                        clearTimeout(timeout);
+                        reject(new Error("Image failed to load from Pollinations.ai"));
                     };
                     img.src = imageUrl;
                 });
