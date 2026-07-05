@@ -425,17 +425,6 @@
             });
         }
 
-                async function fetchFullNFTMetadata(nftId) {
-            try {
-                const res = await fetch(`https://api.xrpscan.com/api/v1/nft/${nftId}`);
-                const data = await res.json();
-                return data.meta || {};
-            } catch (e) {
-                console.error("Metadata fetch error:", e);
-                return {};
-            }
-        }
-
         async function raceMetadataProviders(nftId) {
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 3000);
@@ -452,6 +441,23 @@
                     throw new Error('no image');
                 })));
                 return firstResult;
+            } catch (e) { return null; }
+            finally { clearTimeout(timeout); }
+        }
+
+        async function fetchFullNFTMetadata(nftId) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 3000);
+            const providers = [
+                () => fetch("https://api.xrpscan.com/api/v1/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.meta || d)),
+                () => fetch("https://xrplmeta.org/api/v1/nft/" + nftId, { signal: controller.signal }).then(r => r.json()),
+                () => fetch("https://bithomp.com/api/v2/nft/" + nftId, { signal: controller.signal }).then(r => r.json())
+            ];
+            try {
+                return await Promise.any(providers.map(p => p().then(meta => {
+                    if (meta && (meta.name || meta.description)) { clearTimeout(timeout); controller.abort(); return meta; }
+                    throw new Error("no metadata");
+                })));
             } catch (e) { return null; }
             finally { clearTimeout(timeout); }
         }
@@ -498,6 +504,8 @@
         let activeCreativeMetadata = null;
 
         function creativeNFT(nftId) {
+            activeCreativeMetadata = null;
+            fetchFullNFTMetadata(nftId).then(m => activeCreativeMetadata = m);
             const nft = allNFTs.find(n => n.NFTokenID === nftId);
             if (!nft) return;
             
@@ -506,11 +514,6 @@
             placeholder.classList.remove('hidden');
             
             showCreativeStudio();
-            
-            activeCreativeMetadata = null;
-            fetchFullNFTMetadata(nftId).then(meta => {
-                activeCreativeMetadata = meta;
-            });
             
             resolveNFTImageSources(nft).then(sources => {
                 if (sources.length > 0) {
@@ -573,12 +576,12 @@
 
             try {
                 const seed = Math.floor(Math.random() * 1000000);
-                let extraContext = "";
+                let metaContext = "";
                 if (activeCreativeMetadata) {
-                    if (activeCreativeMetadata.name) extraContext += `, character name: ${activeCreativeMetadata.name}`;
-                    if (activeCreativeMetadata.description) extraContext += `, description: ${activeCreativeMetadata.description}`;
+                    if (activeCreativeMetadata.name) metaContext += ` Character: ${activeCreativeMetadata.name}.`;
+                    if (activeCreativeMetadata.description) metaContext += ` Description: ${activeCreativeMetadata.description}.`;
                 }
-                const enhancedPrompt = encodeURIComponent(`${promptInput}${extraContext}, cinematic lighting, highly detailed, masterpiece, related to the style of the original NFT image`);
+                const enhancedPrompt = encodeURIComponent(`${promptInput}${metaContext}, cinematic lighting, highly detailed, masterpiece, related to the style of the original NFT image`);
                 const imageUrl = `https://image.pollinations.ai/prompt/${enhancedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
 
                 const img = new Image();
