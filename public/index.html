@@ -1201,7 +1201,7 @@
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
-                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
+                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[tryIdx]; };
                         img.src = sources[0];
                         wrap.appendChild(img);
                     }
