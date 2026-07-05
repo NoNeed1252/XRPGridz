@@ -453,7 +453,7 @@
         // --- Tab Management ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            const target = document.getElementById(`tab-${tabId}`);
+            const target = document.getElementById(\`tab-\${tabId}\`);
             if (target) {
                 target.classList.add('active');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -523,7 +523,7 @@
 
         
         async function generateCreativeArtwork() {
-            const promptInput = document.getElementById('creative-prompt').value.toLowerCase();
+            const promptInput = document.getElementById('creative-prompt').value.trim();
             const btn = document.getElementById('creative-generate-btn');
             const canvas = document.getElementById('creative-canvas');
             const ctx = canvas.getContext('2d');
@@ -536,39 +536,34 @@
             btn.innerHTML = '<i class="fa-solid fa-sparkles fa-spin"></i> Generating...';
 
             try {
-                await new Promise(r => setTimeout(r, 1200));
+                const seed = Math.floor(Math.random() * 1000000);
+                const enhancedPrompt = encodeURIComponent(\`\${promptInput}, cinematic lighting, highly detailed, masterpiece, related to the style of the original NFT image\`);
+                const imageUrl = \`https://image.pollinations.ai/prompt/\${enhancedPrompt}?width=1024&height=1024&nologo=true&seed=\${seed}\`;
+
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                
+                await new Promise((resolve, reject) => {
+                    img.onload = () => {
+                        canvas.width = 1024;
+                        canvas.height = 1024;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, 1024, 1024);
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        reject(new Error("Failed to load generated image from Pollinations.ai"));
+                    };
+                    img.src = imageUrl;
+                });
+            } catch (e) {
+                console.error("Creative Studio Error:", e);
+                alert("Failed to generate artwork. Falling back to base image.");
+                canvas.width = activeCreativeImage.naturalWidth;
+                canvas.height = activeCreativeImage.naturalHeight;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(activeCreativeImage, 0, 0, canvas.width, canvas.height);
-
-                if (promptInput.includes('green') || promptInput.includes('matrix')) {
-                    applyOverlay(ctx, canvas, 'rgba(0, 255, 70, 0.25)');
-                } else if (promptInput.includes('red') || promptInput.includes('fire')) {
-                    applyOverlay(ctx, canvas, 'rgba(255, 0, 0, 0.25)');
-                } else if (promptInput.includes('blue') || promptInput.includes('ice')) {
-                    applyOverlay(ctx, canvas, 'rgba(0, 100, 255, 0.25)');
-                } else if (promptInput.includes('gold') || promptInput.includes('yellow')) {
-                    applyOverlay(ctx, canvas, 'rgba(255, 215, 0, 0.25)');
-                } else if (promptInput.includes('cyberpunk') || promptInput.includes('neon')) {
-                    applyOverlay(ctx, canvas, 'rgba(255, 0, 255, 0.25)');
-                } else {
-                    applyOverlay(ctx, canvas, 'rgba(139, 92, 246, 0.2)');
-                }
-
-                if (promptInput.includes('glitch')) drawGlitchEffect(ctx, canvas);
-                if (promptInput.includes('sparkle') || promptInput.includes('magic')) drawSparkles(ctx, canvas);
-
-                ctx.save();
-                let fontSize = Math.floor(canvas.width * 0.07);
-                if (promptInput.includes('bigger')) fontSize = Math.floor(canvas.width * 0.12);
-                ctx.font = "bold " + fontSize + "px system-ui, sans-serif";
-                ctx.fillStyle = "white";
-                ctx.textAlign = "center";
-                ctx.shadowColor = "rgba(0,0,0,0.8)";
-                ctx.shadowBlur = 15;
-                const displayLabel = promptInput.length > 20 ? promptInput.substring(0, 17) + "..." : promptInput;
-                ctx.fillText(displayLabel.toUpperCase(), canvas.width / 2, canvas.height / 2 + (fontSize / 3));
-                ctx.restore();
-            } catch (e) { console.error(e); } finally {
+            } finally {
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
             }
@@ -725,7 +720,7 @@
 
         function showDonateModal() {
             const treasuryAddress = "rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY";
-            const modalHtml = `
+            const modalHtml = \`
                 <div id="donate-modal-root" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="this.parentElement.remove()"></div>
                     <div class="relative bg-[#111827] border border-slate-700 w-full max-w-md rounded-3xl p-8 shadow-2xl">
@@ -743,7 +738,7 @@
                                         <i class="fa-solid fa-copy"></i> Copy Address
                                     </button>
                                 </div>
-                                <div class="font-mono text-xs text-blue-400 break-all select-all">${treasuryAddress}</div>
+                                <div class="font-mono text-xs text-blue-400 break-all select-all">\${treasuryAddress}</div>
                             </div>
 
                             <button onclick="this.closest('#donate-modal-root').remove()" class="w-full py-3.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100 transition-colors">
@@ -752,7 +747,7 @@
                         </div>
                     </div>
                 </div>
-            `;
+            \`;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
         }
 
@@ -802,7 +797,7 @@
             ctx.save();
             let centerX = bannerX + bannerW / 2, centerY = bannerY + bannerH / 2;
             if (position === 'left' || position === 'right') { ctx.translate(centerX, centerY); ctx.rotate(-Math.PI/2); ctx.translate(-centerX, -centerY); }
-            ctx.font = `bold ${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif`;
+            ctx.font = \`bold \${Math.floor(bannerThickness * 0.4)}px system-ui, sans-serif\`;
             const text = "XRPGridz";
             const textMetrics = ctx.measureText(text);
             const logoSize = bannerThickness * 0.6;
@@ -874,7 +869,7 @@
             ctx.drawImage(activeMemeImage, 0, 0, width, height);
 
             const fontSize = Math.floor(width * 0.1);
-            ctx.font = `bold ${fontSize}px Impact, system-ui, sans-serif`;
+            ctx.font = \`bold \${fontSize}px Impact, system-ui, sans-serif\`;
             ctx.fillStyle = 'white';
             ctx.strokeStyle = 'black';
             ctx.lineWidth = fontSize / 12;
@@ -897,7 +892,7 @@
             const canvas = document.getElementById('meme-canvas');
             if (!activeMemeImage) return alert('Select an NFT first!');
             const link = document.createElement('a');
-            link.download = `xrpmeme-${Date.now()}.png`;
+            link.download = \`xrpmeme-\${Date.now()}.png\`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -921,7 +916,7 @@
                 renderBannerNFTGallery();
                 document.getElementById('banner-nft-count').textContent = bannerAllNFTs.length;
                 updateBannerSelectedCount();
-                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, \`Found \${allNFTs.length} NFTs\`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
@@ -932,13 +927,13 @@
             bannerAllNFTs.forEach((nft, i) => {
                 const isSelected = bannerSelectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card w-full bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
-                card.innerHTML = `
+                card.className = \`nft-card w-full bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer\`;
+                card.innerHTML = \`
                     <div class="relative aspect-square bg-slate-900">
-                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="banner-skel-${i}"><i class="fa-solid fa-image text-xl text-slate-700"></i></div>
-                        <div id="banner-imgwrap-${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-2 right-2"><div class="w-5 h-5 flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]"></i></div></div>
-                    </div>`;
+                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="banner-skel-\${i}"><i class="fa-solid fa-image text-xl text-slate-700"></i></div>
+                        <div id="banner-imgwrap-\${i}" class="w-full h-full hidden"></div>
+                        <div class="absolute top-2 right-2"><div class="w-5 h-5 flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-[10px]"></i></div></div>
+                    </div>\`;
                 card.onclick = () => toggleBannerSelection(nft, card);
                 container.appendChild(card);
                 
@@ -955,8 +950,8 @@
         }
 
         async function loadImageForBannerCard(nft, index) {
-            const skel = document.getElementById(`banner-skel-${index}`);
-            const wrap = document.getElementById(`banner-imgwrap-${index}`);
+            const skel = document.getElementById(\`banner-skel-\${index}\`);
+            const wrap = document.getElementById(\`banner-imgwrap-\${index}\`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -1081,7 +1076,7 @@
             const canvas = document.getElementById('banner-canvas');
             if (bannerSelectedNFTs.length === 0) return alert('Select an NFT first!');
             const link = document.createElement('a');
-            link.download = `xrp-banner-${Date.now()}.png`;
+            link.download = \`xrp-banner-\${Date.now()}.png\`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -1173,14 +1168,14 @@
                 selectedNFTs = allNFTs.slice(0, 16);
                 updateSelectedCount();
                 setTimeout(() => updateGridPreview(), 600);
-                showStatus(statusEl, `Found ${allNFTs.length} NFTs`, 'success');
+                showStatus(statusEl, \`Found \${allNFTs.length} NFTs\`, 'success');
             } catch (e) { showStatus(statusEl, 'Error loading NFTs.', 'error'); }
         }
 
         function populateCollectionFilter() {
             const select = document.getElementById('collection-filter');
             select.innerHTML = '<option value="">All Collections</option>';
-            const issuers = [...new Set(allNFTs.map(n => `${n.Issuer || ''}-${n.NFTokenTaxon || 0}`))];
+            const issuers = [...new Set(allNFTs.map(n => \`\${n.Issuer || ''}-\${n.NFTokenTaxon || 0}\`))];
             issuers.forEach(iss => {
                 const opt = document.createElement('option');
                 opt.value = iss;
@@ -1197,18 +1192,18 @@
             list.forEach((nft, i) => {
                 const isSelected = selectedNFTs.some(s => s.NFTokenID === nft.NFTokenID);
                 const card = document.createElement('div');
-                card.className = `nft-card w-full bg-[#0a0f1e] border ${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer`;
-                card.innerHTML = `
+                card.className = \`nft-card w-full bg-[#0a0f1e] border \${isSelected ? 'border-blue-500 selected' : 'border-slate-700'} rounded-2xl overflow-hidden cursor-pointer\`;
+                card.innerHTML = \`
                     <div class="relative aspect-square bg-slate-900">
-                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
-                        <div id="imgwrap-${i}" class="w-full h-full hidden"></div>
-                        <div class="absolute top-3 right-3"><div class="w-6 h-6 flex items-center justify-center ${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid ${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
-                        <button onclick="event.stopPropagation(); memeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
+                        <div class="absolute inset-0 loading-skeleton flex items-center justify-center" id="skel-\${i}"><i class="fa-solid fa-image text-3xl text-slate-700"></i></div>
+                        <div id="imgwrap-\${i}" class="w-full h-full hidden"></div>
+                        <div class="absolute top-3 right-3"><div class="w-6 h-6 flex items-center justify-center \${isSelected ? 'bg-blue-600' : 'bg-black/70'}"><i class="fa-solid \${isSelected ? 'fa-check text-white' : 'fa-plus text-white/70'} text-xs"></i></div></div>
+                        <button onclick="event.stopPropagation(); memeNFT('\${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg">
                             <i class="fa-solid fa-face-grin-tears"></i> MEME IT
                         </button>
-                        <button onclick="event.stopPropagation(); creativeNFT('${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg mt-10">
+                        <button onclick="event.stopPropagation(); creativeNFT('\${nft.NFTokenID}')" class="meme-btn px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded-xl flex items-center justify-center gap-1 shadow-lg mt-10">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> STUDIO</button>
-                    </div>`;
+                    </div>\`;
                 card.onclick = () => toggleSelection(nft, card);
                 container.appendChild(card);
                 
@@ -1225,8 +1220,8 @@
         }
 
         async function loadImageForCard(nft, index) {
-            const skel = document.getElementById(`skel-${index}`);
-            const wrap = document.getElementById(`imgwrap-${index}`);
+            const skel = document.getElementById(\`skel-\${index}\`);
+            const wrap = document.getElementById(\`imgwrap-\${index}\`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -1261,7 +1256,7 @@
             const text = document.getElementById('nft-filter').value.toLowerCase().trim();
             const coll = document.getElementById('collection-filter').value;
             let filtered = allNFTs;
-            if (coll) filtered = filtered.filter(n => `${n.Issuer || ''}-${n.NFTokenTaxon || 0}` === coll);
+            if (coll) filtered = filtered.filter(n => \`\${n.Issuer || ''}-\${n.NFTokenTaxon || 0}\` === coll);
             if (text) filtered = filtered.filter(n => (n.NFTokenID?.toLowerCase().includes(text)));
             renderNFTGallery(filtered);
         }
@@ -1276,11 +1271,11 @@
             document.getElementById('rows-value').textContent = rows;
 
             if (!selectedNFTs.length) { grid.innerHTML = ''; return; }
-            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateColumns = \`repeat(\${cols}, 1fr)\`;
             grid.innerHTML = '';
             selectedNFTs.slice(0, rows * cols).forEach(nft => {
                 const cell = document.createElement('div');
-                cell.className = `grid-cell border border-slate-600 overflow-hidden relative`;
+                cell.className = \`grid-cell border border-slate-600 overflow-hidden relative\`;
                 const wrap = document.createElement('div');
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
@@ -1304,7 +1299,7 @@
             if (!wrapper || !wrapper.children.length) return alert('Build a grid first!');
             captureGrid().then(blob => {
                 const a = document.createElement('a');
-                a.download = `xrpgridz-${new Date().getTime()}.png`;
+                a.download = \`xrpgridz-\${new Date().getTime()}.png\`;
                 a.href = URL.createObjectURL(blob);
                 a.click();
             });
@@ -1319,8 +1314,8 @@
         function clearSelected() { selectedNFTs = []; renderNFTGallery(); updateSelectedCount(); updateGridPreview(); }
         function selectAllNFTs() { selectedNFTs = [...allNFTs].slice(0, 100); renderNFTGallery(); updateSelectedCount(); updateGridPreview(); }
         function updateSelectedCount() { document.getElementById('selected-count').textContent = selectedNFTs.length; }
-        function showStatus(el, msg, type) { el.innerHTML = msg; el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; el.classList.remove('hidden'); }
-        function createPlaceholder(id) { return `<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 p-2 text-center">No Image<br>${id.slice(0,6)}</div>`; }
+        function showStatus(el, msg, type) { el.innerHTML = msg; el.className = \`mt-2 text-sm px-4 py-2 rounded-2xl \${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}\`; el.classList.remove('hidden'); }
+        function createPlaceholder(id) { return \`<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 p-2 text-center">No Image<br>\${id.slice(0,6)}</div>\`; }
 
         window.onload = () => { 
             document.getElementById('rows-slider').oninput = updateGridPreview;
