@@ -1042,7 +1042,27 @@
             if (metadataCache.has(nftId)) return metadataCache.get(nftId);
 
             const sources = [];
-            if (nft.URI) sources.push("/api/proxy?hex=" + nft.URI);
+            
+            // Check URI first
+            if (nft.URI) {
+                let decoded = nft.URI;
+                if (/^[0-9A-Fa-f]{20,}$/.test(decoded)) decoded = hexToString(decoded);
+                
+                if (decoded) {
+                    // Try to extract a CID or URL
+                    const cid = extractCID(decoded);
+                    if (cid) {
+                        sources.push("https://ipfs.io/ipfs/" + cid);
+                        sources.push("https://cloudflare-ipfs.com/ipfs/" + cid);
+                        sources.push("https://gateway.pinata.cloud/ipfs/" + cid);
+                    } else if (decoded.startsWith('http')) {
+                        sources.push("/api/proxy?url=" + encodeURIComponent(decoded));
+                    }
+                }
+                
+                // Keep the original hex proxy as a fallback
+                sources.push("/api/proxy?hex=" + nft.URI);
+            }
 
             const [racedImage, cidInfo] = await Promise.all([
                 queuedRequest(() => raceMetadataProviders(nftId)),
@@ -1054,7 +1074,8 @@
             ]);
 
             if (racedImage) {
-                const url = racedImage.startsWith('ipfs://') ? "https://ipfs.io/ipfs/" + racedImage.replace('ipfs://', '') : racedImage;
+                let url = racedImage;
+                if (url.startsWith('ipfs://')) url = "https://ipfs.io/ipfs/" + url.replace('ipfs://', '');
                 sources.push("/api/proxy?url=" + encodeURIComponent(url));
             }
 
