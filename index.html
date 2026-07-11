@@ -513,7 +513,7 @@
             if (width > maxSize || height > maxSize) {
                 const ratio = Math.min(maxSize / width, maxSize / height);
                 width *= ratio;
-                height *= height;
+                height *= ratio;
             }
 
             canvas.width = width;
@@ -905,7 +905,7 @@
 
         async function loadImageForBannerCard(nft, index) {
             const skel = document.getElementById(`banner-skel-${index}`);
-            const wrap = document.getElementById(`banner-imgwrap-${index}`);
+            const wrap = document.getElementById(`imgwrap-${index}`);
             const sources = await resolveNFTImageSources(nft);
             if (skel) skel.style.display = 'none';
             if (wrap) {
@@ -1043,13 +1043,22 @@
 
             const sources = [];
             
-            // Check URI first
+            // ATM Community Genesis Specific Logic: These NFTs often have missing URIs on-chain
+            if (nft.NFTokenTaxon === 907776756 || !nft.URI) {
+                const raced = await raceMetadataProviders(nftId);
+                if (raced) {
+                    let url = raced;
+                    if (url.startsWith('ipfs://')) url = "https://ipfs.io/ipfs/" + url.replace('ipfs://', '');
+                    sources.push("/api/proxy?url=" + encodeURIComponent(url));
+                    sources.push(url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/'));
+                }
+            }
+            
             if (nft.URI) {
                 let decoded = nft.URI;
-                if (/^[0-9A-Fa-f]{2,}$/.test(decoded)) decoded = hexToString(decoded);
+                if (/^[0-9A-Fa-f]{10,}$/.test(decoded)) decoded = hexToString(decoded);
                 
                 if (decoded) {
-                    // Try to extract a CID or URL
                     const cid = extractCID(decoded);
                     if (cid) {
                         sources.push("https://ipfs.io/ipfs/" + cid);
@@ -1059,29 +1068,16 @@
                         sources.push("/api/proxy?url=" + encodeURIComponent(decoded));
                     }
                 }
-                
-                // Keep the original hex proxy as a fallback
                 sources.push("/api/proxy?hex=" + nft.URI);
             }
 
-            const [racedImage, cidInfo] = await Promise.all([
-                queuedRequest(() => raceMetadataProviders(nftId)),
-                (async () => {
-                    let rawUri = nft.URI || '';
-                    if (/^[0-9A-Fa-f]{2,}$/.test(rawUri)) rawUri = hexToString(rawUri);
-                    return rawUri ? extractCID(rawUri) : null;
-                })()
-            ]);
-
-            if (racedImage) {
-                let url = racedImage;
-                if (url.startsWith('ipfs://')) url = "https://ipfs.io/ipfs/" + url.replace('ipfs://', '');
-                sources.push("/api/proxy?url=" + encodeURIComponent(url));
-            }
-
-            if (cidInfo) {
-                sources.push("https://ipfs.io/ipfs/" + cidInfo);
-                sources.push("https://cloudflare-ipfs.com/ipfs/" + cidInfo);
+            if (sources.length === 0) {
+                const racedImage = await raceMetadataProviders(nftId);
+                if (racedImage) {
+                    let url = racedImage;
+                    if (url.startsWith('ipfs://')) url = "https://ipfs.io/ipfs/" + url.replace('ipfs://', '');
+                    sources.push("/api/proxy?url=" + encodeURIComponent(url));
+                }
             }
 
             const uniqueSources = [...new Set(sources.filter(s => !!s))];
@@ -1312,7 +1308,12 @@
         function selectAllNFTs() { selectedNFTs = [...allNFTs].slice(0, 100); renderNFTGallery(); updateSelectedCount(); updateGridPreview(); }
         function updateSelectedCount() { document.getElementById('selected-count').textContent = selectedNFTs.length; }
         function showStatus(el, msg, type) { el.innerHTML = msg; el.className = `mt-2 text-sm px-4 py-2 rounded-2xl ${type === 'error' ? 'bg-red-950/60 text-red-400' : 'bg-blue-950/60 text-blue-400'}`; el.classList.remove('hidden'); }
-        function createPlaceholder(id) { return `<div class="flex items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 p-2 text-center">No Image<br>${id.slice(0,6)}</div>`; }
+        function createPlaceholder(id) { 
+    return `<div class="flex flex-col items-center justify-center h-full bg-slate-800 text-[10px] text-slate-500 p-2 text-center">
+        <div class="mb-1 animate-pulse"><i class="fa-solid fa-spinner fa-spin"></i></div>
+        <div>Resolving Metadata...<br><span class="opacity-50">${id.slice(-6)}</span></div>
+    </div>`; 
+}
 
         window.onload = () => { 
             document.getElementById('rows-slider').oninput = updateGridPreview;
