@@ -513,7 +513,7 @@
             if (width > maxSize || height > maxSize) {
                 const ratio = Math.min(maxSize / width, maxSize / height);
                 width *= ratio;
-                height *= ratio;
+                height *= height;
             }
 
             canvas.width = width;
@@ -1046,7 +1046,7 @@
             // Check URI first
             if (nft.URI) {
                 let decoded = nft.URI;
-                if (/^[0-9A-Fa-f]{20,}$/.test(decoded)) decoded = hexToString(decoded);
+                if (/^[0-9A-Fa-f]{2,}$/.test(decoded)) decoded = hexToString(decoded);
                 
                 if (decoded) {
                     // Try to extract a CID or URL
@@ -1068,7 +1068,7 @@
                 queuedRequest(() => raceMetadataProviders(nftId)),
                 (async () => {
                     let rawUri = nft.URI || '';
-                    if (/^[0-9A-Fa-f]{20,}$/.test(rawUri)) rawUri = hexToString(rawUri);
+                    if (/^[0-9A-Fa-f]{2,}$/.test(rawUri)) rawUri = hexToString(rawUri);
                     return rawUri ? extractCID(rawUri) : null;
                 })()
             ]);

@@ -41,10 +41,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Missing CID, Hex, nftId, or URL parameter' });
     }
 
+    // Extended timeout for specific collections (ATM Community Genesis - Taxon 907776756)
+    // Note: Since taxon isn't passed here directly, we use a slightly longer default for all
+    // but could specifically check if passed.
+    const baseTimeout = 25000;
+
     console.log(`[Proxy] Initial Target: ${targetUrl}`);
 
     // Initial Fetch with Fallback Logic
-    let response = await fetchWithGatewayFallback(targetUrl, 15000);
+    let response = await fetchWithGatewayFallback(targetUrl, baseTimeout);
     let contentType = response.headers.get('content-type') || '';
 
     // Recursive Resolution: If target is JSON, extract image link and re-fetch
@@ -55,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (mediaUrl) {
         targetUrl = normalizeUrl(mediaUrl);
         console.log(`[Proxy] Re-fetching actual media: ${targetUrl}`);
-        response = await fetchWithGatewayFallback(targetUrl, 15000);
+        response = await fetchWithGatewayFallback(targetUrl, baseTimeout);
         contentType = response.headers.get('content-type') || '';
       }
     }
@@ -150,10 +155,13 @@ function resolveTargetUrl(cid: string | null, hex: string | null, url: string | 
   if (hex) {
     let decoded = '';
     try {
-      for (let i = 0; i < hex.length; i += 2) {
-        decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+      // Relaxed hex validation to handle shorter or slightly malformed URIs
+      if (/^[0-9A-Fa-f]+$/.test(hex)) {
+        for (let i = 0; i < hex.length; i += 2) {
+          decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+        }
+        return normalizeUrl(decoded);
       }
-      return normalizeUrl(decoded);
     } catch (e) { return null; }
   }
   return null;
