@@ -408,7 +408,7 @@
                 () => fetch("https://api.xrpscan.com/api/v1/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.meta?.image)),
                 () => fetch("https://xrplmeta.org/api/v1/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
                 () => fetch("https://bithomp.com/api/v2/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.image)),
-                () => fetch("https://api.bidds.com/api/v1/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.image))
+                () => fetch("https://api.bidds.com/api/v1/nft/" + nftId, { signal: controller.signal }).then(r => r.json().then(d => d.image || d.meta?.image))
             ];
 
             try {
