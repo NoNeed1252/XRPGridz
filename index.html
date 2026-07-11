@@ -1129,11 +1129,33 @@
         function populateCollectionFilter() {
             const select = document.getElementById('collection-filter');
             select.innerHTML = '<option value="">All Collections</option>';
-            const issuers = [...new Set(allNFTs.map(n => `${n.Issuer || ''}-${n.NFTokenTaxon || 0}`))];
-            issuers.forEach(iss => {
+            
+            // Map to track unique collections and their display names
+            const collectionMap = new Map();
+            
+            allNFTs.forEach(nft => {
+                const taxon = nft.NFTokenTaxon || 0;
+                const issuer = nft.Issuer || '';
+                const key = `${issuer}-${taxon}`;
+                
+                if (!collectionMap.has(key)) {
+                    let displayName = "Unknown Collection";
+                    
+                    // MANUAL OVERRIDE: ATM Community Genesis Collection
+                    if (taxon === 907776756) {
+                        displayName = "ATM Community Genesis";
+                    } else {
+                        displayName = issuer.length > 10 ? issuer.slice(0, 8) + '...' + issuer.slice(-4) + ' (T:' + taxon + ')' : 'Issuer: ' + issuer + ' (T:' + taxon + ')';
+                    }
+                    
+                    collectionMap.set(key, displayName);
+                }
+            });
+
+            collectionMap.forEach((name, key) => {
                 const opt = document.createElement('option');
-                opt.value = iss;
-                opt.textContent = iss.length > 20 ? iss.slice(0, 12) + '...' : iss;
+                opt.value = key;
+                opt.textContent = name;
                 select.appendChild(opt);
             });
         }
