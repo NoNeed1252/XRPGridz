@@ -47,7 +47,7 @@
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
 
-    <!-- NAV (exactly as your original) -->
+    <!-- NAV (unchanged) -->
     <nav class="border-b border-slate-800 bg-[#0a0f1e]/95 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
             <div class="flex items-center gap-x-4">
@@ -67,7 +67,7 @@
         </div>
     </nav>
 
-    <!-- SIDEBAR (exactly as your original) -->
+    <!-- SIDEBAR (unchanged) -->
     <div id="sidebar-overlay"></div>
     <div id="sidebar">
         <div class="flex justify-between items-center mb-8">
@@ -82,7 +82,7 @@
         </ul>
     </div>
 
-    <!-- GRID TAB (exactly as your original) -->
+    <!-- GRID TAB (unchanged) -->
     <div id="tab-grid" class="tab-content active">
         <div class="max-w-4xl mx-auto px-5 pt-10 pb-8 text-center">
             <h1 class="text-5xl md:text-6xl font-semibold tracking-tighter mb-4">Turn your XRP NFTs<br>into beautiful grids.</h1>
@@ -201,7 +201,7 @@
         </div>
     </div>
 
-    <!-- MEME, BANNER, CREATIVE TABS (exactly as your original - unchanged) -->
+    <!-- Other tabs unchanged -->
     <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
         <!-- Your original Meme Maker content -->
     </div>
@@ -215,7 +215,60 @@
     </div>
 
     <script>
-        // ==================== FIX 1: Background Color from Metadata ====================
+        // ==================== IMPROVED IMAGE LOADING FOR ATM COLLECTION ====================
+        async function resolveNFTImageSources(nft) {
+            const nftId = nft?.NFTokenID;
+            if (!nftId) return [];
+            if (metadataCache.has(nftId)) return metadataCache.get(nftId);
+
+            const sources = [];
+
+            // Strong handling for ATM Community Genesis
+            if (nft.NFTokenTaxon === 907776756 || !nft.URI) {
+                const raced = await raceMetadataProviders(nftId);
+                if (raced) {
+                    let url = raced;
+                    if (url.startsWith('ipfs://')) url = url.replace('ipfs://', '');
+                    sources.push("https://ipfs.io/ipfs/" + url);
+                    sources.push("https://cloudflare-ipfs.com/ipfs/" + url);
+                    sources.push("https://gateway.pinata.cloud/ipfs/" + url);
+                    sources.push("https://dweb.link/ipfs/" + url);
+                    sources.push("/api/proxy?url=" + encodeURIComponent("https://ipfs.io/ipfs/" + url));
+                }
+            }
+
+            if (nft.URI) {
+                let decoded = nft.URI;
+                if (/^[0-9A-Fa-f]{10,}$/.test(decoded)) decoded = hexToString(decoded);
+                const cid = extractCID(decoded);
+                if (cid) {
+                    sources.push("https://ipfs.io/ipfs/" + cid);
+                    sources.push("https://cloudflare-ipfs.com/ipfs/" + cid);
+                    sources.push("https://gateway.pinata.cloud/ipfs/" + cid);
+                    sources.push("https://dweb.link/ipfs/" + cid);
+                    sources.push("/api/proxy?url=" + encodeURIComponent("https://ipfs.io/ipfs/" + cid));
+                } else if (decoded.startsWith('http')) {
+                    sources.push(decoded);
+                    sources.push("/api/proxy?url=" + encodeURIComponent(decoded));
+                }
+            }
+
+            if (sources.length === 0) {
+                const racedImage = await raceMetadataProviders(nftId);
+                if (racedImage) {
+                    let url = racedImage;
+                    if (url.startsWith('ipfs://')) url = url.replace('ipfs://', '');
+                    sources.push("https://ipfs.io/ipfs/" + url);
+                    sources.push("https://cloudflare-ipfs.com/ipfs/" + url);
+                }
+            }
+
+            const unique = [...new Set(sources.filter(Boolean))];
+            metadataCache.set(nftId, unique);
+            return unique;
+        }
+
+        // ==================== BACKGROUND COLOR FIX (unchanged from before) ====================
         async function applyNFTBackgroundColor(nft, element) {
             if (!nft || !element) return;
             try {
@@ -233,50 +286,7 @@
             } catch (e) {}
         }
 
-        // ==================== FIX 2: Improved ATM Collection Image Loading ====================
-        async function resolveNFTImageSources(nft) {
-            const nftId = nft?.NFTokenID;
-            if (!nftId) return [];
-            if (metadataCache.has(nftId)) return metadataCache.get(nftId);
-
-            const sources = [];
-
-            if (nft.NFTokenTaxon === 907776756 || !nft.URI) {
-                const raced = await raceMetadataProviders(nftId);
-                if (raced) {
-                    let url = raced;
-                    if (url.startsWith('ipfs://')) url = url.replace('ipfs://', 'https://ipfs.io/ipfs/');
-                    sources.push(url);
-                    sources.push("https://cloudflare-ipfs.com/ipfs/" + url.split('/ipfs/').pop());
-                    sources.push("/api/proxy?url=" + encodeURIComponent(url));
-                }
-            }
-
-            if (nft.URI) {
-                let decoded = nft.URI;
-                if (/^[0-9A-Fa-f]{10,}$/.test(decoded)) decoded = hexToString(decoded);
-                const cid = extractCID(decoded);
-                if (cid) {
-                    sources.push("https://ipfs.io/ipfs/" + cid);
-                    sources.push("https://cloudflare-ipfs.com/ipfs/" + cid);
-                    sources.push("/api/proxy?url=" + encodeURIComponent("https://ipfs.io/ipfs/" + cid));
-                } else if (decoded.startsWith('http')) {
-                    sources.push(decoded);
-                    sources.push("/api/proxy?url=" + encodeURIComponent(decoded));
-                }
-            }
-
-            if (sources.length === 0) {
-                const racedImage = await raceMetadataProviders(nftId);
-                if (racedImage) sources.push(racedImage);
-            }
-
-            const unique = [...new Set(sources.filter(Boolean))];
-            metadataCache.set(nftId, unique);
-            return unique;
-        }
-
-        // ==================== YOUR ORIGINAL FUNCTIONS (with fixes integrated) ====================
+        // ==================== REST OF YOUR ORIGINAL CODE ====================
         let allNFTs = [];
         let selectedNFTs = [];
         let metadataCache = new Map();
@@ -416,7 +426,6 @@
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
 
-                // === FIX: Apply background color from metadata ===
                 applyNFTBackgroundColor(nft, cell);
 
                 resolveNFTImageSources(nft).then(sources => {
@@ -453,7 +462,7 @@
         }
 
         function filterNFTs() {
-            // original filter logic
+            // original filter
         }
 
         function downloadGridPNG() {
