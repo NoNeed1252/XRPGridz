@@ -220,7 +220,7 @@
     </div>
 
     <script>
-        // ==================== IMPROVED: Background Color from Metadata (now checks attributes too) ====================
+        // ==================== FIXED: Background Color from Metadata (now catches color names too) ====================
         async function applyNFTBackgroundColor(nft, element) {
             if (!nft || !element) return;
             try {
@@ -235,22 +235,19 @@
                         a.trait_type && a.trait_type.toLowerCase() === 'background' && a.value
                     );
                     if (bgAttr) {
-                        const val = String(bgAttr.value).trim();
-                        // Only use if it looks like an actual color
-                        if (val.startsWith('#') || val.startsWith('hsl') || val.startsWith('rgb') || /^[0-9a-fA-F]{6}$/.test(val)) {
-                            bg = val;
-                        }
+                        bg = bgAttr.value;   // ← now accepts "Purple", "Blue", "hsl(...)", "#hex", etc.
                     }
                 }
 
-                // Hardcoded fallback for the specific purple NFT you showed
+                // Hardcoded fallback for the specific purple NFT you showed earlier
                 if (nft.NFTokenID === "001813888682E04526B1E4A8AD2117495A00D16E222FCE6F8DAC702E05E26393") {
                     bg = "hsl(299, 45%, 67%)";
                 }
 
                 if (bg) {
-                    if (!bg.startsWith('#') && !bg.startsWith('hsl') && !bg.startsWith('rgb') && bg.length === 6) {
-                        bg = '#' + bg;
+                    const val = String(bg).trim();
+                    if (!val.startsWith('#') && !val.startsWith('hsl') && !val.startsWith('rgb') && /^[0-9a-fA-F]{6}$/.test(val)) {
+                        bg = '#' + val;
                     }
                     element.style.setProperty('--nft-bg', bg);
                     element.classList.add('has-bg');
@@ -258,7 +255,7 @@
             } catch (e) {}
         }
 
-        // ==================== IMPROVED: Image loading for ATM + other collections ====================
+        // ==================== IMPROVED: Image loading (ATM + others) ====================
         async function resolveNFTImageSources(nft) {
             const nftId = nft?.NFTokenID;
             if (!nftId) return [];
@@ -273,7 +270,6 @@
                 "https://nftstorage.link/ipfs/"
             ];
 
-            // Get metadata first (more reliable now)
             const meta = await fetchFullNFTMetadata(nftId);
             if (meta && meta.image) {
                 let img = meta.image;
@@ -285,7 +281,6 @@
                 }
             }
 
-            // Race multiple providers (kept from before)
             const raced = await raceMetadataProviders(nftId);
             if (raced) {
                 let url = raced;
@@ -297,17 +292,12 @@
                 }
             }
 
-            // Extra fallback for ATM collection
-            if (nft.NFTokenTaxon === 907776756) {
-                // already covered above, but we have strong gateways
-            }
-
             const unique = [...new Set(sources.filter(Boolean))];
             metadataCache.set(nftId, unique);
             return unique;
         }
 
-        // ==================== REST OF YOUR ORIGINAL CODE (with the two fixes integrated) ====================
+        // ==================== REST OF YOUR ORIGINAL CODE (with fixes integrated) ====================
         let allNFTs = [];
         let selectedNFTs = [];
         let metadataCache = new Map();
@@ -466,7 +456,7 @@
                 const cell = document.createElement('div');
                 cell.className = `grid-cell border border-slate-600 overflow-hidden relative`;
                 const wrap = document.createElement('div');
-                wrap.className = 'w-full h-full';   // ← NO bg-[#1e2937] so custom colors can show
+                wrap.className = 'w-full h-full';   // ← transparent so custom bg shows through
                 cell.appendChild(wrap);
 
                 applyNFTBackgroundColor(nft, cell);
