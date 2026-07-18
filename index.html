@@ -631,7 +631,7 @@
             document.getElementById('sidebar-overlay').classList.toggle('open', open);
         }
 
-        async function copyTreasuryAddress(btn) {
+        window.copyTreasuryAddress = async function(btn) {
             const treasuryAddress = "rP1wMvanhfmsm7Af4FcHvSvfhash43LWSY";
             try {
                 await navigator.clipboard.writeText(treasuryAddress);
@@ -663,7 +663,7 @@
                             <div class="w-full bg-[#0a0f1e] border border-slate-800 rounded-2xl p-4 mb-6 text-left">
                                 <div class="flex justify-between items-center mb-1">
                                     <label class="block text-[10px] text-slate-500 uppercase tracking-widest font-bold">Treasury Wallet</label>
-                                    <button onclick="copyTreasuryAddress(this)" class="text-[10px] text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1 transition-colors">
+                                    <button onclick="window.copyTreasuryAddress(this)" class="text-[10px] text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1 transition-colors">
                                         <i class="fa-solid fa-copy"></i> Copy Address
                                     </button>
                                 </div>
