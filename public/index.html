@@ -420,6 +420,49 @@
             finally { clearTimeout(timeout); }
         }
 
+        // --- Metadata & Background Helpers ---
+        function decodeURIField(uri) {
+            if (!uri) return "";
+            if (/^[0-9A-Fa-f]{20,}$/.test(uri)) {
+                let str = "";
+                for (let i = 0; i < uri.length; i += 2) str += String.fromCharCode(parseInt(uri.substr(i, 2), 16));
+                return str;
+            }
+            return uri;
+        }
+
+        function ipfsToGateways(uri) {
+            if (!uri || !uri.includes("ipfs")) return [uri];
+            const cid = uri.replace(/^ipfs:\/\/|ipfs\//, "").split("/").pop();
+            return [
+                `https://ipfs.io/ipfs/${cid}`,
+                `https://cloudflare-ipfs.com/ipfs/${cid}`,
+                `https://gateway.pinata.cloud/ipfs/${cid}`
+            ];
+        }
+
+        function pickBackgroundColor(meta) {
+            if (!meta) return null;
+            const val = meta.background_color || meta.backgroundColor || 
+                        (meta.attributes?.find(a => /background/i.test(a.trait_type))?.value);
+            if (!val) return null;
+            return val.startsWith("#") ? val : "#" + val;
+        }
+
+        async function resolveNFTBackgroundColor(nft) {
+            const uri = decodeURIField(nft.URI);
+            if (!uri) return null;
+            const urls = ipfsToGateways(uri);
+            for (const url of urls) {
+                try {
+                    const res = await fetch("/api/proxy?url=" + encodeURIComponent(url));
+                    const meta = await res.json();
+                    return pickBackgroundColor(meta);
+                } catch (e) {}
+            }
+            return null;
+        }
+
         let allNFTs = [];
         let selectedNFTs = [];
         let currentWallet = '';
@@ -1261,11 +1304,12 @@
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let currentTry = 0;
-                        img.onerror = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
+                        img.onload = () => { currentTry++; if (currentTry < sources.length) img.src = sources[currentTry]; };
                         img.src = sources[0];
                         wrap.appendChild(img);
                     }
                 });
+                resolveNFTBackgroundColor(nft).then(bg => { if (bg) wrap.style.backgroundColor = bg; });
                 grid.appendChild(cell);
             });
         }
