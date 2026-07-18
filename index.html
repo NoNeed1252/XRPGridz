@@ -15,7 +15,7 @@
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
 
-    <!-- Top Navigation -->
+    <!-- Top Nav -->
     <nav class="border-b border-slate-800 bg-[#0a0f1e]/95 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
             <div class="flex items-center gap-x-3 cursor-pointer" onclick="switchTab('grid')">
@@ -112,7 +112,7 @@
     </div>
 
     <script>
-        // ==================== IMPROVED VERSION WITH RAW METADATA FIX ====================
+        // ==================== FIXED VERSION (strong images + background colors) ====================
         let allNFTs = [];
         let selectedNFTs = [];
         let nftDataCache = new Map();
@@ -127,7 +127,8 @@
             return cid ? [
                 'https://ipfs.io/ipfs/' + cid,
                 'https://cloudflare-ipfs.com/ipfs/' + cid,
-                'https://gateway.pinata.cloud/ipfs/' + cid
+                'https://gateway.pinata.cloud/ipfs/' + cid,
+                'https://dweb.link/ipfs/' + cid
             ] : [];
         }
 
@@ -150,29 +151,32 @@
             let imageSources = [];
             let backgroundColor = null;
 
+            // Try metadata JSON first (for background colors)
             if (uri) {
                 const target = uri.startsWith('http') ? uri : ipfsToGateways(uri)[0];
                 if (target) {
                     try {
-                        // Added &raw=true so the proxy returns the full metadata JSON
                         const res = await fetch('/api/proxy?url=' + encodeURIComponent(target) + '&raw=true');
                         const meta = await res.json();
                         if (meta && typeof meta === 'object') {
                             backgroundColor = pickBackgroundColor(meta);
                             const img = decodeURIField(meta.image || '');
                             if (img) {
-                                const first = img.startsWith('http') ? img : ipfsToGateways(img)[0];
-                                if (first) imageSources.push('/api/proxy?url=' + encodeURIComponent(first));
                                 imageSources.push(...ipfsToGateways(img));
+                                if (img.startsWith('http')) imageSources.push(img);
                             }
                         }
                     } catch (e) {}
                 }
             }
 
-            // Fallbacks
-            if (!imageSources.length && nft.URI) {
-                imageSources.push('/api/proxy?hex=' + nft.URI);
+            // Strong fallbacks for images (this is what was missing before)
+            if (imageSources.length === 0) {
+                if (nft.URI) {
+                    imageSources.push('/api/proxy?hex=' + nft.URI);
+                }
+                // Add direct IPFS gateways from URI
+                imageSources.push(...ipfsToGateways(uri));
             }
 
             // Hardcoded fallback for your purple NFT
@@ -209,6 +213,11 @@
                         const img = new Image();
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
+                        let i = 0;
+                        img.onerror = () => {
+                            i++;
+                            if (i < imageSources.length) img.src = imageSources[i];
+                        };
                         img.src = imageSources[0];
                         wrap.appendChild(img);
                     }
@@ -217,7 +226,7 @@
             }
         }
 
-        // Basic helper functions
+        // Helper functions
         function hexToString(hex) {
             let str = '';
             for (let i = 0; i < hex.length; i += 2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
@@ -235,7 +244,7 @@
         async function loadNFTs() {
             const address = document.getElementById('wallet-input').value.trim();
             if (!address) return alert('Please enter a wallet address');
-            alert("Loading NFTs... (you can replace this with your full original function later)");
+            alert("Loading NFTs... (replace this alert with your full original loadNFTs function if needed)");
         }
 
         function switchTab(tabId) {
@@ -248,7 +257,7 @@
             alert("Support modal placeholder");
         }
 
-        // Initialize sliders
+        // Initialize
         window.onload = () => {
             const rowsSlider = document.getElementById('rows-slider');
             const colsSlider = document.getElementById('cols-slider');
