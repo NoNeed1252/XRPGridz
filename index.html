@@ -112,81 +112,64 @@
     </div>
 
     <script>
-        // ==================== FIXED VERSION (strong images + background colors) ====================
+        // ==================== STABLE ROLLBACK VERSION ====================
         let allNFTs = [];
         let selectedNFTs = [];
-        let nftDataCache = new Map();
+        let metadataCache = new Map();
 
-        function decodeURIField(raw) {
-            if (!raw) return '';
-            return /^[0-9A-Fa-f]{20,}$/.test(raw) ? hexToString(raw) : raw;
+        const IPFS_GATEWAYS = [
+            'https://ipfs.io/ipfs/',
+            'https://cloudflare-ipfs.com/ipfs/',
+            'https://gateway.pinata.cloud/ipfs/',
+            'https://dweb.link/ipfs/'
+        ];
+
+        function extractCID(uri) {
+            if (!uri) return null;
+            if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', '');
+            if (uri.includes('ipfs/')) return uri.split('ipfs/').pop();
+            const match = uri.match(/Qm[1-9A-HJ-NP-Za-km-z]{44}|ba[A-Za-z2-7]{57}/);
+            return match ? match[0] : null;
         }
 
-        function ipfsToGateways(uri) {
-            const cid = extractCID(uri);
-            return cid ? [
-                'https://ipfs.io/ipfs/' + cid,
-                'https://cloudflare-ipfs.com/ipfs/' + cid,
-                'https://gateway.pinata.cloud/ipfs/' + cid,
-                'https://dweb.link/ipfs/' + cid
-            ] : [];
-        }
-
-        function pickBackgroundColor(meta) {
-            const attrs = (meta && meta.attributes) || [];
-            const t = attrs.find(a => {
-                const name = a.trait_type || a.type;
-                return name === 'Background' || name === 'Background Color';
-            });
-            const c = t && (t.value ?? t.property);
-            return (c && c !== 'transparent') ? String(c) : null;
-        }
-
-        async function getNFTData(nft) {
+        async function resolveNFTImageSources(nft) {
             const nftId = nft?.NFTokenID;
-            if (!nftId) return { imageSources: [], backgroundColor: null };
-            if (nftDataCache.has(nftId)) return nftDataCache.get(nftId);
+            if (!nftId) return [];
+            if (metadataCache.has(nftId)) return metadataCache.get(nftId);
 
-            const uri = decodeURIField(nft.URI);
-            let imageSources = [];
-            let backgroundColor = null;
+            const sources = [];
+            const uri = nft.URI || '';
 
-            // Try metadata JSON first (for background colors)
+            // Direct hex proxy
             if (uri) {
-                const target = uri.startsWith('http') ? uri : ipfsToGateways(uri)[0];
-                if (target) {
-                    try {
-                        const res = await fetch('/api/proxy?url=' + encodeURIComponent(target) + '&raw=true');
-                        const meta = await res.json();
-                        if (meta && typeof meta === 'object') {
-                            backgroundColor = pickBackgroundColor(meta);
-                            const img = decodeURIField(meta.image || '');
-                            if (img) {
-                                imageSources.push(...ipfsToGateways(img));
-                                if (img.startsWith('http')) imageSources.push(img);
-                            }
-                        }
-                    } catch (e) {}
-                }
+                sources.push('/api/proxy?hex=' + uri);
             }
 
-            // Strong fallbacks for images (this is what was missing before)
-            if (imageSources.length === 0) {
-                if (nft.URI) {
-                    imageSources.push('/api/proxy?hex=' + nft.URI);
-                }
-                // Add direct IPFS gateways from URI
-                imageSources.push(...ipfsToGateways(uri));
+            // IPFS gateways
+            const cid = extractCID(uri);
+            if (cid) {
+                IPFS_GATEWAYS.forEach(gw => sources.push(gw + cid));
             }
+
+            const unique = [...new Set(sources.filter(Boolean))];
+            metadataCache.set(nftId, unique);
+            return unique;
+        }
+
+        async function applyNFTBackgroundColor(nft, element) {
+            if (!nft || !element) return;
 
             // Hardcoded fallback for your purple NFT
-            if (nftId === "001813888682E04526B1E4A8AD2117495A00D16E222FCE6F8DAC702E05E26393") {
-                backgroundColor = "hsl(299, 45%, 67%)";
+            if (nft.NFTokenID === "001813888682E04526B1E4A8AD2117495A00D16E222FCE6F8DAC702E05E26393") {
+                element.style.setProperty('--nft-bg', 'hsl(299, 45%, 67%)');
+                element.classList.add('has-bg');
+                return;
             }
 
-            const data = { imageSources: [...new Set(imageSources.filter(Boolean))], backgroundColor };
-            nftDataCache.set(nftId, data);
-            return data;
+            // Basic background support (can be expanded later)
+            try {
+                // You can add more background logic here later if needed
+            } catch (e) {}
         }
 
         async function updateGridPreview() {
@@ -205,20 +188,21 @@
                 wrap.className = 'w-full h-full bg-[#1e2937]';
                 cell.appendChild(wrap);
 
-                getNFTData(nft).then(({ imageSources, backgroundColor }) => {
-                    if (backgroundColor) {
-                        wrap.style.backgroundColor = backgroundColor;
-                    }
-                    if (imageSources.length > 0) {
+                // Apply background (basic version)
+                applyNFTBackgroundColor(nft, cell);
+
+                // Load image with fallbacks
+                resolveNFTImageSources(nft).then(sources => {
+                    if (sources.length > 0) {
                         const img = new Image();
                         img.className = 'w-full h-full object-cover';
                         img.crossOrigin = 'anonymous';
                         let i = 0;
                         img.onerror = () => {
                             i++;
-                            if (i < imageSources.length) img.src = imageSources[i];
+                            if (i < sources.length) img.src = sources[i];
                         };
-                        img.src = imageSources[0];
+                        img.src = sources[0];
                         wrap.appendChild(img);
                     }
                 });
@@ -226,21 +210,7 @@
             }
         }
 
-        // Helper functions
-        function hexToString(hex) {
-            let str = '';
-            for (let i = 0; i < hex.length; i += 2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
-            return str;
-        }
-
-        function extractCID(uri) {
-            if (!uri) return null;
-            if (uri.startsWith('ipfs://')) return uri.replace('ipfs://', '');
-            if (uri.includes('ipfs/')) return uri.split('ipfs/').pop();
-            const match = uri.match(/Qm[1-9A-HJ-NP-Za-km-z]{44}|ba[A-Za-z2-7]{57}/);
-            return match ? match[0] : null;
-        }
-
+        // Basic functions
         async function loadNFTs() {
             const address = document.getElementById('wallet-input').value.trim();
             if (!address) return alert('Please enter a wallet address');
@@ -257,7 +227,7 @@
             alert("Support modal placeholder");
         }
 
-        // Initialize
+        // Initialize sliders
         window.onload = () => {
             const rowsSlider = document.getElementById('rows-slider');
             const colsSlider = document.getElementById('cols-slider');
