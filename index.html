@@ -65,7 +65,7 @@
     </style>
 </head>
 <body class="bg-[#0a0f1e] text-slate-200">
-    <nav class="border-b border-slate-800 bg-[#0a0f1e]/95 sticky top-0 z-50">
+        <nav class="border-b border-slate-800 bg-[#0a0f1e]/95 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
             <div class="flex items-center gap-x-4">
                 <button id="hamburger" class="text-2xl text-slate-400 hover:text-white">
@@ -79,9 +79,8 @@
                         <span>XRP</span><span class="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Gridz</span>
                     </div>
                 </div>
-            </div>
-            <div class="flex items-center gap-x-4">
-                <button onclick="showDonateModal()" class="px-5 py-2.5 text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2 shadow-lg shadow-emerald-900/20 hover:scale-[1.02] transition-transform">
+            </div><div class="flex items-center gap-x-4">
+                <button onclick="showDonateModal()" class="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-2xl flex items-center gap-x-2">
                     <i class="fa-solid fa-heart"></i> <span>Support</span>
                 </button>
             </div>
@@ -105,215 +104,11 @@
 
     <!-- Grid Tab -->
     <div id="tab-grid" class="tab-content active">
-        <div class="max-w-4xl mx-auto px-5 pt-16 pb-12 text-center">
-            <h1 class="text-5xl md:text-7xl font-bold tracking-tighter mb-6 leading-tight">Turn your XRP NFTs<br>into beautiful grids.</h1>
-            <p class="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">Search wallet • Filter by collection • Build grid • Download PNG</p>
-            <button type="button" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})" class="px-10 py-4.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-3xl text-xl shadow-xl shadow-blue-900/20 transition-all hover:scale-105 active:scale-95">Start Creating</button>
+        <div class="max-w-4xl mx-auto px-5 pt-10 pb-8 text-center">
+            <h1 class="text-5xl md:text-6xl font-semibold tracking-tighter mb-4">Turn your XRP NFTs<br>into beautiful grids.</h1>
+            <p class="text-xl text-slate-400 mb-6">Search wallet • Filter by collection • Build grid • Download PNG</p>
+            <button type="button" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})" class="px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-3xl text-lg">Start Creating</button>
         </div>
 
         <div id="tool" class="max-w-7xl mx-auto px-5 pb-16">
-            <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-10 shadow-2xl">
-                
-                <div class="mb-10">
-                    <div class="flex items-center gap-x-3 mb-4">
-                        <div class="w-8 h-8 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-900/20">1</div>
-                        <h2 class="text-2xl font-bold">Enter Your XRPL Wallet</h2>
-                    </div>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <input id="wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-2xl px-6 py-4 text-lg font-mono outline-none transition-colors">
-                        <button type="button" onclick="loadNFTs()" class="px-10 py-4.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100 transition-all shadow-lg active:scale-95">Load NFTs</button>
-                    </div>
-                    <div id="wallet-status" class="mt-3 text-sm hidden"></div>
-                </div>
-
-                <div id="nft-gallery-section" class="hidden">
-                    <div class="flex justify-between items-end mb-6">
-                        <div>
-                            <h3 class="text-2xl font-bold">Your NFTs <span id="nft-count" class="text-blue-400 font-mono ml-2">(0)</span></h3>
-                            <button id="load-more-btn" onclick="loadMoreNFTs()" class="hidden mt-2 text-xs px-4 py-1.5 bg-emerald-600/20 text-emerald-400 rounded-xl font-bold uppercase tracking-wider border border-emerald-900/30">Load More</button>
-                        </div>
-                        <div class="flex gap-3">
-                            <button onclick="selectAllNFTs()" class="text-xs px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 font-bold transition-colors">Select All</button>
-                            <button onclick="deselectAllNFTs()" class="text-xs px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 font-bold transition-colors">Clear</button>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
-                        <input id="nft-filter" type="text" onkeyup="filterNFTs()" placeholder="Search by ID..." class="flex-1 bg-[#0a0f1e] border border-slate-700 px-5 py-3 rounded-2xl text-sm focus:outline-none focus:border-blue-500 transition-colors">
-                        <select id="collection-filter" onchange="filterNFTs()" class="bg-[#0a0f1e] border border-slate-700 px-5 py-3 rounded-2xl text-sm focus:outline-none focus:border-blue-500 transition-colors">
-                            <option value="">All Collections</option>
-                        </select>
-                    </div>
-
-                    <div class="text-xs text-slate-500 mb-3 font-medium uppercase tracking-widest">Lazy loading enabled for high-count wallets</div>
-                    <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[500px] overflow-auto p-1 custom-scrollbar"></div>
-
-                    <div class="mt-6 flex justify-between items-center text-sm">
-                        <div class="bg-blue-900/20 text-blue-400 px-4 py-2 rounded-xl border border-blue-900/30 font-bold"><span id="selected-count">0</span> selected</div>
-                        <button onclick="clearSelected()" class="text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-widest transition-colors">Clear selection</button>
-                    </div>
-                </div>
-
-                <div id="grid-config-section" class="hidden mt-10 pt-10 border-t border-slate-700">
-                    <div class="grid md:grid-cols-5 gap-10">
-                        <div class="md:col-span-2">
-                            <div class="flex items-center gap-x-3 mb-6">
-                                <div class="w-8 h-8 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-lg shadow-emerald-900/20">2</div>
-                                <h3 class="text-2xl font-bold">Build Your Grid</h3>
-                            </div>
-
-                            <div class="mb-6">
-                                <div class="text-xs text-slate-500 mb-3 font-bold uppercase tracking-widest">Quick Sizes</div>
-                                <div class="grid grid-cols-4 gap-2 text-xs">
-                                    <button onclick="setGridPreset(2,2)" class="py-2.5 border border-slate-600 hover:border-blue-500 hover:bg-blue-500/10 rounded-xl transition-all font-bold">2×2</button>
-                                    <button onclick="setGridPreset(3,3)" class="py-2.5 border border-slate-600 hover:border-blue-500 hover:bg-blue-500/10 rounded-xl transition-all font-bold">3×3</button>
-                                    <button onclick="setGridPreset(4,4)" class="py-2.5 border border-slate-600 hover:border-blue-500 hover:bg-blue-500/10 rounded-xl transition-all font-bold">4×4</button>
-                                    <button onclick="setGridPreset(5,5)" class="py-2.5 border border-slate-600 hover:border-blue-500 hover:bg-blue-500/10 rounded-xl transition-all font-bold">5×5</button>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-6 mb-6">
-                                <div>
-                                    <div class="flex justify-between text-xs mb-2 font-bold uppercase tracking-widest"><span>Columns</span><span id="cols-value" class="text-blue-400">4</span></div>
-                                    <input type="range" id="cols-slider" min="1" max="10" value="4" class="w-full accent-blue-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-xs mb-2 font-bold uppercase tracking-widest"><span>Rows</span><span id="rows-value" class="text-blue-400">4</span></div>
-                                    <input type="range" id="rows-slider" min="1" max="10" value="4" class="w-full accent-blue-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
-                                </div>
-                            </div>
-
-                            <div class="mb-8">
-                                <div class="text-xs text-slate-500 mb-3 font-bold uppercase tracking-widest">Banner Placement</div>
-                                <select id="banner-position" class="w-full bg-[#0a0f1e] border border-slate-600 px-5 py-3 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-colors">
-                                    <option value="bottom">Bottom</option>
-                                    <option value="top">Top</option>
-                                    <option value="left">Left Side</option>
-                                    <option value="right">Right Side</option>
-                                </select>
-                            </div>
-
-                            <div class="flex gap-3">
-                                <button onclick="shuffleSelected()" class="flex-1 py-3 text-xs border border-slate-600 rounded-2xl font-bold hover:bg-white/5 transition-colors">Shuffle</button>
-                                <button onclick="updateGridPreview()" class="flex-1 py-3 text-xs bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-900/20 active:scale-95 transition-all">Refresh Preview</button>
-                            </div>
-                        </div>
-
-                        <div class="md:col-span-3">
-                            <div class="flex justify-between items-center mb-5">
-                                <div class="flex items-center gap-x-3">
-                                    <div class="w-8 h-8 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-lg shadow-purple-900/20">3</div>
-                                    <span class="font-bold text-xl">Live Preview</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button onclick="downloadGridPNG()" class="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2 shadow-lg shadow-blue-900/20 hover:scale-[1.02] transition-transform">
-                                        <i class="fa-solid fa-download"></i> Download PNG
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div id="preview-wrapper" class="bg-[#0f172a] border-2 border-slate-700/50 p-4 rounded-[2rem] min-h-[400px] flex items-center justify-center shadow-inner">
-                                <div id="grid-preview" class="grid w-full max-w-[580px] shadow-2xl" style="gap: 8px;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Meme Tab -->
-    <div id="tab-meme" class="tab-content max-w-7xl mx-auto px-5 py-10">
-        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-10 shadow-2xl">
-            <div class="flex items-center gap-x-4 mb-10">
-                <div class="w-12 h-12 bg-purple-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-purple-900/20">
-                    <i class="fa-solid fa-face-grin-tears text-2xl"></i>
-                </div>
-                <h2 class="text-4xl font-bold tracking-tighter">Meme Maker</h2>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-12">
-                <div id="meme-preview-area" class="w-full aspect-square bg-[#0a0f1e] border-2 border-slate-800 rounded-[2.5rem] flex items-center justify-center overflow-hidden relative p-4 shadow-inner">
-                    <canvas id="meme-canvas" class="rounded-xl shadow-2xl"></canvas>
-                    <div id="meme-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500 font-bold px-10 text-center">
-                        Select an NFT from the Grid tab to start meming
-                    </div>
-                </div>
-                
-                <div class="space-y-8">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-3 uppercase tracking-[0.2em]">Top Text</label>
-                        <input id="meme-top-text" type="text" placeholder="TOP TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-6 py-5 text-xl focus:border-purple-500 outline-none uppercase font-black transition-colors">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-3 uppercase tracking-[0.2em]">Bottom Text</label>
-                        <input id="meme-bottom-text" type="text" placeholder="BOTTOM TEXT" oninput="drawMeme()" class="w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-6 py-5 text-xl focus:border-purple-500 outline-none uppercase font-black transition-colors">
-                    </div>
-                    <div class="flex flex-col gap-4">
-                        <button onclick="saveMeme()" class="w-full py-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-xl shadow-purple-900/20 transition-all hover:scale-[1.02] active:scale-95">Save & Export</button>
-                    </div>
-                    <button onclick="switchTab('grid')" class="w-full py-2 text-slate-500 hover:text-slate-300 transition-colors font-bold uppercase tracking-widest text-xs">Back to Grid Builder</button>
-                </div>
-            </div>
-
-            <div class="mb-10 p-8 mt-16 bg-[#0a0f1e] border border-slate-800 rounded-[2.5rem] shadow-inner">
-                <div class="text-xs text-slate-500 mb-5 uppercase tracking-[0.3em] font-black text-center">Quick Wallet Load</div>
-                <div class="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
-                    <input id="meme-wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#111827] border border-slate-700 focus:border-purple-500 rounded-2xl px-6 py-4 text-sm font-mono outline-none transition-colors">
-                    <button onclick="loadNFTsForMeme()" class="px-8 py-4 bg-purple-600 text-white font-bold rounded-2xl hover:bg-purple-500 transition-all shadow-lg active:scale-95 text-sm">Load NFTs</button>
-                </div>
-                <div id="meme-wallet-status" class="mt-4 text-center text-[10px] hidden font-bold"></div>
-                
-                <div id="meme-gallery-section" class="hidden mt-10 pt-10 border-t border-slate-800">
-                    <div id="meme-nft-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 max-h-[350px] overflow-auto p-2 custom-scrollbar"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Banner Tab -->
-    <div id="tab-banner" class="tab-content max-w-7xl mx-auto px-5 py-10">
-        <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-10 shadow-2xl">
-            <div class="flex items-center gap-x-4 mb-10">
-                <div class="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-                    <i class="fa-solid fa-image text-2xl"></i>
-                </div>
-                <h2 class="text-4xl font-bold tracking-tighter">Banner Maker</h2>
-            </div>
-
-            <div class="mb-10">
-                <div class="flex items-center gap-x-3 mb-5">
-                    <div class="w-8 h-8 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm font-bold">1</div>
-                    <h2 class="text-2xl font-bold">Enter Your XRPL Wallet</h2>
-                </div>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <input id="banner-wallet-input" type="text" placeholder="r... address" class="flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-2xl px-6 py-4 text-lg font-mono outline-none transition-colors">
-                    <button type="button" onclick="loadNFTsForBanner()" class="px-10 py-4.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100 transition-all shadow-lg active:scale-95">Load NFTs</button>
-                </div>
-                <div id="banner-wallet-status" class="mt-3 text-sm hidden"></div>
-            </div>
-
-            <div id="banner-nft-gallery-section" class="hidden mb-10 pt-10 border-t border-slate-700">
-                <div class="flex justify-between items-end mb-6">
-                    <div>
-                        <h3 class="text-2xl font-bold">Your NFTs <span id="banner-nft-count" class="text-blue-400 font-mono ml-2">(0)</span></h3>
-                    </div>
-                    <div class="flex gap-3">
-                        <button onclick="selectAllNFTsForBanner()" class="text-xs px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 font-bold transition-colors">Select All</button>
-                        <button onclick="deselectAllNFTsForBanner()" class="text-xs px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 font-bold transition-colors">Clear</button>
-                    </div>
-                </div>
-                <div id="banner-nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[400px] overflow-auto p-2 custom-scrollbar"></div>
-                <div class="mt-6">
-                    <div class="bg-blue-900/20 text-blue-400 px-4 py-2 rounded-xl border border-blue-900/30 font-bold inline-block text-sm"><span id="banner-selected-count">0</span> selected</div>
-                </div>
-            </div>
-            
-            <div id="banner-preview-section" class="hidden mt-10 pt-10 border-t border-slate-700">
-                <div class="grid grid-cols-1 gap-12">
-                    <div class="flex flex-col gap-6">
-                        <div class="flex items-center gap-x-3">
-                            <div class="w-8 h-8 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold">2</div>
-                            <h3 class="text-2xl font-bold">Banner Preview (16:9)</h3>
-                        </div>
-                        <div id="banner-preview-area" class="w-full bg-[#0a0f1e] border-2 border-slate-800 rounded-[2.5rem] aspect-[16/9] flex items-center justify-center overflow-hidden 
+            <div class="bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8\">\n                \n                <div class=\"mb-8\">\n                    <div class=\"flex items-center gap-x-3 mb-3\">\n                        <div class=\"w-7 h-7 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm font-bold\">1</div>\n                        <h2 class=\"text-xl font-semibold\">Enter Your XRPL Wallet</h2>\n                    </div>\n                    <div class=\"flex flex-col sm:flex-row gap-3\">\n                        <input id=\"wallet-input\" type=\"text\" placeholder=\"r... address\" class=\"flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-2xl px-5 py-3.5 text-lg font-mono outline-none\">\n                        <button type=\"button\" onclick=\"loadNFTs()\" class=\"px-8 py-3.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100\">Load NFTs</button>\n                    </div>\n                    <div id=\"wallet-status\" class=\"mt-2 text-sm hidden\"></div>\n                </div>\n\n                <div id=\"nft-gallery-section\" class=\"hidden\">\n                    <div class=\"flex justify-between items-end mb-4\">\n                        <div>\n                            <h3 class=\"text-xl font-semibold\">Your NFTs <span id=\"nft-count\" class=\"text-blue-400 font-mono\">(0)</span></h3>\n                            <button id=\"load-more-btn\" onclick=\"loadMoreNFTs()\" class=\"hidden mt-1 text-xs px-3 py-1 bg-emerald-600/20 text-emerald-400 rounded-xl\">Load More</button>\n                        </div>\n                        <div class=\"flex gap-2\">\n                            <button onclick=\"selectAllNFTs()\" class=\"text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10\">Select All</button>\n                            <button onclick=\"deselectAllNFTs()\" class=\"text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10\">Clear</button>\n                        </div>\n                    </div>\n\n                    <div class=\"flex flex-col sm:flex-row gap-3 mb-4\">\n                        <input id=\"nft-filter\" type=\"text\" onkeyup=\"filterNFTs()\" placeholder=\"Search by ID...\" class=\"flex-1 bg-[#0a0f1e] border border-slate-700 px-4 py-2 rounded-2xl text-sm focus:outline-none focus:border-blue-500\">\n                        <select id=\"collection-filter\" onchange=\"filterNFTs()\" class=\"bg-[#0a0f1e] border border-slate-700 px-4 py-2 rounded-2xl text-sm focus:outline-none focus:border-blue-500\">\n                            <option value=\"\">All Collections</option>\n                        </select>\n                    </div>\n\n                    <div class=\"text-xs text-slate-400 mb-2\">Lazy loading enabled for high-count wallets.</div>\n                    <div id=\"nft-grid\" class=\"grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[500px] overflow-auto p-1\"></div>\n\n                    <div class=\"mt-4 flex justify-between text-sm\">\n                        <div class=\"text-blue-400\"><span id=\"selected-count\">0</span> selected</div>\n                        <button onclick=\"clearSelected()\" class=\"text-red-400 hover:text-red-300 text-xs\">Clear selection</button>\n                    </div>\n                </div>\n\n                <div id=\"grid-config-section\" class=\"hidden mt-8 pt-8 border-t border-slate-700\">\n                    <div class=\"grid md:grid-cols-5 gap-8\">\n                        <div class=\"md:col-span-2\">\n                            <div class=\"flex items-center gap-x-3 mb-4\">\n                                <div class=\"w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold\">2</div>\n                                <h3 class=\"text-xl font-semibold\">Build Your Grid</h3>\n                            </div>\n\n                            <div class=\"mb-5\">\n                                <div class=\"text-xs text-slate-400 mb-2\">QUICK SIZES</div>\n                                <div class=\"grid grid-cols-4 gap-2 text-xs\">\n                                    <button onclick=\"setGridPreset(2,2)\" class=\"py-2 border border-slate-600 hover:border-blue-500 rounded-xl\">2×2</button>\n                                    <button onclick=\"setGridPreset(3,3)\" class=\"py-2 border border-slate-600 hover:border-blue-500 rounded-xl\">3×3</button>\n                                    <button onclick=\"setGridPreset(4,4)\" class=\"py-2 border border-slate-600 hover:border-blue-500 rounded-xl\">4×4</button>\n                                    <button onclick=\"setGridPreset(5,5)\" class=\"py-2 border border-slate-600 hover:border-blue-500 rounded-xl\">5×5</button>\n                                </div>\n                            </div>\n\n                            <div class=\"grid grid-cols-2 gap-4 mb-5\">\n                                <div>\n                                    <div class=\"flex justify-between text-xs mb-1\"><span>Columns</span><span id=\"cols-value\">4</span></div>\n                                    <input type=\"range\" id=\"cols-slider\" min=\"1\" max=\"10\" value=\"4\" class=\"w-full accent-blue-500\">\n                                </div>\n                                <div>\n                                    <div class=\"flex justify-between text-xs mb-1\"><span>Rows</span><span id=\"rows-value\">4</span></div>\n                                    <input type=\"range\" id=\"rows-slider\" min=\"1\" max=\"10\" value=\"4\" class=\"w-full accent-blue-500\">\n                                </div>\n                            </div>\n\n                            <div class=\"mb-5\">\n                                <div class=\"text-xs text-slate-400 mb-2\">BANNER PLACEMENT</div>\n                                <select id=\"banner-position\" class=\"w-full bg-[#0a0f1e] border border-slate-600 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-blue-500\">\n                                    <option value=\"bottom\">Bottom</option>\n                                    <option value=\"top\">Top</option>\n                                    <option value=\"left\">Left Side</option>\n                                    <option value=\"right\">Right Side</option>\n                                </select>\n                            </div>\n\n                            <div class=\"flex gap-2\">\n                                <button onclick=\"shuffleSelected()\" class=\"flex-1 py-2 text-xs border border-slate-600 rounded-2xl\">Shuffle</button>\n                                <button onclick=\"updateGridPreview()\" class=\"flex-1 py-2 text-xs bg-emerald-600 text-white rounded-2xl\">Refresh Preview</button>\n                            </div>\n                        </div>\n\n                        <div class=\"md:col-span-3\">\n                            <div class=\"flex justify-between items-center mb-3\">\n                                <div class=\"flex items-center gap-x-2\">\n                                    <div class=\"w-7 h-7 bg-purple-500 text-white rounded-xl flex items-center justify-center text-sm font-bold\">3</div>\n                                    <span class=\"font-semibold\">Live Preview</span>\n                                </div>\n                                <div class=\"flex gap-2\">\n                                    <button onclick=\"downloadGridPNG()\" class=\"px-5 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-bold rounded-2xl flex items-center gap-x-2\">\n                                        <i class=\"fa-solid fa-download\"></i> Download PNG\n                                    </button>\n                                </div>\n                            </div>\n\n                            <div id=\"preview-wrapper\" class=\"bg-[#0f172a] border border-slate-600 p-3 rounded-3xl min-h-[320px] flex items-center justify-center\">\n                                <div id=\"grid-preview\" class=\"grid w-full max-w-[580px]\" style=\"gap: 6px;\"></div>\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        </div>\n    </div>\n\n    <!-- Meme Tab -->\n        <div id=\"tab-meme\" class=\"tab-content max-w-7xl mx-auto px-5 py-10\">\n        <div class=\"bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8\">\n            <div class=\"flex items-center gap-x-3 mb-8\">\n                <div class=\"w-10 h-10 bg-purple-500 text-white rounded-2xl flex items-center justify-center\">\n                    <i class=\"fa-solid fa-face-grin-tears text-2xl\"></i>\n                </div>\n                <h2 class=\"text-3xl font-bold tracking-tighter\">Meme Maker</h2>\n            </div>\n            \n            <div class=\"grid md:grid-cols-2 gap-10\">\n                <div id=\"meme-preview-area\" class=\"w-full aspect-square bg-[#0a0f1e] border border-slate-800 flex items-center justify-center overflow-hidden relative p-2\">\n                    <canvas id=\"meme-canvas\"></canvas>\n                    <div id=\"meme-placeholder\" class=\"absolute inset-0 flex items-center justify-center text-slate-500\">\n                        Select an NFT from the Grid tab to start meming\n                    </div>\n                </div>\n                \n                <div class=\"space-y-6\">\n                    <div>\n                        <label class=\"block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider\">Top Text</label>\n                        <input id=\"meme-top-text\" type=\"text\" placeholder=\"TOP TEXT\" oninput=\"drawMeme()\" class=\"w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold\">\n                    </div>\n                    <div>\n                        <label class=\"block text-sm font-medium text-slate-400 mb-2 uppercase tracking-wider\">Bottom Text</label>\n                        <input id=\"meme-bottom-text\" type=\"text\" placeholder=\"BOTTOM TEXT\" oninput=\"drawMeme()\" class=\"w-full bg-[#0a0f1e] border border-slate-700 rounded-2xl px-5 py-4 text-lg focus:border-purple-500 outline-none uppercase font-bold\">\n                    </div>\n                    <div class=\"flex flex-col gap-3\">\n                        <button onclick=\"saveMeme()\" class=\"w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-purple-900/20\">Save & Export</button>\n                    </div>\n                    <button onclick=\"switchTab('grid')\" class=\"w-full py-2 text-slate-500 hover:text-slate-300 transition-colors\">Back to Grid Builder</button>\n                </div>\n            </div>\n\n            <div class=\"mb-8 p-6 mt-12 bg-[#0a0f1e] border border-slate-800 rounded-3xl\">\n                <div class=\"text-xs text-slate-500 mb-4 uppercase tracking-widest font-bold\">Quick Wallet Load</div>\n                <div class=\"flex flex-col sm:flex-row gap-3\">\n                    <input id=\"meme-wallet-input\" type=\"text\" placeholder=\"r... address\" class=\"flex-1 bg-[#111827] border border-slate-700 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm font-mono outline-none\">\n                    <button onclick=\"loadNFTsForMeme()\" class=\"px-6 py-2.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-500 transition-colors text-sm\">Load NFTs</button>\n                </div>\n                <div id=\"meme-wallet-status\" class=\"mt-2 text-[10px] hidden\"></div>\n                \n                <div id=\"meme-gallery-section\" class=\"hidden mt-6 pt-6 border-t border-slate-800\">\n                    <div id=\"meme-nft-grid\" class=\"grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 max-h-[300px] overflow-auto p-1\"></div>\n                </div>\n            </div>\n        </div>\n    </div>\n\n<div id=\"tab-banner\" class=\"tab-content max-w-7xl mx-auto px-5 py-10\">\n        <div class=\"bg-[#111827] border border-slate-700 rounded-3xl p-6 md:p-8\">\n            <div class=\"flex items-center gap-x-3 mb-8\">\n                <div class=\"w-10 h-10 bg-blue-500 text-white rounded-2xl flex items-center justify-center\">\n                    <i class=\"fa-solid fa-image text-2xl\"></i>\n                </div>\n                <h2 class=\"text-3xl font-bold tracking-tighter\">Banner Maker</h2>\n            </div>\n\n            <div class=\"mb-8\">\n                <div class=\"flex items-center gap-x-3 mb-3\">\n                    <div class=\"w-7 h-7 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm font-bold\">1</div>\n                    <h2 class=\"text-xl font-semibold\">Enter Your XRPL Wallet</h2>\n                </div>\n                <div class=\"flex flex-col sm:flex-row gap-3\">\n                    <input id=\"banner-wallet-input\" type=\"text\" placeholder=\"r... address\" class=\"flex-1 bg-[#0a0f1e] border border-slate-600 focus:border-blue-500 rounded-2xl px-5 py-3.5 text-lg font-mono outline-none\">\n                    <button type=\"button\" onclick=\"loadNFTsForBanner()\" class=\"px-8 py-3.5 bg-white text-[#0a0f1e] font-bold rounded-2xl hover:bg-slate-100\">Load NFTs</button>\n                </div>\n                <div id=\"banner-wallet-status\" class=\"mt-2 text-sm hidden\"></div>\n            </div>\n\n            <div id=\"banner-nft-gallery-section\" class=\"hidden mb-8 pt-8 border-t border-slate-700\">\n                <div class=\"flex justify-between items-end mb-4\">\n                    <div>\n                        <h3 class=\"text-xl font-semibold\">Your NFTs <span id=\"banner-nft-count\" class=\"text-blue-400 font-mono\">(0)</span></h3>\n                    </div>\n                    <div class=\"flex gap-2\">\n                        <button onclick=\"selectAllNFTsForBanner()\" class=\"text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10\">Select All</button>\n                        <button onclick=\"deselectAllNFTsForBanner()\" class=\"text-xs px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10\">Clear</button>\n                    </div>\n                </div>\n                <div id=\"banner-nft-grid\" class=\"grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[400px] overflow-auto p-1\"></div>\n                <div class=\"mt-4 flex justify-between text-sm\">\n                    <div class=\"text-blue-400\"><span id=\"banner-selected-count\">0</span> selected</div>\n                </div>\n            </div>\n            \n            <div id=\"banner-preview-section\" class=\"hidden mt-8 pt-8 border-t border-slate-700\">\n                <div class=\"grid md:grid-cols-1 gap-10\">\n                    <div class=\"flex flex-col gap-4\">\n                        <div class=\"flex items-center gap-x-3\">\n                            <div class=\"w-7 h-7 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-bold\">2</div>\n                            <h3 class=\"text-xl font-semibold\">Banner Preview (16:9)</h3>\n                        </div>\n                        <div id=\"banner-preview-area\" class=\"w-full bg-[#0a0f1e] border border-slate-800 aspect-[16/9] flex items-center justify-center overflow-hidden relative p-2\">\n                            <canvas id=\"banner-canvas\"></canvas>\n                        </div>\n                    </div>\n                    \n                    <div class=\"space-y-6\">\n                        <div class=\"grid md:grid-cols-2 gap-4\">\n                            <button onclick=\"saveBanner()\" class=\"w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-2xl text-xl shadow-lg shadow-blue-900/20\">Save & Export</button>\n                        </div>\n                        <button onclick=\"switchTab('grid')\" class=\"w-full py-2 text-slate-500 hover:text-slate-300 transition-colors\">Back to Grid Builder</button>\n                    </div>\n                </div>\n            </div>\n        </div>\n    </div>\n\n\n    <!-- Creative Studio Tab -->\n    <div id=\"tab-creative\" class=\"tab-content max-w-7xl mx-auto px-5 py-10\">\n        <div class=\"bg-[#111827] border border-slate-700 rounded-3xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]\">\n            <div class=\"w-20 h-20 bg-slate-800 text-slate-400 rounded-full flex items-center justify-center mb-6\">\n                <i class=\"fa-solid fa-lock text-4xl\"></i>\n            </div>\n            <h2 class=\"text-4xl font-bold tracking-tighter mb-4 text-white\">Under Maintenance</h2>\n            <p class=\"text-xl text-slate-400 mb-10\">Coming soon!</p>\n            <button onclick=\"switchTab('grid')\" class=\"px-8 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-3xl text-lg transition-all shadow-lg shadow-blue-900/20\">\n                Back to Grid Builder\n            </button>\n        </div>\n    </div>\n    \n    <script>\n        // Compatibility Polyfills\n        if (!Promise.any) {\n            Promise.any = function(promises) {\n                return new Promise((resolve, reject) => {\n                    let errors = [];\n                    let remaining = promises.length;\n                    if (remaining === 0) return reject(new Error('All promises were rejected'));\n             
