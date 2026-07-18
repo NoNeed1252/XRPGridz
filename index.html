@@ -46,7 +46,7 @@
             background: #0a0f1e;
             border-right: 1px solid #1e2937;
             z-index: 100;
-            transition: left 0.3s ease;
+            transition: left (0.3s) ease;
             padding: 2rem;
         }
         #sidebar.open {
@@ -456,7 +456,7 @@
             for (const url of urls) {
                 try {
                     const res = await fetch("/api/proxy?url=" + encodeURIComponent(url));
-                    const meta = await res.json();
+                    let meta; try { meta = await res.json(); } catch(e) { continue; }
                     return pickBackgroundColor(meta);
                 } catch (e) {}
             }
