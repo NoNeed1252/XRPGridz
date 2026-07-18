@@ -28,6 +28,15 @@
         .loading-skeleton { background: linear-gradient(90deg, #1e2937 25%, #334155 50%, #1e2937 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         
+        /* Fixed responsive grid for NFT gallery */
+        #nft-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            width: 100%;
+            max-width: 100%;
+        }
+
         /* Meme Tab Styles */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -145,7 +154,9 @@
                     </div>
 
                     <div class="text-xs text-slate-400 mb-2">Lazy loading enabled for high-count wallets.</div>
-                    <div id="nft-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-h-[500px] overflow-auto p-1"></div>
+                    <div id="nft-grid-container" class="w-full overflow-hidden p-1">
+                        <div id="nft-grid" class="max-h-[500px] overflow-auto"></div>
+                    </div>
 
                     <div class="mt-4 flex justify-between text-sm">
                         <div class="text-blue-400"><span id="selected-count">0</span> selected</div>
