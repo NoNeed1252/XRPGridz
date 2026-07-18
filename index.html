@@ -30,11 +30,10 @@
         
         /* Fixed responsive grid for NFT gallery */
         #nft-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 1rem;
-            width: 100%;
-            max-width: 100%;
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
+            gap: 1rem !important;
+            width: 100% !important;
         }
 
         /* Meme Tab Styles */
@@ -154,7 +153,7 @@
                     </div>
 
                     <div class="text-xs text-slate-400 mb-2">Lazy loading enabled for high-count wallets.</div>
-                    <div id="nft-grid-container" class="w-full overflow-hidden p-1">
+                    <div id="nft-grid-container" class="w-full p-1">
                         <div id="nft-grid" class="max-h-[500px] overflow-auto"></div>
                     </div>
 
@@ -561,7 +560,7 @@
                             <div class="text-[9px] font-mono truncate text-slate-300">${nft.NFTokenID}</div>
                         </div>
                         <button onclick="event.stopPropagation(); startMemeFromNFT('${nft.NFTokenID}')" class="meme-btn bg-purple-600 text-white py-1 px-2 rounded-lg text-[10px] font-bold shadow-lg">Meme This</button>
-                        <button onclick="event.stopPropagation(); startBannerFromNFT('${nft.NFTokenID}')" class=\"banner-btn bg-blue-600 text-white py-1 px-2 rounded-lg text-[10px] font-bold shadow-lg">Banner This</button>
+                        <button onclick="event.stopPropagation(); startBannerFromNFT('${nft.NFTokenID}')" class="banner-btn bg-blue-600 text-white py-1 px-2 rounded-lg text-[10px] font-bold shadow-lg">Banner This</button>
                     </div>`;
                 
                 card.onclick = () => toggleSelection(nft, card);
